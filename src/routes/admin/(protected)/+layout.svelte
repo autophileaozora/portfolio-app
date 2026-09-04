@@ -1,4 +1,6 @@
 <script>
+	import '$lib/styles/admin.css';
+
 	let { data, children } = $props();
 
 	const NAV_ITEMS = [
