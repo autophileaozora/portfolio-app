@@ -18,27 +18,14 @@
 
 	let currentIndex = $state(0);
 	let isFading = $state(false);
-	let quote = $state('');
-	let author = $state('');
-	let role = $state('');
-
-	$effect(() => {
-		const t = visibleTestimonials[0];
-		if (t) {
-			quote = t.quote;
-			author = t.author_name;
-			role = t.author_role;
-		}
-	});
+	let quote = $derived(visibleTestimonials[currentIndex]?.quote ?? '');
+	let author = $derived(visibleTestimonials[currentIndex]?.author_name ?? '');
+	let role = $derived(visibleTestimonials[currentIndex]?.author_role ?? '');
 
 	function goToSlide(index) {
-		currentIndex = index;
 		isFading = true;
 		setTimeout(() => {
-			const t = visibleTestimonials[currentIndex];
-			quote = t.quote;
-			author = t.author_name;
-			role = t.author_role;
+			currentIndex = index;
 			isFading = false;
 		}, 200);
 	}
