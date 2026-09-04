@@ -2,51 +2,51 @@
 	import { onMount, onDestroy } from 'svelte';
 	import '$lib/styles/project-detail.css';
 
-	// --- Dummy content for Phase B — same project regardless of slug for now;
-	// becomes a real Supabase lookup by slug in a later phase. ---
-	const project = {
-		title: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB',
-		contributors: 'Imanuel, Louis, Jonathan, Emma',
-		associatedWith: 'Universitas Kristen Satya Wacana',
-		category: 'Web App',
-		dates: 'Aug 2023 - Dec 2023',
-		role: 'Product Designer',
-		description:
-			'Profesional IT Support yang berpengalaman dalam administrasi sistem, troubleshooting perangkat keras/lunak, dan instalasi jaringan. Berpengalaman mengelola lab komputer besar, konfigurasi MikroTik, dan menangani perangkat AV untuk live streaming. Memiliki kemampuan komunikasi yang baik untuk memimpin tim teknis dan memecahkan masalah.',
-		tags: ['#Pyhton', '#JavaScript', '#TypeScript', '#Java', '#CSharp', '#Ruby', '#GoLang', '#Swift', '#Kotlin', '#Rust', '#PHP']
-	};
+	let { data } = $props();
 
-	const sections = [
-		{ heading: 'Problems', body: project.description },
-		{ heading: 'Solutions', body: project.description },
-		{ heading: 'Final Results', body: project.description }
-	];
+	let project = $derived({
+		title: data.project.title,
+		contributors: data.project.contributors,
+		associatedWith: data.project.associated_with,
+		category: data.project.category,
+		dates: formatDateRange(data.project.date_start, data.project.date_end),
+		role: data.project.role,
+		description: data.project.short_description,
+		liveUrl: data.project.live_url,
+		tags: (data.project.project_tags ?? []).map((pt) => pt.tags?.label).filter(Boolean)
+	});
 
-	const docSlides = [
-		{
-			title: 'JUDUL DOKUMENTASI',
-			body: 'Teks ini sangat panjang untuk mendemonstrasikan fungsi truncate maksimal 4 baris. Profesional IT Support yang berpengalaman dalam administrasi sistem, troubleshooting perangkat keras/lunak, dan instalasi jaringan. Berpengalaman mengelola lab komputer besar, konfigurasi MikroTik, dan menangani perangkat AV untuk live streaming. Memiliki kemampuan komunikasi yang baik untuk memimpin tim teknis dan memecahkan masalah. Jika melebihi 4 baris, teks ini otomatis terpotong.'
-		},
-		{
-			title: 'KONTEN SLIDE DUA',
-			body: 'Perhatikan animasi kartu ini saat berganti. Kartu yang baru akan meluncur lembut dari bawah (ease-in smooth) sambil memudar, sedangkan kartu yang lama hanya memudar (fade) menghilang secara elegan tanpa bergeser.'
-		},
-		{
-			title: 'KONTEN SLIDE TIGA',
-			body: 'Ini adalah slide ketiga. Anda bisa mengeklik titik-titik di atas untuk melompat langsung ke slide tertentu. Teks paragraf pada box ini sudah dikunci agar hanya menampilkan empat baris teks dan menambahkan tiga titik elipsis di ujungnya secara otomatis menggunakan CSS native.'
-		},
-		{
-			title: 'KONTEN SLIDE EMPAT',
-			body: 'Meskipun ini adalah slide ke-4, jumlah titik di pojok kiri atas tetap dibatasi maksimal 3 sesuai dengan permintaan desain. Indikator aktif akan kembali menyalakan titik pertama, sehingga secara visual layout tetap konsisten. Teks panjang ini juga terpotong tepat 4 baris.'
-		}
-	];
+	function formatDateRange(start, end) {
+		const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '');
+		if (!start) return '';
+		return end ? `${fmt(start)} - ${fmt(end)}` : `${fmt(start)} - Present`;
+	}
 
-	const otherProjects = Array.from({ length: 3 }, () => ({
-		title: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB',
-		role: 'UI/UX Designer',
-		duration: '2 Weeks',
-		category: 'App'
-	}));
+	function sectionsByType(type) {
+		return (data.project.project_sections ?? [])
+			.filter((s) => s.type === type)
+			.sort((a, b) => a.display_order - b.display_order);
+	}
+
+	let sections = $derived(
+		[...sectionsByType('problem'), ...sectionsByType('solution'), ...sectionsByType('result')].map((s) => ({
+			heading: s.title,
+			body: s.content
+		}))
+	);
+
+	let docSlides = $derived(sectionsByType('documentation').map((s) => ({ title: s.title, body: s.content })));
+
+	let otherProjects = $derived(
+		data.otherProjects.map((p) => ({
+			slug: p.slug,
+			title: p.title,
+			role: p.role,
+			duration: p.duration,
+			category: p.category,
+			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
+		}))
+	);
 
 	// --- Documentation carousel (ported from projects/detail/script.js) ---
 	let currentSlide = $state(0);
@@ -61,6 +61,7 @@
 	}
 
 	function startAutoPlay() {
+		if (!docSlides.length) return;
 		autoPlayInterval = setInterval(() => {
 			currentSlide = (currentSlide + 1) % docSlides.length;
 		}, 5000);
@@ -126,8 +127,9 @@
 		</div>
 	</header>
 
-	<!-- svelte-ignore a11y_invalid_attribute -- live project URL not modeled yet (Phase B) -->
-	<a href="#" class="cta-button">SEE LIVE PROJECT &rarr;</a>
+	{#if project.liveUrl}
+		<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">SEE LIVE PROJECT &rarr;</a>
+	{/if}
 
 	<section class="cards-grid">
 		{#each sections as section}
@@ -184,11 +186,11 @@
 			{#each otherProjects as card}
 				<div class="card-wrapper">
 					<div class="card-header">
-						<a href="/projects" class="card-arrow-btn" aria-label="Lihat Project" data-sveltekit-reload>
+						<a href="/projects/{card.slug}" class="card-arrow-btn" aria-label="Lihat Project" data-sveltekit-reload>
 							<img src="/assets/arrow_button.png" alt="Arrow" class="arrow-icon" />
 						</a>
 						<div class="thumbnail-wrapper">
-							<img src="/assets/card_header_bg.png" alt="Project Preview" class="card-thumbnail" />
+							<img src={card.thumbnail} alt="{card.title} Preview" class="card-thumbnail" />
 						</div>
 					</div>
 					<article class="project-card">

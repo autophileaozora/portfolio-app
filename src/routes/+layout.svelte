@@ -5,7 +5,7 @@
 	import Navbar from '$lib/components/Navbar.svelte';
 	import ContactFooter from '$lib/components/ContactFooter.svelte';
 
-	let { children } = $props();
+	let { data, children } = $props();
 </script>
 
 <svelte:head>
@@ -16,4 +16,6 @@
 
 {@render children()}
 
-<div id="contact-footer-root"><ContactFooter /></div>
+<div id="contact-footer-root">
+	<ContactFooter profile={data.profile} testimonials={data.testimonials} />
+</div>

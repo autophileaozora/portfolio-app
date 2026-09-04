@@ -2,19 +2,20 @@
 	import { onMount } from 'svelte';
 	import '$lib/styles/projects.css';
 
-	// --- Dummy content for Phase B — the original site literally shows the
-	// same placeholder project 3 times here; real distinct data comes from
-	// Supabase in a later phase. ---
-	const DUMMY_SLUG = 'website-smk-kristen-5-klaten';
-	const cards = Array.from({ length: 3 }, () => ({
-		title: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB',
-		role: 'UI/UX Designer',
-		duration: '2 Weeks',
-		category: 'App'
-	}));
+	let { data } = $props();
+	let cards = $derived(
+		data.projects.map((p) => ({
+			slug: p.slug,
+			title: p.title,
+			role: p.role,
+			duration: p.duration,
+			category: p.category,
+			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
+		}))
+	);
 
 	const pages = [1, 2, 3];
-	let activePage = 1;
+	let activePage = $state(1);
 
 	// --- Floating filter bar (ported from projects/main.js initFloatFilterBar) ---
 	let floatBarEl;
@@ -121,11 +122,11 @@
 		{#each cards as card}
 			<div class="card-wrapper">
 				<div class="card-header">
-					<a href="/projects/{DUMMY_SLUG}" class="card-arrow-btn" aria-label="Lihat Project" data-sveltekit-reload>
+					<a href="/projects/{card.slug}" class="card-arrow-btn" aria-label="Lihat Project" data-sveltekit-reload>
 						<img src="/assets/arrow_button.png" alt="Arrow" class="arrow-icon" />
 					</a>
 					<div class="thumbnail-wrapper">
-						<img src="/assets/card_header_bg.png" alt="Website SMK Kristen 5 Klaten Preview" class="card-thumbnail" />
+						<img src={card.thumbnail} alt="{card.title} Preview" class="card-thumbnail" />
 					</div>
 				</div>
 

@@ -2,55 +2,43 @@
 	import { onMount, onDestroy } from 'svelte';
 
 	/**
-	 * Ported 1:1 from the static site's components/contact-footer.js.
-	 * The "Leave a Message" form is still client-side only for now (Phase B) —
-	 * it becomes a real Supabase-backed form action in a later phase.
+	 * profile/testimonials come from Supabase now (loaded once in the root
+	 * +layout.server.ts, since this component renders on every page). The
+	 * "Leave a Message" form is still client-side only for now — it becomes
+	 * a real Supabase-backed form action in a later phase.
 	 */
-	const TESTIMONIALS = [
-		{ quote: '"KEMARIN NGERJAIN PROYEK BARENG, SERU SIH, EL NYA BAIK RESPONNYA"', author: 'Abraham', role: 'Public User' },
-		{
-			quote: '"Instalasi jaringan lab komputer dan konfigurasi MikroTik cepat dan sangat terstruktur. Recommended IT Support!"',
-			author: 'Budi Santoso',
-			role: 'Lab Admin - UKSW'
-		},
-		{
-			quote: '"Pengelolaan live streaming multi-camera sangat lancar tanpa kendala teknis. Terima kasih mas El!"',
-			author: 'Jessica Natalia',
-			role: 'Event Director'
-		},
-		{
-			quote: '"Troubleshooting hardware & server cepat tanggap. Memiliki kemampuan komunikasi teknis yang luarbiasa."',
-			author: 'Rian Prasetyo',
-			role: 'Manager PT Selaras Citra Terabit'
-		},
-		{
-			quote: '"KERJASAMA DENGAN MAS EL TERASA LANCAR, KOMUNIKASINYA JELAS, DAN HASILNYA BISA LANGSUNG DIPAKAI."',
-			author: 'Dewi Anggraini',
-			role: 'School Operations Lead'
-		},
-		{
-			quote: '"SOLUSI IT YANG DIBERIKAN DETAIL, CEPAT, DAN MUDAH DIMENGERTI. SANGAT REKOMENDASI UNTUK TIM TEKNIS."',
-			author: 'Fadli Rahman',
-			role: 'Technical Coordinator'
-		}
+	let { profile = null, testimonials = [] } = $props();
+
+	const FALLBACK_TESTIMONIALS = [
+		{ quote: 'KEMARIN NGERJAIN PROYEK BARENG, SERU SIH, EL NYA BAIK RESPONNYA', author_name: 'Abraham', author_role: 'Public User' }
 	];
-	const TOTAL_COUNT = 20;
+
+	let visibleTestimonials = $derived(testimonials.length ? testimonials : FALLBACK_TESTIMONIALS);
 	const VISIBLE_DOTS = 3;
 
 	let currentIndex = $state(0);
 	let isFading = $state(false);
-	let quote = $state(TESTIMONIALS[0].quote);
-	let author = $state(TESTIMONIALS[0].author);
-	let role = $state(TESTIMONIALS[0].role);
+	let quote = $state('');
+	let author = $state('');
+	let role = $state('');
+
+	$effect(() => {
+		const t = visibleTestimonials[0];
+		if (t) {
+			quote = t.quote;
+			author = t.author_name;
+			role = t.author_role;
+		}
+	});
 
 	function goToSlide(index) {
 		currentIndex = index;
 		isFading = true;
 		setTimeout(() => {
-			const t = TESTIMONIALS[currentIndex];
+			const t = visibleTestimonials[currentIndex];
 			quote = t.quote;
-			author = t.author;
-			role = t.role;
+			author = t.author_name;
+			role = t.author_role;
 			isFading = false;
 		}, 200);
 	}
@@ -58,7 +46,7 @@
 	let sliderInterval;
 	onMount(() => {
 		sliderInterval = setInterval(() => {
-			goToSlide((currentIndex + 1) % TESTIMONIALS.length);
+			goToSlide((currentIndex + 1) % visibleTestimonials.length);
 		}, 4000);
 	});
 	onDestroy(() => clearInterval(sliderInterval));
@@ -75,14 +63,14 @@
 		toastTimer = setTimeout(() => (toastVisible = false), 3200);
 	}
 
-	const EMAIL = 'helloimanuel@yahoo.com';
+	let email = $derived(profile?.email || 'helloimanuel@yahoo.com');
 
 	async function copyEmail() {
 		try {
-			await navigator.clipboard.writeText(EMAIL);
-			showToast('Email copied to clipboard: ' + EMAIL);
+			await navigator.clipboard.writeText(email);
+			showToast('Email copied to clipboard: ' + email);
 		} catch {
-			showToast('Email: ' + EMAIL);
+			showToast('Email: ' + email);
 		}
 	}
 
@@ -135,7 +123,7 @@
 		<div class="testimonial-card">
 			<div class="testimonial-header">
 				<span class="section-label testimonial-label">TESTIMONIAL</span>
-				<span class="testimonial-counter">{currentIndex + 1}/{TOTAL_COUNT}</span>
+				<span class="testimonial-counter">{currentIndex + 1}/{visibleTestimonials.length}</span>
 			</div>
 			<blockquote class="quote-text" class:is-fading={isFading}>
 				{quote}
@@ -149,7 +137,7 @@
 			</div>
 			<div class="slider-controls">
 				<div class="slider-dots">
-					{#each TESTIMONIALS.slice(0, VISIBLE_DOTS) as _, idx}
+					{#each visibleTestimonials.slice(0, VISIBLE_DOTS) as _, idx}
 						<div class="dot" class:active={idx === currentIndex} onclick={() => goToSlide(idx)}></div>
 					{/each}
 				</div>
@@ -175,16 +163,16 @@
 		<div class="footer-col">
 			<span class="footer-label">Available for work &amp; Discussions</span>
 			<div class="email-copy-wrapper">
-				<a href={`mailto:${EMAIL}`} class="email-link">{EMAIL}</a>
+				<a href={`mailto:${email}`} class="email-link">{email}</a>
 				<button class="copy-btn" onclick={copyEmail}>COPY</button>
 			</div>
 		</div>
 		<div class="footer-col align-right">
 			<span class="footer-label">Let's Connected</span>
 			<div class="social-links-inline">
-				<a href="https://linkedin.com" target="_blank" rel="noreferrer" class="footer-social-link">LinkedIn</a>
-				<a href="https://instagram.com" target="_blank" rel="noreferrer" class="footer-social-link">Instagram</a>
-				<a href="https://whatsapp.com" target="_blank" rel="noreferrer" class="footer-social-link">Whatsapp</a>
+				<a href={profile?.social_linkedin || 'https://linkedin.com'} target="_blank" rel="noreferrer" class="footer-social-link">LinkedIn</a>
+				<a href={profile?.social_instagram || 'https://instagram.com'} target="_blank" rel="noreferrer" class="footer-social-link">Instagram</a>
+				<a href={profile?.social_whatsapp || 'https://whatsapp.com'} target="_blank" rel="noreferrer" class="footer-social-link">Whatsapp</a>
 			</div>
 		</div>
 	</div>

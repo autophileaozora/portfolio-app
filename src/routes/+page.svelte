@@ -2,46 +2,70 @@
 	import { onMount } from 'svelte';
 	import '$lib/styles/home.css';
 
-	// --- Dummy content for Phase B (visual/behavioral parity, no backend yet) ---
-	const heroCards = [
-		{ class: 'card-marble', tags: ['#tag1', '#tag1', '#tag1'], headline: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB', inner: 'marble' },
-		{ class: 'card-mesh-1', tags: ['#tag1', '#tag1', '#tag1'], headline: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB', inner: 'mesh' },
-		{ class: 'card-project-dark', tags: ['#tag1', '#tag1', '#tag1'], headline: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB', inner: null },
-		{ class: 'card-mesh-2', tags: ['#MikroTik', '#Network', '#UKSW'], headline: 'SIAMIK LABORATORY NETWORK INFRASTRUCTURE SETUP AND SYSTEM ADMINISTRATION', inner: 'mesh' },
-		{ class: 'card-project-dark-2', tags: ['#AVSystem', '#LiveStream'], headline: 'MULTICAM AV LIVE STREAMING & HARDWARE CONTROL CENTER FOR EVENTS', inner: null },
-		{ class: 'card-mesh-3', tags: ['#tag1', '#tag1', '#tag1'], headline: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB', inner: 'mesh' }
-	];
+	let { data } = $props();
 
-	const summaryCards = [
-		{ role: 'as An IT Support', date: 'Jan 2020 - Mar 2020', alt: 'IT Support Snapshot', hue: '' },
-		{ role: 'as Network Infrastructure Specialist', date: 'Apr 2020 - Aug 2020', alt: 'Network Snapshot', hue: 'style-hue-1' },
-		{ role: 'as System Administrator', date: 'Sep 2020 - Dec 2020', alt: 'Sys Admin Snapshot', hue: 'style-hue-2' },
-		{ role: 'as AV Live Stream Specialist', date: 'Jan 2021 - Present', alt: 'AV Tech Snapshot', hue: 'style-hue-3' }
+	// Purely decorative CSS variants for the hero carousel — cycled by index
+	// since they're a visual treatment, not real project data.
+	const HERO_STYLES = [
+		{ class: 'card-marble', inner: 'marble' },
+		{ class: 'card-mesh-1', inner: 'mesh' },
+		{ class: 'card-project-dark', inner: null },
+		{ class: 'card-mesh-2', inner: 'mesh' },
+		{ class: 'card-project-dark-2', inner: null },
+		{ class: 'card-mesh-3', inner: 'mesh' }
 	];
+	const HUE_STYLES = ['', 'style-hue-1', 'style-hue-2', 'style-hue-3'];
 
-	const stats = [
-		{ target: 3, label: 'Years in IT Fields' },
-		{ target: 12, label: 'Impactful Projects' },
-		{ target: 10, label: 'People Has Collaborate' },
-		{ target: 24, label: 'Technologies' }
-	];
+	function projectTags(project) {
+		return (project.project_tags ?? []).map((pt) => pt.tags?.label).filter(Boolean);
+	}
 
-	const experience = [
-		{ side: 'exp-above', role: 'IT Support', type: '(Intern)', company: 'at PT Selaras Citra Terabit', date: 'Jan 2020 - Mar 2020' },
-		{ side: 'exp-below', role: 'IT Support', type: '(Freelance)', company: 'at Boemisora', date: 'Jan 2020 - Mar 2020' },
-		{ side: 'exp-above', role: 'IT Support', type: '(Part Timer)', company: 'at Faculty Information Technology of UKSW', date: 'Jan 2020 - Mar 2020' },
-		{ side: 'exp-below', role: 'AV Technician', type: '(Project Based)', company: 'at Boemisora Productions', date: 'Apr 2021 - Present' }
-	];
+	function formatDateRange(start, end) {
+		const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '');
+		if (!start) return '';
+		return end ? `${fmt(start)} - ${fmt(end)}` : `${fmt(start)} - Present`;
+	}
 
-	const skills = ['#IT Support', '#Python', '#JavaScript', '#TypeScript', '#Java', '#CSharp', '#Ruby', '#GoLang', '#Swift', '#Kotlin', '#Rust', '#PHP'];
+	let heroCards = $derived(
+		data.featuredProjects.map((p, i) => ({
+			...HERO_STYLES[i % HERO_STYLES.length],
+			tags: projectTags(p),
+			headline: p.title
+		}))
+	);
 
-	const projects = [
-		{ img: '/assets/project_mesh.jpg', hue: '', alt: 'Website SMK Kristen 5 Klaten', tags: ['#ReactJS', '#MongoDB', '#NodeJS'], title: 'WEBSITE SMK KRISTEN 5 KLATEN USING REACT JS AND MONGODB' },
-		{ img: '/assets/project_mesh.jpg', hue: 'style-hue-1', alt: 'Network Infrastructure SIAMIK', tags: ['#MikroTik', '#Network', '#UKSW'], title: 'SIAMIK LABORATORY NETWORK INFRASTRUCTURE SETUP AND SYSTEM ADMINISTRATION' },
-		{ img: '/assets/project_mesh.jpg', hue: 'style-hue-2', alt: 'AV Live Streaming', tags: ['#AVSystem', '#LiveStream'], title: 'MULTICAM AV LIVE STREAMING & HARDWARE CONTROL CENTER FOR EVENTS' },
-		{ img: '/assets/project_mesh.jpg', hue: 'style-hue-3', alt: 'IT Support Dashboard', tags: ['#ITSupport', '#Python'], title: 'IT SUPPORT TICKETING & ASSET MANAGEMENT SYSTEM FOR PT SELARAS CITRA TERABIT' },
-		{ img: '/assets/project_mesh.jpg', hue: '', alt: 'School Admin Portal', tags: ['#Laravel', '#MySQL', '#PHP'], title: 'SCHOOL ADMINISTRATION PORTAL WITH ATTENDANCE & GRADE MANAGEMENT' }
-	];
+	let summaryCards = $derived(
+		data.experience.map((e, i) => ({
+			role: `as ${e.role_title}`,
+			date: formatDateRange(e.date_start, e.date_end),
+			alt: e.role_title,
+			hue: HUE_STYLES[i % HUE_STYLES.length]
+		}))
+	);
+
+	let stats = $derived(data.stats.map((s) => ({ target: s.value, label: s.label })));
+
+	let experience = $derived(
+		data.experience.map((e, i) => ({
+			side: i % 2 === 0 ? 'exp-above' : 'exp-below',
+			role: e.role_title,
+			type: e.role_type,
+			company: e.company_name,
+			date: formatDateRange(e.date_start, e.date_end)
+		}))
+	);
+
+	let skills = $derived(data.skills.map((s) => s.name));
+
+	let projects = $derived(
+		data.featuredProjects.map((p, i) => ({
+			img: p.thumbnail_url || '/assets/project_mesh.jpg',
+			hue: HUE_STYLES[i % HUE_STYLES.length],
+			alt: p.title,
+			tags: projectTags(p),
+			title: p.title
+		}))
+	);
 
 	// --- element refs ---
 	let heroTrackEl;
@@ -53,8 +77,8 @@
 	let expLineFillEl;
 	let expDotEls = [];
 
-	let summaryActiveRole = $state(summaryCards[0].role);
-	let summaryActiveDate = $state(summaryCards[0].date);
+	let summaryActiveRole = $state(summaryCards[0]?.role ?? '');
+	let summaryActiveDate = $state(summaryCards[0]?.date ?? '');
 	let statValues = $state(stats.map(() => 0));
 
 	// 1. Hero carousel: scroll-driven horizontal parallax
