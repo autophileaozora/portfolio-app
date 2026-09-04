@@ -1,7 +1,12 @@
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders }) => {
-	const [{ data: featuredProjects }, { data: experience }, { data: skills }, { data: stats }] = await Promise.all([
+	const [
+		{ data: featuredProjects, error: projectsError },
+		{ data: experience, error: experienceError },
+		{ data: skills, error: skillsError },
+		{ data: stats, error: statsError }
+	] = await Promise.all([
 		supabase
 			.from('projects')
 			.select('*, project_tags(tags(label))')
@@ -12,6 +17,11 @@ export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders })
 		supabase.from('skills').select('*').order('display_order'),
 		supabase.from('stats').select('*').order('display_order')
 	]);
+
+	if (projectsError) console.error('[+page.server.ts /] projects query failed:', projectsError.message);
+	if (experienceError) console.error('[+page.server.ts /] experience query failed:', experienceError.message);
+	if (skillsError) console.error('[+page.server.ts /] skills query failed:', skillsError.message);
+	if (statsError) console.error('[+page.server.ts /] stats query failed:', statsError.message);
 
 	setHeaders({ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' });
 

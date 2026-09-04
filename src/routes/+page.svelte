@@ -326,27 +326,29 @@
 			<div class="profile-row">
 				<div class="profile-left">
 					<div class="avatar-container">
-						<img src="/assets/avatar.jpg" alt="Andrian Imanuel Sinaga" class="avatar-img" />
+						<img src={data.profile?.avatar_url || '/assets/avatar.jpg'} alt={data.profile?.full_name ?? ''} class="avatar-img" />
 					</div>
 					<div class="profile-text-details">
-						<h1 class="profile-name">ANDRIAN IMANUEL SINAGA</h1>
-						<p class="profile-title">Tech Enthusiast</p>
-						<p class="profile-location"><i class="fa-solid fa-location-dot"></i> Tangerang, Indonesia</p>
+						<h1 class="profile-name">{(data.profile?.full_name ?? 'Andrian Imanuel Sinaga').toUpperCase()}</h1>
+						<p class="profile-title">{data.profile?.title ?? 'Tech Enthusiast'}</p>
+						<p class="profile-location">
+							<i class="fa-solid fa-location-dot"></i> {data.profile?.location ?? 'Tangerang, Indonesia'}
+						</p>
 					</div>
 				</div>
 
 				<div class="profile-right">
 					<div class="social-icons-row">
-						<a href="https://linkedin.com" target="_blank" rel="noreferrer" aria-label="LinkedIn" class="github-circle-btn"
+						<a href={data.profile?.social_linkedin || 'https://linkedin.com'} target="_blank" rel="noreferrer" aria-label="LinkedIn" class="github-circle-btn"
 							><i class="fa-brands fa-linkedin-in"></i></a
 						>
-						<a href="mailto:helloimanuel@yahoo.com" aria-label="Email" class="github-circle-btn"
+						<a href={`mailto:${data.profile?.email || 'helloimanuel@yahoo.com'}`} aria-label="Email" class="github-circle-btn"
 							><i class="fa-solid fa-envelope"></i></a
 						>
-						<a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub" class="github-circle-btn"
+						<a href={data.profile?.social_github || 'https://github.com'} target="_blank" rel="noreferrer" aria-label="GitHub" class="github-circle-btn"
 							><i class="fa-brands fa-github"></i></a
 						>
-						<a href="https://instagram.com" target="_blank" rel="noreferrer" aria-label="Instagram" class="github-circle-btn"
+						<a href={data.profile?.social_instagram || 'https://instagram.com'} target="_blank" rel="noreferrer" aria-label="Instagram" class="github-circle-btn"
 							><i class="fa-brands fa-instagram"></i></a
 						>
 					</div>

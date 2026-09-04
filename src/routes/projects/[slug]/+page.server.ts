@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase }, setHeaders }) => {
-	const { data: project } = await supabase
+	const { data: project, error: projectError } = await supabase
 		.from('projects')
 		.select('*, project_tags(tags(label)), project_sections(*)')
 		.eq('slug', params.slug)
@@ -10,6 +10,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase }, setHe
 		.single();
 
 	if (!project) {
+		if (projectError) console.error(`[+page.server.ts /projects/${params.slug}] query failed:`, projectError.message);
 		error(404, 'Project not found');
 	}
 
