@@ -1,5 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
 	import ConfirmDeleteButton from './ConfirmDeleteButton.svelte';
 
 	/**
@@ -9,6 +10,10 @@
 	 */
 	let { columns, rows, basePath } = $props();
 </script>
+
+{#if $page.form?.error}
+	<p class="form-error-banner">{$page.form.error}</p>
+{/if}
 
 <div class="admin-table-wrap">
 	<table class="admin-table">

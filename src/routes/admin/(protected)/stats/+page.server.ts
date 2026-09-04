@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { friendlyDbError } from '$lib/server/adminErrors';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
@@ -31,7 +32,7 @@ export const actions: Actions = {
 		if (!id || Number.isNaN(displayOrder)) return fail(400, { error: 'Data tidak valid.' });
 
 		const { error } = await supabase.from('stats').update({ display_order: displayOrder }).eq('id', id);
-		if (error) return fail(400, { error: error.message });
+		if (error) return fail(400, { error: friendlyDbError(error) });
 
 		return { success: true };
 	}

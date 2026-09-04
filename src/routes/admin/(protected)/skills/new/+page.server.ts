@@ -1,5 +1,6 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { skillSchema } from '$lib/validation/schemas';
+import { friendlyDbError } from '$lib/server/adminErrors';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
@@ -20,7 +21,7 @@ export const actions: Actions = {
 		}
 
 		const { error } = await supabase.from('skills').insert(parsed.data);
-		if (error) return fail(400, { error: error.message, values: raw });
+		if (error) return fail(400, { error: friendlyDbError(error), values: raw });
 
 		redirect(303, '/admin/skills');
 	}

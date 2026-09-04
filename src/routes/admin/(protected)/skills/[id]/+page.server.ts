@@ -1,5 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { skillSchema } from '$lib/validation/schemas';
+import { friendlyDbError } from '$lib/server/adminErrors';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
@@ -35,7 +36,7 @@ export const actions: Actions = {
 		}
 
 		const { error: updateError } = await supabase.from('skills').update(parsed.data).eq('id', params.id);
-		if (updateError) return fail(400, { error: updateError.message, values: raw });
+		if (updateError) return fail(400, { error: friendlyDbError(updateError), values: raw });
 
 		redirect(303, '/admin/skills');
 	}
