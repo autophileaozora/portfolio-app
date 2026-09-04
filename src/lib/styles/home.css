@@ -1,0 +1,891 @@
+/* CSS Reset & Root Variables */
+:root {
+    --bg-dark: #192128;
+    --bg-card: #202A34;
+    --border-card: rgba(255, 255, 255, 0.08);
+    --border-gold: rgba(212, 175, 55, 0.4);
+    
+    --accent-gold: #E5C158;
+    --accent-gold-text: #F3E5AB;
+    --accent-cyan: #06B6D4;
+    
+    --text-primary: #FFFFFF;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
+    
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-full: 9999px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+/* App Container Layout */
+.app-container {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 100px 32px 60px;
+    position: relative;
+}
+
+/* Flat Clean Card Styling */
+.flat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.flat-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+}
+
+/* Section Shared */
+.section {
+    margin-bottom: 70px;
+}
+
+/* Shared Contact + Footer Component already sets its own vertical rhythm */
+.section.engagement-section {
+    margin-bottom: 0;
+}
+
+.section-title, .section-hashtag {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+}
+
+/* Hero & Profile Section */
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.profile-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 100px;
+    
+}
+
+.profile-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.avatar-container {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-text-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-name {
+    font-family: var(--font-heading);
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--text-primary);
+}
+
+.profile-title {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.profile-location {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.profile-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+}
+
+.social-icons-row {
+    display: flex;
+    gap: 12px;
+}
+
+.github-circle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    color: #0D1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    text-decoration: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.github-circle-btn:hover {
+    transform: translateY(-4px) scale(1.08);
+    box-shadow: 0 10px 25px rgba(255, 255, 255, 0.3);
+}
+
+.document-links-row {
+    display: flex;
+    gap: 20px;
+}
+
+.doc-link {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--accent-gold-text);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.3s ease;
+}
+
+.doc-link:hover {
+    color: var(--text-primary);
+}
+
+/* Hero Carousel Scroll-Driven Track */
+.hero-carousel-wrapper {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    overflow: hidden;
+    padding: 10px 0 30px;
+}
+
+.hero-carousel-track {
+    display: flex;
+    gap: 24px;
+    padding-left: calc((100vw - 1240px) / 2 + 32px);
+    will-change: transform;
+    transition: transform 0.1s cubic-bezier(0.1, 1, 0.1, 1);
+}
+
+@media (max-width: 1280px) {
+    .hero-carousel-track {
+        padding-left: 32px;
+    }
+}
+
+/* Hero Card Base */
+.hero-card {
+    min-width: 380px;
+    width: 380px;
+    height: 230px;
+    border-radius: 28px;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.hero-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(250, 204, 21, 0.8);
+    box-shadow: 0 0 30px rgba(250, 204, 21, 0.3), 0 15px 35px rgba(0, 0, 0, 0.6);
+}
+
+/* Card 1: Marble Fluid Simulation */
+.card-marble {
+    background: radial-gradient(circle at 30% 30%, #2A3644 0%, #0F151B 100%);
+}
+
+.marble-canvas-sim {
+    position: absolute;
+    inset: 0;
+    background: 
+        radial-gradient(ellipse at 20% 50%, rgba(212, 175, 55, 0.35), transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.4), transparent 60%),
+        radial-gradient(ellipse at 60% 80%, rgba(139, 92, 246, 0.4), transparent 50%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 10px);
+    filter: contrast(140%) brightness(110%);
+}
+
+/* Liquid Mesh Cards */
+.card-mesh-1, .card-mesh-2, .card-mesh-3 {
+    background: linear-gradient(135deg, #EC4899, #8B5CF6, #3B82F6, #06B6D4, #F59E0B);
+    background-size: 300% 300%;
+    animation: gradientShift 10s ease infinite alternate;
+}
+
+.card-mesh-2 {
+    background: linear-gradient(135deg, #8B5CF6, #06B6D4, #EC4899);
+    animation-delay: -3s;
+}
+
+.card-mesh-3 {
+    background: linear-gradient(135deg, #3B82F6, #EC4899, #F59E0B);
+    animation-delay: -6s;
+}
+
+.card-project-dark, .card-project-dark-2 {
+    background: linear-gradient(160deg, #1C2735 0%, #151D27 100%);
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* Hover Overlay */
+.card-hover-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 21, 28, 0.95) 0%, rgba(15, 21, 28, 0.45) 60%, transparent 100%);
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    border-radius: 28px;
+}
+
+.hero-card:hover .card-hover-overlay {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.project-tags {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.tag-pill {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(8px);
+    color: #FFFFFF;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 6px;
+}
+
+.project-headline {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #FACC15;
+    line-height: 1.35;
+    text-transform: uppercase;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 2.7em;
+}
+
+/* ==========================================================================
+   SECTION 2: SUMMARY 50:50 GRID RATIO & INFINITE CONTINUOUS CAROUSEL
+   ========================================================================== */
+.summary-50-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: flex-start;
+    margin-bottom: 50px;
+    padding-left: 100px;
+}
+
+.summary-left-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.summary-title {
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.summary-paragraph {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+}
+
+.summary-right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.summary-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 52px;
+}
+
+.summary-role-text {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    transition: opacity 0.25s ease;
+}
+
+.summary-date-text {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    transition: opacity 0.25s ease;
+}
+
+.summary-carousel-viewport {
+    width: 100%;
+    overflow: hidden;
+    padding: 6px 0;
+}
+
+.summary-carousel-track {
+    display: flex;
+    gap: 20px;
+    will-change: transform;
+}
+
+/* Card 1.5x Larger (230px x 230px) */
+.summary-card-item {
+    width: 230px;
+    height: 230px;
+    border-radius: 20px;
+    flex-shrink: 0;
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    transition: transform 0.3s ease;
+}
+
+.summary-card-item:hover {
+    transform: scale(1.03);
+}
+
+.summary-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Image filter variations */
+.style-hue-1 { 
+    filter: hue-rotate(60deg) saturate(1.2);
+}
+
+.style-hue-2 { 
+    filter: hue-rotate(140deg) saturate(1.3);
+}
+
+.style-hue-3 { 
+    filter: hue-rotate(220deg) saturate(1.4);
+}
+
+/* Stats Counter Row */
+.stats-grid { 
+    display: grid; 
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 24px; 
+    padding-right: 100px;
+}
+
+.stat-card { 
+    padding: 20px 24px; 
+    text-align: center; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 12px;
+}
+
+.stat-number { 
+    font-family: var(--font-heading); 
+    font-size: 6rem; 
+    font-weight: 200; 
+    line-height: 1; 
+    color: var(--text-primary);
+}
+
+.stat-label { 
+    font-size: 0.95rem; 
+    color: var(--text-secondary);
+}
+
+/* ============================================================
+   HORIZONTAL ALTERNATING TIMELINE — WORK EXPERIENCE
+   ============================================================ */
+
+/* Section wrapper — no overflow clipping needed (scroll outer handles it) */
+.experience-section-wrap {
+    padding: 80px 0 60px;
+    position: relative;
+}
+
+/* Inner padded content areas (title + skills) */
+.exp-inner-content {
+    padding: 0 100px;
+    margin-bottom: 28px;
+}
+
+/* Scrollable outer wrapper */
+.exp-scroll-outer {
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(212, 175, 55, 0.3) transparent;
+}
+
+.exp-scroll-outer::-webkit-scrollbar { 
+    height: 4px;
+}
+
+.exp-scroll-outer::-webkit-scrollbar-track { 
+    background: transparent;
+}
+
+.exp-scroll-outer::-webkit-scrollbar-thumb { 
+    background: rgba(212, 175, 55, 0.35);
+    border-radius: 4px;
+}
+
+/* Inner: must be block with explicit height so the line's top:50% is reliable */
+.exp-scroll-inner {
+    position: relative;
+    min-width: 100%;
+    height: 300px; /* Fixed height — line will be at exactly 150px */
+}
+
+/* Horizontal center line — full width, exactly at vertical center */
+.exp-h-line {
+    position: absolute;
+    top: 50%; /* = 150px */
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%);
+    z-index: 0;
+}
+
+/* Scroll-reveal fill (only animated on the mobile vertical timeline) */
+.exp-h-line-fill {
+    display: none;
+}
+
+/* Row of timeline item columns, padded 100px each side */
+.exp-items-track {
+    display: flex;
+    flex-direction: row;
+    height: 300px;
+    padding: 0 100px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Each item column: 260px wide, 300px tall, position:relative for absolute children */
+.exp-item {
+    flex: 0 0 260px;
+    height: 300px;
+    position: relative;
+}
+
+/*
+ * Dot: absolutely pinned to top:50% left:0 with translateY(-50%)
+ * This GUARANTEES every single dot is at the exact same Y as the center line.
+ */
+.exp-dot {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent-gold);
+    border: 3px solid var(--bg-dark);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.6);
+    z-index: 2;
+}
+
+/* Text block: absolutely positioned in the appropriate half */
+.exp-text-block {
+    position: absolute;
+    left: 0;
+    right: 0;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ABOVE: text occupies top half, sticks to bottom of that half */
+.exp-item.exp-above .exp-text-block {
+    top: 0;
+    bottom: 50%;
+    justify-content: flex-end;
+    padding-bottom: 14px;
+}
+
+/* BELOW: text occupies bottom half, sticks to top of that half */
+.exp-item.exp-below .exp-text-block {
+    top: 50%;
+    bottom: 0;
+    justify-content: flex-start;
+    padding-top: 14px;
+}
+
+/* Text content styles */
+.role-title { 
+    font-family: var(--font-heading); 
+    font-size: 1.05rem; 
+    font-weight: 700; 
+    margin-bottom: 4px;
+}
+
+.role-type { 
+    font-size: 0.85rem; 
+    font-weight: 400; 
+    color: var(--text-muted); 
+    margin-left: 4px;
+}
+
+.company-name { 
+    font-size: 0.9rem; 
+    color: var(--accent-gold); 
+    font-weight: 500; 
+    margin-bottom: 4px;
+}
+
+.timeline-date { 
+    font-size: 0.82rem; 
+    color: var(--text-muted);
+}
+
+/* Skills Cloud */
+.skills-cloud { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 12px;
+}
+
+.skill-chip { 
+    padding: 10px 20px; 
+    border-radius: var(--radius-md); 
+    background: rgba(255, 255, 255, 0.05); 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    color: var(--text-primary); 
+    font-family: var(--font-heading); 
+    font-size: 0.9rem; 
+    font-weight: 600; 
+    transition: all 0.25s ease;
+}
+
+.skill-chip:hover { 
+    background: rgba(255, 255, 255, 0.12); 
+    border-color: var(--accent-cyan); 
+    color: var(--accent-cyan); 
+    transform: translateY(-3px);
+}
+
+/* Projects Carousel Section */
+.projects-carousel-section {
+    padding: 80px 0 60px;
+}
+
+.projects-carousel-header {
+    padding: 0 100px;
+    margin-bottom: 36px;
+}
+
+/* Viewport: clips overflow so cards slide in/out cleanly */
+.projects-carousel-viewport {
+    overflow: hidden;
+    width: calc(100% - 100px);
+    margin-left: 100px; /* Start cards with same margin as header */
+}
+
+/* "See More Project" CTA below the carousel */
+.projects-carousel-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+    padding: 0 100px;
+}
+
+/* Track: flex row of cards, no-wrap */
+.projects-carousel-track {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    will-change: transform;
+}
+
+/* Individual project card */
+.proj-card {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    cursor: pointer;
+}
+
+.proj-card:hover .proj-img {
+    transform: scale(1.04);
+}
+
+/* Image wrapper with rounded corners */
+.proj-img-wrapper {
+    width: 300px;
+    height: 200px;
+    border-radius: 18px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.proj-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block;
+}
+
+/* Info block below image */
+.proj-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 2px;
+}
+
+/* Tag pills */
+.proj-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.proj-tag {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-secondary);
+}
+
+/* Project title */
+.proj-title {
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-pill-accent {
+    background: #18222E;
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px 22px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    text-decoration: none;
+    font-family: var(--font-heading);
+    font-weight: 600;
+}
+
+@media (max-width: 1024px) {
+    .summary-50-grid { grid-template-columns: 1fr; }
+    .projects-grid, .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --mobile-title-size: 1.25rem;    /* section-level headings: SUMMMARY, PROJECTS, RELATED SKILLS, #WORK EXPERIENCE */
+        --mobile-subtitle-size: 1rem;    /* sub-headings: role titles, "as ..." labels, tagline */
+        --mobile-body-size: 0.9rem;      /* paragraph / meta text */
+    }
+
+    /* Judul (section titles) */
+    .section-title,
+    .section-hashtag,
+    .summary-title {
+        font-size: var(--mobile-title-size);
+    }
+
+    /* Sub judul */
+    .profile-title,
+    .summary-role-text,
+    .role-title {
+        font-size: var(--mobile-subtitle-size);
+    }
+
+    /* Konten paragraf / meta */
+    .summary-paragraph,
+    .profile-location,
+    .summary-date-text,
+    .company-name,
+    .timeline-date,
+    .stat-label {
+        font-size: var(--mobile-body-size);
+    }
+
+    .app-container { padding: 90px 20px 40px; }
+
+    .profile-row { flex-direction: column; align-items: center; gap: 20px; padding: 0; text-align: center; }
+    .profile-left { flex-direction: column; align-items: center; }
+    .profile-text-details { align-items: center; }
+    .profile-location { justify-content: center; }
+    .profile-right { align-items: center; width: 100%; }
+    .social-icons-row { justify-content: center; }
+    .profile-name { font-size: 1.5rem; }
+
+    .document-links-row { flex-wrap: wrap; justify-content: center; row-gap: 10px; }
+    .doc-link { white-space: nowrap; }
+
+    .summary-50-grid { padding-left: 0; gap: 32px; }
+
+    .projects-grid, .stats-grid { grid-template-columns: 1fr; }
+    .stats-grid { padding-right: 0; gap: 16px; }
+    .stat-number { font-size: 3.5rem; }
+
+    /* Work Experience: vertical timeline instead of horizontal scroll */
+    .exp-inner-content { padding: 0 20px; }
+
+    .exp-scroll-outer { overflow-x: visible; }
+    .exp-scroll-inner { height: auto; min-width: 0; }
+
+    .exp-h-line {
+        top: 0;           /* precise top/height set by JS to span exactly first-dot to last-dot */
+        bottom: auto;
+        left: 29px;       /* items-track padding (20px) + dot center (9px, border-box) */
+        right: auto;
+        width: 1px;
+        height: 0;
+        transform: none;
+        background: rgba(255, 255, 255, 0.15);
+        overflow: hidden;
+    }
+
+    .exp-h-line-fill {
+        display: block;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0%;
+        background: var(--accent-gold);
+        box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+    }
+
+    .exp-items-track { flex-direction: column; height: auto; padding: 0 20px; gap: 36px; }
+    .exp-scroll-outer { margin-bottom: 44px; }
+
+    .exp-item { flex: none; width: 100%; height: auto; padding-left: 32px; }
+    .exp-dot { top: 2px; transform: none; }
+
+    .exp-text-block,
+    .exp-item.exp-above .exp-text-block,
+    .exp-item.exp-below .exp-text-block {
+        position: static;
+        padding: 0;
+        justify-content: flex-start;
+    }
+
+    /* Related Skills */
+    .skill-chip { padding: 8px 16px; font-size: 0.85rem; }
+
+    /* Projects: stacked list instead of sliding carousel, max 4 cards shown */
+    .projects-carousel-header { padding: 0 20px; margin-bottom: 24px; }
+
+    .projects-carousel-viewport {
+        overflow: visible;
+        width: calc(100% - 20px);
+        margin-left: 20px;
+    }
+
+    .projects-carousel-track {
+        flex-direction: column;
+        gap: 28px;
+        transform: none !important; /* auto-scroll is disabled on mobile, see main.js */
+    }
+
+    .proj-card { flex: 1 1 auto; width: 100%; cursor: default; }
+    .proj-img-wrapper { width: 100%; height: 200px; }
+
+    .proj-card:nth-child(n+5) { display: none; }
+
+    .projects-carousel-footer { padding: 0 20px; margin-top: 24px; justify-content: flex-start; }
+}

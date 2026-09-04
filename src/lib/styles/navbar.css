@@ -1,0 +1,349 @@
+/* ===================================================
+   SHARED NAVBAR COMPONENT
+   Source of truth: originally from projects/index.html
+   Transparent at top, solid floating pill on scroll.
+   Used on every page via components/navbar.js
+   =================================================== */
+.navbar {
+    position: fixed;
+    top: 5px;
+    left: 0;
+    right: 0;
+    z-index: 9999 !important;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+
+    background-color: transparent;
+    box-shadow: none;
+    border-bottom: 1px solid transparent;
+    border-radius: 0;
+    width: 100%;
+    margin: 0;
+    transform: translateY(0);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* State SCROLLED: Floating Pill */
+.navbar.scrolled {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 65%;
+    max-width: 1000px;
+    background-color: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-bottom: none;
+    border-radius: 50px;
+    padding: 0 36px;
+    height: 60px;
+}
+
+/* State HIDDEN: Sembunyi ke atas */
+.navbar.hidden {
+    transform: translateY(-120px) !important;
+}
+.navbar.scrolled.hidden {
+    transform: translate(-50%, -120px) !important;
+}
+
+@keyframes navSlideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* Logo */
+.navbar-logo {
+    font-family: 'Pacifico', cursive;
+    font-size: 24px;
+    font-weight: 400;
+    text-decoration: none;
+    background: linear-gradient(90deg, #E176CA 0%, #D9D9D9 50%, #E8F55F 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.2px;
+    flex-shrink: 0;
+    transition: opacity 0.3s;
+    display: inline-block;
+}
+.navbar-logo:hover { opacity: 0.85; }
+
+/* Nav links (Container) */
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.navbar-links a {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-decoration: none;
+    position: relative;
+    padding-bottom: 3px;
+    transition: color 0.2s ease;
+}
+
+.navbar-links a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #1f2937;
+    transition: width 0.25s ease;
+}
+
+.navbar-links a:hover::after { width: 100%; }
+.navbar-links a.active::after { width: 100%; }
+
+/* Warna teks saat transparan (di hero) */
+.navbar:not(.scrolled) .navbar-links a { color: #1f2937; }
+.navbar:not(.scrolled) .navbar-links a:hover { color: #000000; }
+.navbar:not(.scrolled) .navbar-links a.active { color: #000000; font-weight: 700; }
+.navbar:not(.scrolled) .lang-text { color: #ffffff; }
+.navbar:not(.scrolled) .navbar-hamburger span { background: #ffffff; }
+
+/* Varian "on-dark": dipakai di halaman yang area hero-nya gelap polos
+   (tanpa notch putih), supaya nav-links tetap terbaca saat transparan. */
+.navbar--on-dark:not(.scrolled) .navbar-links a { color: #ffffff; }
+.navbar--on-dark:not(.scrolled) .navbar-links a::after { background: #ffffff; }
+.navbar--on-dark:not(.scrolled) .navbar-links a:hover { color: #e2d175; }
+.navbar--on-dark:not(.scrolled) .navbar-links a.active { color: #ffffff; font-weight: 700; }
+
+/* Varian "on-light": dipakai di halaman yang area di belakang navbar-nya
+   putih/terang polos (tanpa foto PCB gelap), supaya hamburger + teks
+   LANGUAGE tetap terbaca saat transparan (bawaan defaultnya putih). */
+.navbar--on-light:not(.scrolled) .lang-text { color: #555e6d; }
+.navbar--on-light:not(.scrolled) .navbar-hamburger span { background: #1f2937; }
+
+/* Warna teks saat scrolled (background putih) */
+.navbar.scrolled .navbar-links a { color: #1f2937; }
+.navbar.scrolled .navbar-links a:hover { color: #000000; }
+.navbar.scrolled .navbar-links a.active { color: #000000; font-weight: 700; }
+.navbar.scrolled .lang-text { color: #555e6d; }
+.navbar.scrolled .navbar-hamburger span { background: #1f2937; }
+
+/* Stagger fade-in */
+.navbar-links li {
+    opacity: 0;
+    animation: linkFadeIn 0.4s ease forwards;
+}
+
+.navbar-links li:nth-child(1) { animation-delay: 0.10s; }
+.navbar-links li:nth-child(2) { animation-delay: 0.15s; }
+.navbar-links li:nth-child(3) { animation-delay: 0.20s; }
+.navbar-links li:nth-child(4) { animation-delay: 0.25s; }
+.navbar-links li:nth-child(5) { animation-delay: 0.30s; }
+
+@keyframes linkFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Right section (language selector) */
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* Language selector duplicated inside the mobile dropdown; hidden on desktop */
+.navbar-language-item {
+    display: none;
+}
+
+.navbar-language {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+}
+.navbar-language:hover { opacity: 0.8; }
+
+.flag-icon {
+    display: block;
+    border-radius: 2px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+.lang-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #555e6d;
+}
+
+/* Hamburger (mobile only) */
+.navbar-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 4px;
+    background: none;
+    border: none;
+}
+.navbar-hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: #1f2937;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+.navbar-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.navbar-hamburger.open span:nth-child(2) { opacity: 0; }
+.navbar-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile dropdown */
+.navbar-links.open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 68px;
+    left: 0;
+    right: 0;
+    transform: none;
+    background: #ffffff;
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f3f5;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    gap: 0;
+    z-index: 999;
+}
+.navbar-links.open a { color: #1f2937; }
+
+.navbar-links.open a:hover { color: #ffffff; }
+.navbar-links.open li {
+    opacity: 1;
+    animation: none;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.navbar-links.open li:last-child { border-bottom: none; }
+.navbar-links.open a {
+    display: block;
+    padding: 12px 0;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .navbar { padding: 0 20px; }
+    .navbar-links { display: none; }
+    .navbar-hamburger { display: flex; }
+
+    /* Floating pill was too narrow/cramped on small screens */
+    .navbar.scrolled { width: calc(100% - 24px); max-width: none; padding: 0 20px; }
+
+    /* Language selector lives inside the dropdown menu instead of the collapsed top bar */
+    .navbar-language-desktop { display: none; }
+    .navbar-language-item {
+        display: block;
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    .navbar-language-item .navbar-language {
+        padding: 4px 0;
+    }
+}
+
+/* "Feature under development" modal — shown for nav items with no page yet */
+.navbar-info-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 14, 20, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.navbar-info-modal.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.navbar-info-modal-card {
+    background: #1C242C;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 20px;
+    padding: 36px 32px;
+    max-width: 340px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    transform: translateY(12px) scale(0.96);
+    transition: transform 0.25s ease;
+}
+
+.navbar-info-modal.show .navbar-info-modal-card {
+    transform: translateY(0) scale(1);
+}
+
+.navbar-info-modal-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.12);
+    color: #E2D175;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.navbar-info-modal-message {
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0 0 24px;
+}
+
+.navbar-info-modal-close {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #1C242C;
+    background: #E2D175;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 28px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.navbar-info-modal-close:hover {
+    background: #f3e5ab;
+}
