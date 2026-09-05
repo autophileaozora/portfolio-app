@@ -28,7 +28,8 @@ export const experienceSchema = z.object({
 	role_type: z.enum(['', ...ROLE_TYPE_OPTIONS]).optional().default(''),
 	company_name: z.string().trim().max(120).optional().default(''),
 	date_start: nullableDate(),
-	date_end: nullableDate()
+	date_end: nullableDate(),
+	image_url: nullableText(500)
 });
 
 export const testimonialSchema = z.object({

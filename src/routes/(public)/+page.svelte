@@ -38,6 +38,7 @@
 		data.experience.map((e, i) => ({
 			role: `as ${e.role_title}`,
 			date: formatDateRange(e.date_start, e.date_end),
+			img: e.image_url || '/assets/project_mesh.jpg',
 			alt: e.role_title,
 			hue: HUE_STYLES[i % HUE_STYLES.length]
 		}))
@@ -405,7 +406,7 @@
 						<div class="summary-carousel-track" bind:this={summaryTrackEl}>
 							{#each summaryCards as card}
 								<div class="summary-card-item" data-role={card.role} data-date={card.date}>
-									<img src="/assets/project_mesh.jpg" alt={card.alt} class="summary-card-img {card.hue}" />
+									<img src={card.img} alt={card.alt} class="summary-card-img {card.hue}" />
 								</div>
 							{/each}
 						</div>

@@ -2,9 +2,8 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { projectSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { parseTagsInput, syncProjectTags } from '$lib/server/tags';
+import { resolveFileField } from '$lib/server/uploads';
 import type { Actions, PageServerLoad } from './$types';
-
-const BUCKET = 'public-assets';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
 	const { data: project, error: projectError } = await supabase
@@ -36,14 +35,17 @@ export const actions: Actions = {
 			.eq('id', params.id)
 			.single();
 
-		let thumbnail_url = current?.thumbnail_url ?? null;
-		const file = formData.get('thumbnail_url');
-		if (file instanceof File && file.size > 0) {
-			const ext = file.name.split('.').pop() || 'bin';
-			const path = `thumbnails/${crypto.randomUUID()}.${ext}`;
-			const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
-			if (uploadError) return fail(400, { error: `Gagal unggah thumbnail: ${uploadError.message}` });
-			thumbnail_url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+		let thumbnail_url: string | null;
+		try {
+			thumbnail_url = await resolveFileField(
+				supabase,
+				formData,
+				'thumbnail_url',
+				current?.thumbnail_url ?? null,
+				'thumbnails'
+			);
+		} catch (e) {
+			return fail(400, { error: e instanceof Error ? e.message : 'Upload gagal.' });
 		}
 
 		const raw = {

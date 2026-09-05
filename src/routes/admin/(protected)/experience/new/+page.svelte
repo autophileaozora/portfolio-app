@@ -9,7 +9,8 @@
 		{ name: 'company_name', label: 'Perusahaan', type: 'text' },
 		{ name: 'role_type', label: 'Tipe', type: 'select', options: ROLE_TYPE_OPTIONS },
 		{ name: 'date_start', label: 'Tanggal mulai', type: 'date' },
-		{ name: 'date_end', label: 'Tanggal selesai', type: 'date' }
+		{ name: 'date_end', label: 'Tanggal selesai', type: 'date' },
+		{ name: 'image_url', label: 'Gambar', type: 'file', accept: 'image/*', isImage: true }
 	];
 
 	let errors = $derived(

@@ -1,34 +1,8 @@
 import { fail } from '@sveltejs/kit';
 import { profileSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
+import { resolveFileField } from '$lib/server/uploads';
 import type { Actions, PageServerLoad } from './$types';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '$lib/supabase/database.types';
-
-const BUCKET = 'public-assets';
-
-/**
- * Uploads a new file if one was chosen; otherwise keeps whatever URL the
- * row already had. <input type="file"> can never be pre-filled by the
- * browser, so "no file chosen" must not be read as "clear this field".
- */
-async function resolveFileField(
-	supabase: SupabaseClient<Database>,
-	formData: FormData,
-	fieldName: string,
-	existingUrl: string | null,
-	folder: string
-) {
-	const file = formData.get(fieldName);
-	if (file instanceof File && file.size > 0) {
-		const ext = file.name.split('.').pop() || 'bin';
-		const path = `${folder}/${crypto.randomUUID()}.${ext}`;
-		const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
-		if (error) throw new Error(`Gagal unggah ${fieldName}: ${error.message}`);
-		return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
-	}
-	return existingUrl;
-}
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const { data: profile, error: profileError } = await supabase

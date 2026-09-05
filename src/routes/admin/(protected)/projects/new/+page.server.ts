@@ -3,22 +3,18 @@ import { projectSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { nextDisplayOrder } from '$lib/server/ranked';
 import { parseTagsInput, syncProjectTags } from '$lib/server/tags';
+import { resolveFileField } from '$lib/server/uploads';
 import type { Actions } from './$types';
-
-const BUCKET = 'public-assets';
 
 export const actions: Actions = {
 	default: async ({ request, locals: { supabase } }) => {
 		const formData = await request.formData();
 
-		let thumbnail_url: string | null = null;
-		const file = formData.get('thumbnail_url');
-		if (file instanceof File && file.size > 0) {
-			const ext = file.name.split('.').pop() || 'bin';
-			const path = `thumbnails/${crypto.randomUUID()}.${ext}`;
-			const { error: uploadError } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
-			if (uploadError) return fail(400, { error: `Gagal unggah thumbnail: ${uploadError.message}` });
-			thumbnail_url = supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+		let thumbnail_url: string | null;
+		try {
+			thumbnail_url = await resolveFileField(supabase, formData, 'thumbnail_url', null, 'thumbnails');
+		} catch (e) {
+			return fail(400, { error: e instanceof Error ? e.message : 'Upload gagal.' });
 		}
 
 		const raw = {

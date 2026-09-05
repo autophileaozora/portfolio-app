@@ -47,6 +47,7 @@ export type Database = {
           date_start: string | null
           display_order: number
           id: string
+          image_url: string | null
           role_title: string
           role_type: string
           updated_at: string
@@ -58,6 +59,7 @@ export type Database = {
           date_start?: string | null
           display_order?: number
           id?: string
+          image_url?: string | null
           role_title: string
           role_type?: string
           updated_at?: string
@@ -69,6 +71,7 @@ export type Database = {
           date_start?: string | null
           display_order?: number
           id?: string
+          image_url?: string | null
           role_title?: string
           role_type?: string
           updated_at?: string
