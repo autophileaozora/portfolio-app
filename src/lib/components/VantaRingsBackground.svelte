@@ -31,8 +31,8 @@
 			vantaEffect = RINGS({
 				el: container,
 				THREE,
-				backgroundAlpha: 0,
-				backgroundColor: 0x7cbcf9,
+				backgroundAlpha: 1,
+				backgroundColor: 0x22466d,
 				color: 0x88ff00,
 				gyroControls: false,
 				minHeight: 200,
