@@ -1,15 +1,15 @@
 <script>
 	import AdminForm from '$lib/components/admin/AdminForm.svelte';
+	import { ROLE_TYPE_OPTIONS } from '$lib/validation/schemas';
 
 	let { form } = $props();
 
 	const fields = [
 		{ name: 'role_title', label: 'Jabatan', type: 'text', required: true },
 		{ name: 'company_name', label: 'Perusahaan', type: 'text' },
-		{ name: 'role_type', label: 'Tipe (mis. Full-time, Magang)', type: 'text' },
+		{ name: 'role_type', label: 'Tipe', type: 'select', options: ROLE_TYPE_OPTIONS },
 		{ name: 'date_start', label: 'Tanggal mulai', type: 'date' },
-		{ name: 'date_end', label: 'Tanggal selesai', type: 'date' },
-		{ name: 'display_order', label: 'Urutan', type: 'number', default: 0 }
+		{ name: 'date_end', label: 'Tanggal selesai', type: 'date' }
 	];
 
 	let errors = $derived(

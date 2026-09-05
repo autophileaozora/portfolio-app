@@ -7,8 +7,7 @@
 		{ name: 'author_name', label: 'Nama', type: 'text', required: true },
 		{ name: 'author_role', label: 'Peran (mis. Rekan Kerja)', type: 'text' },
 		{ name: 'quote', label: 'Quote', type: 'textarea', required: true },
-		{ name: 'is_published', label: 'Terbitkan di halaman publik', type: 'checkbox', default: true },
-		{ name: 'display_order', label: 'Urutan', type: 'number', default: 0 }
+		{ name: 'is_published', label: 'Terbitkan di halaman publik', type: 'checkbox', default: true }
 	];
 
 	let errors = $derived(

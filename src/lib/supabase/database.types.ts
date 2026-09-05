@@ -394,7 +394,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      compact_ranked_table: {
+        Args: { deleted_order: number; target_table: string }
+        Returns: undefined
+      }
+      reorder_ranked_item: {
+        Args: { new_order: number; target_id: string; target_table: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

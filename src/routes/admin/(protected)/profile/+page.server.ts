@@ -2,6 +2,33 @@ import { fail } from '@sveltejs/kit';
 import { profileSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import type { Actions, PageServerLoad } from './$types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '$lib/supabase/database.types';
+
+const BUCKET = 'public-assets';
+
+/**
+ * Uploads a new file if one was chosen; otherwise keeps whatever URL the
+ * row already had. <input type="file"> can never be pre-filled by the
+ * browser, so "no file chosen" must not be read as "clear this field".
+ */
+async function resolveFileField(
+	supabase: SupabaseClient<Database>,
+	formData: FormData,
+	fieldName: string,
+	existingUrl: string | null,
+	folder: string
+) {
+	const file = formData.get(fieldName);
+	if (file instanceof File && file.size > 0) {
+		const ext = file.name.split('.').pop() || 'bin';
+		const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+		const { error } = await supabase.storage.from(BUCKET).upload(path, file, { upsert: true });
+		if (error) throw new Error(`Gagal unggah ${fieldName}: ${error.message}`);
+		return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+	}
+	return existingUrl;
+}
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const { data: profile, error: profileError } = await supabase
@@ -18,18 +45,40 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 export const actions: Actions = {
 	default: async ({ request, locals: { supabase } }) => {
 		const formData = await request.formData();
+
+		const { data: current } = await supabase
+			.from('profile')
+			.select('avatar_url, cv_url, resume_url')
+			.eq('id', 1)
+			.single();
+
+		let avatar_url: string | null, cv_url: string | null, resume_url: string | null;
+		try {
+			avatar_url = await resolveFileField(supabase, formData, 'avatar_url', current?.avatar_url ?? null, 'avatars');
+			cv_url = await resolveFileField(supabase, formData, 'cv_url', current?.cv_url ?? null, 'documents');
+			resume_url = await resolveFileField(
+				supabase,
+				formData,
+				'resume_url',
+				current?.resume_url ?? null,
+				'documents'
+			);
+		} catch (e) {
+			return fail(400, { error: e instanceof Error ? e.message : 'Upload gagal.' });
+		}
+
 		const raw = {
 			full_name: formData.get('full_name'),
 			title: formData.get('title'),
 			location: formData.get('location'),
-			avatar_url: formData.get('avatar_url'),
+			avatar_url,
 			email: formData.get('email'),
 			social_linkedin: formData.get('social_linkedin'),
 			social_github: formData.get('social_github'),
 			social_instagram: formData.get('social_instagram'),
 			social_whatsapp: formData.get('social_whatsapp'),
-			cv_url: formData.get('cv_url'),
-			resume_url: formData.get('resume_url'),
+			cv_url,
+			resume_url,
 			summary_paragraph: formData.get('summary_paragraph')
 		};
 

@@ -21,10 +21,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 export const actions: Actions = {
 	default: async ({ params, request, locals: { supabase } }) => {
 		const formData = await request.formData();
-		const raw = {
-			name: formData.get('name'),
-			display_order: formData.get('display_order')
-		};
+		const raw = { name: formData.get('name') };
 
 		const parsed = skillSchema.safeParse(raw);
 		if (!parsed.success) {

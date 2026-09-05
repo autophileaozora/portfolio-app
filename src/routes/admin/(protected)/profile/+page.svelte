@@ -7,14 +7,14 @@
 		{ name: 'full_name', label: 'Nama lengkap', type: 'text', required: true },
 		{ name: 'title', label: 'Jabatan / tagline', type: 'text' },
 		{ name: 'location', label: 'Lokasi', type: 'text' },
-		{ name: 'avatar_url', label: 'URL foto profil', type: 'text' },
+		{ name: 'avatar_url', label: 'Foto profil', type: 'file', accept: 'image/*', isImage: true },
 		{ name: 'email', label: 'Email', type: 'text' },
 		{ name: 'social_linkedin', label: 'LinkedIn URL', type: 'text' },
 		{ name: 'social_github', label: 'GitHub URL', type: 'text' },
 		{ name: 'social_instagram', label: 'Instagram URL', type: 'text' },
 		{ name: 'social_whatsapp', label: 'WhatsApp URL', type: 'text' },
-		{ name: 'cv_url', label: 'URL CV', type: 'text' },
-		{ name: 'resume_url', label: 'URL Resume', type: 'text' },
+		{ name: 'cv_url', label: 'File CV', type: 'file', accept: '.pdf,application/pdf' },
+		{ name: 'resume_url', label: 'File Resume', type: 'file', accept: '.pdf,application/pdf' },
 		{ name: 'summary_paragraph', label: 'Ringkasan / bio', type: 'textarea' }
 	];
 

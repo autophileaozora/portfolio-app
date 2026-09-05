@@ -3,10 +3,7 @@
 
 	let { data, form } = $props();
 
-	const fields = [
-		{ name: 'name', label: 'Nama skill', type: 'text', required: true },
-		{ name: 'display_order', label: 'Urutan', type: 'number', default: 0 }
-	];
+	const fields = [{ name: 'name', label: 'Nama skill', type: 'text', required: true }];
 
 	let values = $derived(form?.values ?? data.skill);
 	let errors = $derived(

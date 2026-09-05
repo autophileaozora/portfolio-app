@@ -5,8 +5,7 @@
 
 	const fields = [
 		{ name: 'label', label: 'Label', type: 'text', required: true },
-		{ name: 'value', label: 'Value', type: 'number', default: 0 },
-		{ name: 'display_order', label: 'Urutan', type: 'number', default: 0 }
+		{ name: 'value', label: 'Value', type: 'number', default: 0 }
 	];
 
 	let errors = $derived(

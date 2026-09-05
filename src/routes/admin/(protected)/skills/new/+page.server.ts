@@ -1,15 +1,13 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { skillSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
+import { nextDisplayOrder } from '$lib/server/ranked';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
 	default: async ({ request, locals: { supabase } }) => {
 		const formData = await request.formData();
-		const raw = {
-			name: formData.get('name'),
-			display_order: formData.get('display_order')
-		};
+		const raw = { name: formData.get('name') };
 
 		const parsed = skillSchema.safeParse(raw);
 		if (!parsed.success) {
@@ -20,7 +18,8 @@ export const actions: Actions = {
 			});
 		}
 
-		const { error } = await supabase.from('skills').insert(parsed.data);
+		const display_order = await nextDisplayOrder(supabase, 'skills');
+		const { error } = await supabase.from('skills').insert({ ...parsed.data, display_order });
 		if (error) return fail(400, { error: friendlyDbError(error), values: raw });
 
 		redirect(303, '/admin/skills');

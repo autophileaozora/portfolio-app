@@ -3,10 +3,7 @@
 
 	let { form } = $props();
 
-	const fields = [
-		{ name: 'name', label: 'Nama skill', type: 'text', required: true },
-		{ name: 'display_order', label: 'Urutan', type: 'number', default: 0 }
-	];
+	const fields = [{ name: 'name', label: 'Nama skill', type: 'text', required: true }];
 
 	let errors = $derived(
 		Object.fromEntries(Object.entries(form?.fieldErrors ?? {}).map(([k, v]) => [k, v?.[0]]))

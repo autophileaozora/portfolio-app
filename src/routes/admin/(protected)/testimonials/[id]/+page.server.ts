@@ -25,8 +25,7 @@ export const actions: Actions = {
 			author_name: formData.get('author_name'),
 			author_role: formData.get('author_role'),
 			quote: formData.get('quote'),
-			is_published: formData.get('is_published') === 'on',
-			display_order: formData.get('display_order')
+			is_published: formData.get('is_published') === 'on'
 		};
 
 		const parsed = testimonialSchema.safeParse(raw);

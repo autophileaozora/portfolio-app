@@ -5,32 +5,37 @@ const emptyToNull = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? 
 const nullableText = (max: number) => z.preprocess(emptyToNull, z.string().trim().max(max).nullable());
 const nullableDate = () => z.preprocess(emptyToNull, z.string().nullable());
 
+/**
+ * display_order is intentionally NOT part of these schemas — it's assigned
+ * server-side on create (max + 1) and changed only via the AdminTable
+ * position <select>, which calls the reorder_ranked_item RPC directly. The
+ * create/edit forms never submit it.
+ */
+
 export const skillSchema = z.object({
-	name: z.string().trim().min(1, 'Nama wajib diisi.').max(80),
-	display_order: z.coerce.number().int()
+	name: z.string().trim().min(1, 'Nama wajib diisi.').max(80)
 });
 
 export const statSchema = z.object({
 	label: z.string().trim().min(1, 'Label wajib diisi.').max(80),
-	value: z.coerce.number().int().min(0, 'Value tidak boleh negatif.'),
-	display_order: z.coerce.number().int()
+	value: z.coerce.number().int().min(0, 'Value tidak boleh negatif.')
 });
+
+export const ROLE_TYPE_OPTIONS = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Project-based', 'Volunteer'];
 
 export const experienceSchema = z.object({
 	role_title: z.string().trim().min(1, 'Jabatan wajib diisi.').max(120),
-	role_type: z.string().trim().max(60).optional().default(''),
+	role_type: z.enum(['', ...ROLE_TYPE_OPTIONS]).optional().default(''),
 	company_name: z.string().trim().max(120).optional().default(''),
 	date_start: nullableDate(),
-	date_end: nullableDate(),
-	display_order: z.coerce.number().int()
+	date_end: nullableDate()
 });
 
 export const testimonialSchema = z.object({
 	author_name: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
 	author_role: z.string().trim().max(120).optional().default(''),
 	quote: z.string().trim().min(1, 'Quote wajib diisi.').max(1000),
-	is_published: z.boolean(),
-	display_order: z.coerce.number().int()
+	is_published: z.boolean()
 });
 
 export const profileSchema = z.object({

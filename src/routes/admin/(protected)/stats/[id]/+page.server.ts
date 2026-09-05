@@ -21,11 +21,7 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 export const actions: Actions = {
 	default: async ({ params, request, locals: { supabase } }) => {
 		const formData = await request.formData();
-		const raw = {
-			label: formData.get('label'),
-			value: formData.get('value'),
-			display_order: formData.get('display_order')
-		};
+		const raw = { label: formData.get('label'), value: formData.get('value') };
 
 		const parsed = statSchema.safeParse(raw);
 		if (!parsed.success) {
