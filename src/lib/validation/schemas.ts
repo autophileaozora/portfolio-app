@@ -38,6 +38,41 @@ export const testimonialSchema = z.object({
 	is_published: z.boolean()
 });
 
+export const CATEGORY_OPTIONS = ['web', 'app', 'design'];
+
+export const projectSchema = z.object({
+	slug: z
+		.string()
+		.trim()
+		.toLowerCase()
+		.min(1, 'Slug wajib diisi.')
+		.max(120)
+		.regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Slug hanya boleh huruf kecil, angka, dan tanda "-".'),
+	title: z.string().trim().min(1, 'Judul wajib diisi.').max(200),
+	short_description: z.string().trim().max(2000).optional().default(''),
+	role: z.string().trim().max(120).optional().default(''),
+	duration: z.string().trim().max(120).optional().default(''),
+	category: z.enum(['', ...CATEGORY_OPTIONS]).optional().default(''),
+	thumbnail_url: nullableText(500),
+	contributors: z.string().trim().max(300).optional().default(''),
+	associated_with: z.string().trim().max(300).optional().default(''),
+	date_start: nullableDate(),
+	date_end: nullableDate(),
+	live_url: nullableText(500),
+	is_published: z.boolean(),
+	is_featured: z.boolean()
+});
+
+export const SECTION_TYPES = ['problem', 'solution', 'result', 'documentation'] as const;
+
+export const sectionSchema = z.object({
+	type: z.enum(SECTION_TYPES),
+	title: z.string().trim().max(200).optional().default(''),
+	content: z.string().trim().max(3000).optional().default('')
+});
+
+export const sectionContentSchema = sectionSchema.omit({ type: true });
+
 export const profileSchema = z.object({
 	full_name: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
 	title: z.string().trim().max(120).optional().default(''),

@@ -10,6 +10,19 @@
 	font-size: 1.3rem;
 }
 
+.admin-page-header h2 {
+	margin: 0;
+	font-size: 1.05rem;
+}
+
+.section-group {
+	margin-bottom: 2rem;
+}
+
+.section-group .admin-page-header {
+	margin-bottom: 0.75rem;
+}
+
 .btn-primary {
 	display: inline-block;
 	padding: 0.55rem 1rem;

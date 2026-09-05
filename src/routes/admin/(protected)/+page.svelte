@@ -7,7 +7,7 @@
 		{ href: '/admin/experience', label: 'Experience', icon: 'fa-briefcase', countKey: 'experience' },
 		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', countKey: 'testimonials' },
 		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user' },
-		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', available: false },
+		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', countKey: 'projects' },
 		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: false }
 	];
 </script>

@@ -4,10 +4,11 @@
 	/**
 	 * fields: [{
 	 *   name, label, required, default,
-	 *   type: 'text'|'number'|'textarea'|'date'|'checkbox'|'select'|'file',
+	 *   type: 'text'|'number'|'textarea'|'date'|'checkbox'|'select'|'file'|'hidden',
 	 *   options,   // 'select' only: [{ value, label }] or plain strings
 	 *   accept,    // 'file' only: <input accept=""> filter, e.g. 'image/*'
-	 *   isImage    // 'file' only: preview as <img> instead of a plain link
+	 *   isImage,   // 'file' only: preview as <img> instead of a plain link
+	 *   value      // 'hidden' only: fixed value, not sourced from `values`
 	 * }]
 	 * values/errors come from the +page.server.ts load (values) and form action
 	 * fail() payload (errors), keyed by field name. multipart is always on so
@@ -52,7 +53,9 @@
 	{/if}
 
 	{#each fields as field (field.name)}
-		{#if field.type === 'checkbox'}
+		{#if field.type === 'hidden'}
+			<input type="hidden" name={field.name} value={field.value} />
+		{:else if field.type === 'checkbox'}
 			<label class="checkbox-label">
 				<input type="checkbox" name={field.name} checked={values[field.name] ?? field.default ?? false} />
 				{field.label}

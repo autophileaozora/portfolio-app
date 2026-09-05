@@ -6,7 +6,7 @@
 
 	const NAV_ITEMS = [
 		{ href: '/admin', label: 'Dashboard', icon: 'fa-gauge', available: true },
-		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', available: false },
+		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', available: true },
 		{ href: '/admin/experience', label: 'Experience', icon: 'fa-briefcase', available: true },
 		{ href: '/admin/skills', label: 'Skills', icon: 'fa-code', available: true },
 		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', available: true },

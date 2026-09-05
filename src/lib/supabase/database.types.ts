@@ -394,8 +394,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compact_project_sections: {
+        Args: {
+          deleted_order: number
+          target_project_id: string
+          target_type: string
+        }
+        Returns: undefined
+      }
       compact_ranked_table: {
         Args: { deleted_order: number; target_table: string }
+        Returns: undefined
+      }
+      reorder_project_section: {
+        Args: { new_order: number; section_id: string }
         Returns: undefined
       }
       reorder_ranked_item: {
