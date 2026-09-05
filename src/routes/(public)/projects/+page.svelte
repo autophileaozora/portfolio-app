@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import '$lib/styles/projects.css';
+	import VantaRingsBackground from '$lib/components/VantaRingsBackground.svelte';
 
 	let { data } = $props();
 	let cards = $derived(
@@ -114,7 +115,9 @@
 </svelte:head>
 
 <header class="site-header">
-	<div class="hero-wrap" id="home"></div>
+	<div class="hero-wrap" id="home">
+		<VantaRingsBackground />
+	</div>
 </header>
 
 <section class="projects-section" id="project" bind:this={projectsSectionEl}>

@@ -148,16 +148,15 @@ p, .skill {
   );
 }
 
-/* Background: PCB photo */
+/* Solid backdrop behind the VANTA.RINGS canvas (see the component in
+   +page.svelte) — its own background is transparent (backgroundAlpha: 0
+   in the effect config), so this is what actually shows through. Replaces
+   the previous PCB stock photo. */
 .hero-wrap::before {
     content: "";
     position: absolute;
     inset: 0;
-    /* Dark blue PCB circuit board - angled/blue toned */
-    background-image: url('https://images.unsplash.com/photo-1562408590-e32931084e23?w=1200&q=80');
-    background-size: cover;
-    background-position: center 40%;
-    filter: brightness(0.8) saturate(0.9) hue-rotate(190deg);
+    background: #050a17;
     z-index: 0;
 }
 
