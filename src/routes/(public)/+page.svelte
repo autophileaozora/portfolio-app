@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import '$lib/styles/home.css';
-	import { scrambleText } from '$lib/utils/scrambleText.js';
 
 	let { data } = $props();
 
@@ -94,8 +93,34 @@
 		return () => window.removeEventListener('scroll', handleScroll);
 	}
 
-	// 2. Summary auto carousel (seamless infinite loop + scramble text sync,
-	//    via the shared scrambleText util imported above)
+	// 2. Scramble/decoder text reveal, reused by the summary carousel
+	function scrambleText(setText, targetText, duration = 750) {
+		const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#$@%&*!?<>';
+		const fps = 30;
+		const totalFrames = Math.floor((duration / 1000) * fps);
+		let frame = 0;
+
+		const timer = setInterval(() => {
+			frame++;
+			const progress = frame / totalFrames;
+			const revealedLength = Math.floor(progress * targetText.length);
+
+			let output = '';
+			for (let i = 0; i < targetText.length; i++) {
+				if (i < revealedLength) output += targetText[i];
+				else if (targetText[i] === ' ') output += ' ';
+				else output += chars[Math.floor(Math.random() * chars.length)];
+			}
+			setText(output);
+
+			if (frame >= totalFrames) {
+				setText(targetText);
+				clearInterval(timer);
+			}
+		}, 1000 / fps);
+	}
+
+	// 3. Summary auto carousel (seamless infinite loop + scramble text sync)
 	function initSummaryAutoCarousel() {
 		const track = summaryTrackEl;
 		if (!track) return () => {};

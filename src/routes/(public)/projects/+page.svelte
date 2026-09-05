@@ -1,8 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 	import '$lib/styles/projects.css';
-	import ParticleHeadHero from '$lib/components/ParticleHeadHero.svelte';
-	import { scrambleText } from '$lib/utils/scrambleText.js';
 
 	let { data } = $props();
 	let cards = $derived(
@@ -15,22 +13,6 @@
 			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
 		}))
 	);
-
-	// --- Hero: letter-by-letter headline + scrambled-glyph stat counters ---
-	const HERO_HEADLINE = 'SELECTED WORK';
-	const heroLetters = HERO_HEADLINE.split('');
-	let heroRevealed = $state(false);
-
-	let heroStatProjects = $state('');
-	let heroStatCategories = $state('');
-
-	function initHeroStats() {
-		const projectCount = String(data.projects.length);
-		const categoryCount = String(new Set(data.projects.map((p) => p.category).filter(Boolean)).size);
-
-		scrambleText((v) => (heroStatProjects = v), projectCount, 900);
-		scrambleText((v) => (heroStatCategories = v), categoryCount, 900);
-	}
 
 	const pages = [1, 2, 3];
 	let activePage = $state(1);
@@ -104,9 +86,6 @@
 	}
 
 	onMount(() => {
-		requestAnimationFrame(() => (heroRevealed = true));
-		initHeroStats();
-
 		const observer = new IntersectionObserver(
 			(entries) => entries.forEach((entry) => (barVisible = entry.isIntersecting)),
 			{ rootMargin: '0px 0px -10% 0px', threshold: 0.05 }
@@ -135,29 +114,7 @@
 </svelte:head>
 
 <header class="site-header">
-	<div class="hero-wrap" id="home">
-		<div class="hero-grid-bg" aria-hidden="true"></div>
-		<ParticleHeadHero />
-
-		<div class="hero-copy">
-			<h1 class="hero-headline" class:revealed={heroRevealed}>
-				{#each heroLetters as letter, i (i)}
-					<span class="hero-letter" style="transition-delay: {i * 28}ms">{letter === ' ' ? ' ' : letter}</span>
-				{/each}
-			</h1>
-		</div>
-
-		<div class="hero-stats">
-			<div class="hero-stat hero-stat-left">
-				<span class="hero-stat-value">{heroStatProjects}+</span>
-				<span class="hero-stat-label">PROJECTS SHIPPED</span>
-			</div>
-			<div class="hero-stat hero-stat-right">
-				<span class="hero-stat-value">{heroStatCategories}</span>
-				<span class="hero-stat-label">CATEGORIES</span>
-			</div>
-		</div>
-	</div>
+	<div class="hero-wrap" id="home"></div>
 </header>
 
 <section class="projects-section" id="project" bind:this={projectsSectionEl}>
