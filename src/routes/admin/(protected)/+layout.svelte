@@ -12,7 +12,7 @@
 		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', available: true },
 		{ href: '/admin/stats', label: 'Stats', icon: 'fa-chart-simple', available: true },
 		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user', available: true },
-		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: false }
+		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: true }
 	];
 
 	let pathname = $derived($page.url.pathname);
@@ -34,6 +34,9 @@
 					<a href={item.href} class:active={isActive(item.href)}>
 						<i class="fa-solid {item.icon}"></i>
 						{item.label}
+						{#if item.href === '/admin/messages' && data.pendingMessagesCount > 0}
+							<span class="nav-badge">{data.pendingMessagesCount}</span>
+						{/if}
 					</a>
 				{:else}
 					<span class="nav-disabled">
@@ -124,6 +127,16 @@
 	.nav-disabled {
 		color: #55555f;
 		cursor: default;
+	}
+
+	.nav-badge {
+		margin-left: auto;
+		font-size: 0.7rem;
+		font-weight: 700;
+		background: #dc2626;
+		color: #fff;
+		padding: 0.1rem 0.45rem;
+		border-radius: 999px;
 	}
 
 	.nav-disabled em {

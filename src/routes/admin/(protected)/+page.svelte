@@ -8,7 +8,7 @@
 		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', countKey: 'testimonials' },
 		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user' },
 		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', countKey: 'projects' },
-		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: false }
+		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', isMessages: true }
 	];
 </script>
 
@@ -33,7 +33,15 @@
 			<a class="dashboard-card" href={card.href}>
 				<i class="fa-solid {card.icon}"></i>
 				<span class="card-label">{card.label}</span>
-				<span class="card-sub">{card.countKey ? `${data.counts[card.countKey]} item` : 'Kelola profil'}</span>
+				<span class="card-sub">
+					{#if card.isMessages}
+						{data.pendingMessagesCount > 0 ? `${data.pendingMessagesCount} pending` : 'Tidak ada yang pending'}
+					{:else if card.countKey}
+						{data.counts[card.countKey]} item
+					{:else}
+						Kelola profil
+					{/if}
+				</span>
 			</a>
 		{/if}
 	{/each}

@@ -73,6 +73,14 @@ export const sectionSchema = z.object({
 
 export const sectionContentSchema = sectionSchema.omit({ type: true });
 
+export const messageSchema = z.object({
+	// formData.get() returns null (not undefined) for a field that isn't
+	// present at all, which z.optional() doesn't accept — normalize first.
+	sender_name: z.preprocess((v) => v ?? '', z.string().trim().max(120)),
+	is_anonymous: z.boolean(),
+	content: z.string().trim().min(1, 'Pesan tidak boleh kosong.').max(2000)
+});
+
 export const profileSchema = z.object({
 	full_name: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
 	title: z.string().trim().max(120).optional().default(''),

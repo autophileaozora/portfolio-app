@@ -7,16 +7,27 @@ import type { LayoutServerLoad } from './$types';
  * two loads in the same chain both set the same header.
  */
 export const load: LayoutServerLoad = async ({ locals: { supabase } }) => {
-	const [{ data: profile, error: profileError }, { data: testimonials, error: testimonialsError }] = await Promise.all([
+	const [
+		{ data: profile, error: profileError },
+		{ data: testimonials, error: testimonialsError },
+		{ data: answeredMessages, error: messagesError }
+	] = await Promise.all([
 		supabase.from('profile').select('*').eq('id', 1).single(),
-		supabase.from('testimonials').select('*').eq('is_published', true).order('display_order')
+		supabase.from('testimonials').select('*').eq('is_published', true).order('display_order'),
+		supabase
+			.from('messages')
+			.select('sender_name, is_anonymous, content, admin_reply, replied_at')
+			.eq('status', 'answered')
+			.order('replied_at', { ascending: false })
 	]);
 
 	if (profileError) console.error('[+layout.server.ts] profile query failed:', profileError.message);
 	if (testimonialsError) console.error('[+layout.server.ts] testimonials query failed:', testimonialsError.message);
+	if (messagesError) console.error('[+layout.server.ts] messages query failed:', messagesError.message);
 
 	return {
 		profile,
-		testimonials: testimonials ?? []
+		testimonials: testimonials ?? [],
+		answeredMessages: answeredMessages ?? []
 	};
 };

@@ -1,13 +1,16 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
+	import { enhance } from '$app/forms';
 
 	/**
-	 * profile/testimonials come from Supabase now (loaded once in the root
-	 * +layout.server.ts, since this component renders on every page). The
-	 * "Leave a Message" form is still client-side only for now — it becomes
-	 * a real Supabase-backed form action in a later phase.
+	 * profile/testimonials/answeredMessages all come from Supabase (loaded
+	 * once in the (public) layout, since this component renders on every
+	 * public page). The message form posts to /messages regardless of which
+	 * page it's opened from — an absolute action path works the same as a
+	 * same-route one for use:enhance, so no need to duplicate this action
+	 * across every public route's own +page.server.ts.
 	 */
-	let { profile = null, testimonials = [] } = $props();
+	let { profile = null, testimonials = [], answeredMessages = [] } = $props();
 
 	const FALLBACK_TESTIMONIALS = [
 		{ quote: 'KEMARIN NGERJAIN PROYEK BARENG, SERU SIH, EL NYA BAIK RESPONNYA', author_name: 'Abraham', author_role: 'Public User' }
@@ -51,6 +54,7 @@
 	}
 
 	let email = $derived(profile?.email || 'helloimanuel@yahoo.com');
+	let adminFirstName = $derived(profile?.full_name?.split(' ')[0] || 'Admin');
 
 	async function copyEmail() {
 		try {
@@ -69,38 +73,39 @@
 		if (e.target === e.currentTarget) close();
 	}
 
-	// --- Message form (client-side only for now) ---
-	let senderName = $state('');
-	let isAnonymous = $state(false);
-	let messageContent = $state('');
+	// --- Message form (real /messages form action) ---
+	let sending = $state(false);
+	let sendError = $state('');
 
-	let answeredMessages = $state([
-		{
-			senderLabel: 'Abraham (Public User)',
-			date: 'Yesterday',
-			content: 'KEMARIN NGERJAIN PROYEK BARENG, SERU SIH, EL NYA BAIK RESPONNYA',
-			reply: 'Terima kasih mas Abraham! Sukses selalu buat proyeknya.',
-			pending: false
-		}
-	]);
+	let visibleAnsweredMessages = $derived(
+		answeredMessages.map((m) => ({
+			senderLabel: m.is_anonymous ? 'Anonymous Element' : m.sender_name || 'Anonymous Element',
+			date: formatDate(m.replied_at),
+			content: m.content,
+			reply: m.admin_reply
+		}))
+	);
 
-	function submitMessage(e) {
-		e.preventDefault();
-		const content = messageContent.trim();
-		if (!content) return;
+	function formatDate(iso) {
+		if (!iso) return '';
+		return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+	}
 
-		const name = isAnonymous || !senderName.trim() ? 'Anonymous Element' : senderName.trim();
-
-		answeredMessages = [
-			{ senderLabel: name, date: 'Just now', content, reply: null, pending: true },
-			...answeredMessages
-		];
-
-		msgModalOpen = false;
-		senderName = '';
-		isAnonymous = false;
-		messageContent = '';
-		showToast('Message sent successfully! Thank you.');
+	function handleMessageSubmit() {
+		sending = true;
+		sendError = '';
+		return async ({ result, formElement }) => {
+			sending = false;
+			if (result.type === 'success') {
+				formElement.reset();
+				msgModalOpen = false;
+				showToast('Message sent successfully! Thank you.');
+			} else if (result.type === 'failure') {
+				sendError = result.data?.error ?? 'Gagal mengirim pesan.';
+			} else {
+				sendError = 'Terjadi kesalahan. Coba lagi.';
+			}
+		};
 	}
 </script>
 
@@ -179,27 +184,32 @@
 	<div class="modal-content">
 		<button class="modal-close" onclick={() => (msgModalOpen = false)}>&times;</button>
 		<h3 class="modal-title">Leave a Review or Message</h3>
-		<form onsubmit={submitMessage}>
+		<form method="POST" action="/messages" use:enhance={handleMessageSubmit}>
+			{#if sendError}
+				<p class="send-error">{sendError}</p>
+			{/if}
 			<div class="form-group">
 				<label class="form-label" for="sender-name">Your Name</label>
-				<input type="text" id="sender-name" class="form-input" placeholder="e.g. Abraham" bind:value={senderName} />
+				<input type="text" id="sender-name" name="sender_name" class="form-input" placeholder="e.g. Abraham" />
 			</div>
 			<div class="form-group checkbox-group">
-				<input type="checkbox" id="anonymous-check" bind:checked={isAnonymous} />
+				<input type="checkbox" id="anonymous-check" name="is_anonymous" />
 				<label class="form-label" for="anonymous-check">Send as Anonymous Element</label>
 			</div>
 			<div class="form-group">
 				<label class="form-label" for="message-content">Your Message / Feedback</label>
 				<textarea
 					id="message-content"
+					name="content"
 					class="form-input"
 					rows="4"
 					placeholder="Write your message here..."
 					required
-					bind:value={messageContent}
 				></textarea>
 			</div>
-			<button type="submit" class="btn-pill-accent btn-full">Submit Message &rarr;</button>
+			<button type="submit" class="btn-pill-accent btn-full" disabled={sending}>
+				{sending ? 'Sending...' : 'Submit Message'} &rarr;
+			</button>
 		</form>
 	</div>
 </div>
@@ -215,7 +225,7 @@
 		<button class="modal-close" onclick={() => (readModalOpen = false)}>&times;</button>
 		<h3 class="modal-title">Answered Messages &amp; Feedback</h3>
 		<div class="answered-messages-list">
-			{#each answeredMessages as item}
+			{#each visibleAnsweredMessages as item}
 				<div class="answered-item">
 					<div class="item-header">
 						<strong>{item.senderLabel}</strong>
@@ -223,13 +233,11 @@
 					</div>
 					<p class="item-msg">"{item.content}"</p>
 					<div class="item-reply">
-						{#if item.pending}
-							<i class="fa-solid fa-clock"></i> <em>Pending response from Andrian...</em>
-						{:else}
-							<i class="fa-solid fa-reply"></i> <strong>Andrian:</strong> <em>{item.reply}</em>
-						{/if}
+						<i class="fa-solid fa-reply"></i> <strong>{adminFirstName}:</strong> <em>{item.reply}</em>
 					</div>
 				</div>
+			{:else}
+				<p class="no-answered">Belum ada pesan yang dibalas.</p>
 			{/each}
 		</div>
 	</div>
@@ -239,3 +247,21 @@
 	<i class="fa-solid fa-circle-check"></i>
 	<span>{toastMessage}</span>
 </div>
+
+<style>
+	.send-error {
+		margin: 0 0 0.75rem;
+		padding: 0.6rem 0.75rem;
+		border-radius: 8px;
+		background: rgba(220, 38, 38, 0.1);
+		border: 1px solid rgba(220, 38, 38, 0.3);
+		color: #dc2626;
+		font-size: 0.85rem;
+	}
+
+	.no-answered {
+		color: inherit;
+		opacity: 0.7;
+		font-size: 0.9rem;
+	}
+</style>
