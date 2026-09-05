@@ -32,7 +32,11 @@
 				el: container,
 				THREE,
 				backgroundAlpha: 1,
-				backgroundColor: 0x22466d,
+				backgroundColor: 0x050a17, // darker than the user's original paste (0x22466d) —
+				// the rings' material is semi-transparent, so it blends with
+				// whatever's behind it; a lighter/more saturated background
+				// like 0x22466d visibly dulls the ring colors by comparison,
+				// darker restores the "pop" the transparent version had
 				color: 0x88ff00,
 				gyroControls: false,
 				minHeight: 200,
