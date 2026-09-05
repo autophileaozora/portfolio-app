@@ -24,6 +24,7 @@
 	"dependencies": {
 		"@supabase/ssr": "^0.12.6",
 		"@supabase/supabase-js": "^2.115.0",
+		"three": "^0.185.1",
 		"ws": "^8.21.3",
 		"zod": "^4.5.4"
 	}
