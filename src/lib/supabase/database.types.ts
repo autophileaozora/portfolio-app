@@ -113,9 +113,12 @@ export type Database = {
       }
       profile: {
         Row: {
+          availability_text: string
           avatar_url: string | null
+          connect_text: string
           cv_url: string | null
           email: string
+          footer_copyright: string
           full_name: string
           id: number
           location: string
@@ -129,9 +132,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          availability_text?: string
           avatar_url?: string | null
+          connect_text?: string
           cv_url?: string | null
           email?: string
+          footer_copyright?: string
           full_name?: string
           id?: number
           location?: string
@@ -145,9 +151,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          availability_text?: string
           avatar_url?: string | null
+          connect_text?: string
           cv_url?: string | null
           email?: string
+          footer_copyright?: string
           full_name?: string
           id?: number
           location?: string

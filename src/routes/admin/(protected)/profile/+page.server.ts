@@ -53,7 +53,10 @@ export const actions: Actions = {
 			social_whatsapp: formData.get('social_whatsapp'),
 			cv_url,
 			resume_url,
-			summary_paragraph: formData.get('summary_paragraph')
+			summary_paragraph: formData.get('summary_paragraph'),
+			availability_text: formData.get('availability_text'),
+			connect_text: formData.get('connect_text'),
+			footer_copyright: formData.get('footer_copyright')
 		};
 
 		const parsed = profileSchema.safeParse(raw);

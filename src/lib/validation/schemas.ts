@@ -94,5 +94,8 @@ export const profileSchema = z.object({
 	social_whatsapp: nullableText(500),
 	cv_url: nullableText(500),
 	resume_url: nullableText(500),
-	summary_paragraph: z.string().trim().max(2000).optional().default('')
+	summary_paragraph: z.string().trim().max(2000).optional().default(''),
+	availability_text: z.string().trim().max(160).optional().default('Available for work & Discussions'),
+	connect_text: z.string().trim().max(160).optional().default("Let's Connected"),
+	footer_copyright: z.string().trim().max(200).optional().default('© 2026 Hello Imanuel. All Rights Reserved.')
 });

@@ -15,7 +15,10 @@
 		{ name: 'social_whatsapp', label: 'WhatsApp URL', type: 'text' },
 		{ name: 'cv_url', label: 'File CV', type: 'file', accept: '.pdf,application/pdf' },
 		{ name: 'resume_url', label: 'File Resume', type: 'file', accept: '.pdf,application/pdf' },
-		{ name: 'summary_paragraph', label: 'Ringkasan / bio', type: 'textarea' }
+		{ name: 'summary_paragraph', label: 'Ringkasan / bio', type: 'textarea' },
+		{ name: 'availability_text', label: 'Teks ketersediaan (footer)', type: 'text' },
+		{ name: 'connect_text', label: 'Teks "terhubung" (footer)', type: 'text' },
+		{ name: 'footer_copyright', label: 'Teks copyright (footer)', type: 'text' }
 	];
 
 	let values = $derived(form?.values ?? data.profile);

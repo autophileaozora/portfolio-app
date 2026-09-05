@@ -55,6 +55,9 @@
 
 	let email = $derived(profile?.email || 'helloimanuel@yahoo.com');
 	let adminFirstName = $derived(profile?.full_name?.split(' ')[0] || 'Admin');
+	let availabilityText = $derived(profile?.availability_text || 'Available for work & Discussions');
+	let connectText = $derived(profile?.connect_text || "Let's Connected");
+	let footerCopyright = $derived(profile?.footer_copyright || '© 2026 Hello Imanuel. All Rights Reserved.');
 
 	async function copyEmail() {
 		try {
@@ -153,14 +156,14 @@
 <footer class="footer">
 	<div class="footer-top">
 		<div class="footer-col">
-			<span class="footer-label">Available for work &amp; Discussions</span>
+			<span class="footer-label">{availabilityText}</span>
 			<div class="email-copy-wrapper">
 				<a href={`mailto:${email}`} class="email-link">{email}</a>
 				<button class="copy-btn" onclick={copyEmail}>COPY</button>
 			</div>
 		</div>
 		<div class="footer-col align-right">
-			<span class="footer-label">Let's Connected</span>
+			<span class="footer-label">{connectText}</span>
 			<div class="social-links-inline">
 				<a href={profile?.social_linkedin || 'https://linkedin.com'} target="_blank" rel="noreferrer" class="footer-social-link">LinkedIn</a>
 				<a href={profile?.social_instagram || 'https://instagram.com'} target="_blank" rel="noreferrer" class="footer-social-link">Instagram</a>
@@ -171,7 +174,7 @@
 </footer>
 
 <div class="footer-bottom">
-	<p>&copy; 2026 Hello Imanuel. All Rights Reserved.</p>
+	<p>{footerCopyright}</p>
 </div>
 
 <!-- Message Modal -->
