@@ -54,6 +54,10 @@
 	padding: 0.7rem 1rem;
 	text-align: left;
 	border-bottom: 1px solid #eeeef2;
+	max-width: 260px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .admin-table th {
@@ -79,6 +83,9 @@
 
 .admin-table .col-actions {
 	width: 140px;
+	max-width: none;
+	overflow: visible;
+	white-space: nowrap;
 	display: flex;
 	gap: 0.6rem;
 	align-items: center;
@@ -166,6 +173,17 @@
 	min-height: 90px;
 }
 
+.admin-form .checkbox-label {
+	flex-direction: row;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.admin-form .checkbox-label input {
+	width: 16px;
+	height: 16px;
+}
+
 .field-error {
 	color: #dc2626;
 	font-size: 0.78rem;
@@ -178,6 +196,16 @@
 	background: rgba(220, 38, 38, 0.08);
 	border: 1px solid rgba(220, 38, 38, 0.25);
 	color: #b91c1c;
+	font-size: 0.85rem;
+}
+
+.form-success-banner {
+	padding: 0.6rem 0.75rem;
+	margin: 0 0 1rem;
+	border-radius: 8px;
+	background: rgba(22, 163, 74, 0.08);
+	border: 1px solid rgba(22, 163, 74, 0.25);
+	color: #15803d;
 	font-size: 0.85rem;
 }
 

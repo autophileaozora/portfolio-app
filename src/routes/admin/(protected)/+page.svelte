@@ -4,10 +4,10 @@
 	const CARDS = [
 		{ href: '/admin/skills', label: 'Skills', icon: 'fa-code', countKey: 'skills' },
 		{ href: '/admin/stats', label: 'Stats', icon: 'fa-chart-simple', countKey: 'stats' },
+		{ href: '/admin/experience', label: 'Experience', icon: 'fa-briefcase', countKey: 'experience' },
+		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', countKey: 'testimonials' },
+		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user' },
 		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', available: false },
-		{ href: '/admin/experience', label: 'Experience', icon: 'fa-briefcase', available: false },
-		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', available: false },
-		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user', available: false },
 		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: false }
 	];
 </script>
@@ -33,7 +33,7 @@
 			<a class="dashboard-card" href={card.href}>
 				<i class="fa-solid {card.icon}"></i>
 				<span class="card-label">{card.label}</span>
-				<span class="card-sub">{data.counts[card.countKey]} item</span>
+				<span class="card-sub">{card.countKey ? `${data.counts[card.countKey]} item` : 'Kelola profil'}</span>
 			</a>
 		{/if}
 	{/each}

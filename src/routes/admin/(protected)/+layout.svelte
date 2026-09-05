@@ -7,11 +7,11 @@
 	const NAV_ITEMS = [
 		{ href: '/admin', label: 'Dashboard', icon: 'fa-gauge', available: true },
 		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', available: false },
-		{ href: '/admin/experience', label: 'Experience', icon: 'fa-briefcase', available: false },
+		{ href: '/admin/experience', label: 'Experience', icon: 'fa-briefcase', available: true },
 		{ href: '/admin/skills', label: 'Skills', icon: 'fa-code', available: true },
-		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', available: false },
+		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', available: true },
 		{ href: '/admin/stats', label: 'Stats', icon: 'fa-chart-simple', available: true },
-		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user', available: false },
+		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user', available: true },
 		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: false }
 	];
 
