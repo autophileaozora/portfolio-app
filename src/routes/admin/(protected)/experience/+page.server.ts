@@ -1,6 +1,7 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { friendlyDbError } from '$lib/server/adminErrors';
-import { reorderRow, compactAfterDelete } from '$lib/server/ranked';
+import { reorderRow, compactAfterDelete, nextDisplayOrder } from '$lib/server/ranked';
+import { bulkExperienceSchema } from '$lib/validation/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
@@ -46,5 +47,26 @@ export const actions: Actions = {
 		if (error) return fail(400, { error: friendlyDbError(error) });
 
 		return { success: true };
+	},
+
+	// Experience's doc-import supports adding SEVERAL entries at once from
+	// one document (per the user's explicit follow-up request), unlike the
+	// single-record import on the Tambah/Edit form — each parsed entry gets
+	// the next sequential display_order, no image_url (bulk import never
+	// touches images).
+	bulkImport: async ({ request, locals: { supabase } }) => {
+		const formData = await request.formData();
+		const parsed = bulkExperienceSchema.safeParse(formData.get('entries_json'));
+		if (!parsed.success) {
+			return fail(400, { error: parsed.error.flatten().formErrors[0] ?? 'Data tidak valid.' });
+		}
+
+		const startOrder = await nextDisplayOrder(supabase, 'experience');
+		const rows = parsed.data.map((entry, i) => ({ ...entry, display_order: startOrder + i }));
+
+		const { error } = await supabase.from('experience').insert(rows);
+		if (error) return fail(400, { error: friendlyDbError(error) });
+
+		redirect(303, `/admin/experience?bulkAdded=${rows.length}`);
 	}
 };

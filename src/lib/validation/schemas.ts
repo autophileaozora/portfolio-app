@@ -46,6 +46,29 @@ export const experienceSchema = z.object({
 	image_url: nullableText(500)
 });
 
+/**
+ * Experience's bulk doc-import (see DocImportBox.svelte + parseExperienceBulkDoc)
+ * submits every parsed entry at once as a JSON array in a hidden input,
+ * same pattern as bulkSkillNamesSchema/contributorsListSchema. No
+ * image_url here — bulk import never touches images, same reasoning as
+ * Projects' doc-import (images always stay a manual upload step).
+ */
+const bulkExperienceRecordSchema = z.object({
+	role_title: z.string().trim().min(1, 'Jabatan wajib diisi.').max(120),
+	role_type: z.enum(['', ...ROLE_TYPE_OPTIONS]).optional().default(''),
+	company_name: z.string().trim().max(120).optional().default(''),
+	date_start: nullableDate(),
+	date_end: nullableDate()
+});
+export const bulkExperienceSchema = z.preprocess((v) => {
+	if (typeof v !== 'string') return v;
+	try {
+		return JSON.parse(v);
+	} catch {
+		return [];
+	}
+}, z.array(bulkExperienceRecordSchema).min(1, 'Tidak ada experience untuk ditambahkan.').max(50));
+
 export const testimonialSchema = z.object({
 	author_name: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
 	author_role: z.string().trim().max(120).optional().default(''),

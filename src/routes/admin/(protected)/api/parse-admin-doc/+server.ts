@@ -2,6 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import { extractDocText } from '$lib/server/extractDocText';
 import {
 	parseExperienceDoc,
+	parseExperienceBulkDoc,
 	parseTestimonialDoc,
 	parseStatDoc,
 	parseProfileDoc,
@@ -11,14 +12,17 @@ import type { RequestHandler } from './$types';
 
 /**
  * Generic sibling of /admin/api/parse-project-doc, for every resource
- * that isn't Projects — Experience/Testimonials/Stats/Profile each parse
- * to one flat record, Skills parses to a bulk list of names. Same
- * upload-then-parse shape: the client already uploaded the doc to Storage
- * via a signed URL (folder 'imports'), this endpoint fetches it server-
- * to-server and returns the extracted fields.
+ * that isn't Projects — Testimonials/Stats/Profile each parse to one flat
+ * record, Skills parses to a bulk list of names, Experience supports
+ * both: `experience` (one record, used by the Tambah/Edit form) and
+ * `experience-bulk` (many records from one document, used by the list
+ * page's bulk-import). Same upload-then-parse shape: the client already
+ * uploaded the doc to Storage via a signed URL (folder 'imports'), this
+ * endpoint fetches it server-to-server and returns the extracted fields.
  */
 const PARSERS = {
 	experience: parseExperienceDoc,
+	'experience-bulk': parseExperienceBulkDoc,
 	testimonials: parseTestimonialDoc,
 	stats: parseStatDoc,
 	profile: parseProfileDoc,
