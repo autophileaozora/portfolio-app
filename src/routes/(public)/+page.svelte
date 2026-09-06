@@ -215,15 +215,25 @@
 					if (entry.isIntersecting && !animated) {
 						animated = true;
 						stats.forEach((stat, i) => {
-							let current = 0;
+							// Fixed step count rather than "+1 per tick" — a
+							// decimal target (e.g. 2.8 years) needs fractional
+							// increments to animate smoothly instead of
+							// counting 1, 2, 3 and only snapping down to 2.8
+							// on the very last frame.
 							const duration = 1500;
-							const stepTime = Math.abs(Math.floor(duration / stat.target));
+							const steps = 30;
+							const stepTime = Math.max(16, Math.floor(duration / steps));
+							const increment = stat.target / steps;
+							let current = 0;
+							let tick = 0;
 							const timer = setInterval(() => {
-								current += 1;
-								statValues[i] = current;
-								if (current >= stat.target) {
+								tick += 1;
+								current += increment;
+								if (tick >= steps || current >= stat.target) {
 									statValues[i] = stat.target;
 									clearInterval(timer);
+								} else {
+									statValues[i] = Math.round(current * 10) / 10;
 								}
 							}, stepTime);
 							timers.push(timer);

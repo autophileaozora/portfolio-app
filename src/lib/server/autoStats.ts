@@ -32,17 +32,21 @@ const AUTO_STAT_ROWS = {
 type AutoStatKey = keyof typeof AUTO_STAT_ROWS;
 
 /**
- * Whole months between two dates (end defaults to "now" for an ongoing
- * role with no date_end) — same month-counting logic as
- * lib/utils/formatDuration.js, used per-experience-row here instead of
- * for a single project's display string.
+ * Calendar months an experience entry TOUCHES, inclusive of both the
+ * start and end month (end defaults to "now" for an ongoing role with no
+ * date_end) — e.g. Jan 1 to Mar 31 is 3 months (Jan, Feb, Mar), not 2;
+ * an 8-day stint entirely within one month is still 1 month, never 0.
+ * Deliberately different from lib/utils/formatDuration.js's exact-elapsed-
+ * time math (used elsewhere for a single project's "X months ago" style
+ * display) — the user's own read on their work history is "how many
+ * calendar months was I there", not a precise day-count, and rounding a
+ * short real stint down to 0 read as data being silently thrown away.
  */
-function monthsBetween(start: string, end: string | null) {
+function monthsTouched(start: string, end: string | null) {
 	const startDate = new Date(start);
 	const endDate = end ? new Date(end) : new Date();
-	let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-	if (endDate.getDate() < startDate.getDate()) months -= 1;
-	return Math.max(0, months);
+	const months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth()) + 1;
+	return Math.max(1, months);
 }
 
 async function computeAutoStatValues(supabase: SupabaseClient<Database>): Promise<Record<AutoStatKey, number>> {
@@ -66,12 +70,15 @@ async function computeAutoStatValues(supabase: SupabaseClient<Database>): Promis
 	// Per the user's explicit choice: sum each experience entry's OWN
 	// duration in months (not the span from the earliest start to now,
 	// which overcounts if there were gaps between jobs, or undercounts
-	// concurrent/overlapping roles), then convert the total to years.
+	// concurrent/overlapping roles), then convert the total to years —
+	// kept to 1 decimal place ("jangan bulat", don't round to a whole
+	// number) rather than floored/rounded to an integer like the other 3
+	// auto-tracked stats.
 	const totalMonths = (experienceRes.data ?? []).reduce(
-		(sum, e) => (e.date_start ? sum + monthsBetween(e.date_start, e.date_end) : sum),
+		(sum, e) => (e.date_start ? sum + monthsTouched(e.date_start, e.date_end) : sum),
 		0
 	);
-	const yearsInIt = Math.floor(totalMonths / 12);
+	const yearsInIt = Math.round((totalMonths / 12) * 10) / 10;
 
 	return {
 		years_in_it: yearsInIt,

@@ -32,7 +32,10 @@ export const bulkSkillNamesSchema = z.preprocess((v) => {
 
 export const statSchema = z.object({
 	label: z.string().trim().min(1, 'Label wajib diisi.').max(80),
-	value: z.coerce.number().int().min(0, 'Value tidak boleh negatif.')
+	// Not .int() — "Years in IT Fields" is auto-computed to 1 decimal place
+	// (see lib/server/autoStats.ts), and a manual edit on any stat should
+	// accept the same range the auto-computed ones can land on.
+	value: z.coerce.number().min(0, 'Value tidak boleh negatif.')
 });
 
 export const ROLE_TYPE_OPTIONS = ['Full-time', 'Part-time', 'Internship', 'Freelance', 'Project-based', 'Volunteer'];
