@@ -24,6 +24,7 @@
 	"dependencies": {
 		"@supabase/ssr": "^0.12.6",
 		"@supabase/supabase-js": "^2.115.0",
+		"dommatrix": "^0.1.1",
 		"mammoth": "^1.12.2",
 		"pdfjs-dist": "^5.4.296",
 		"three": "^0.185.1",

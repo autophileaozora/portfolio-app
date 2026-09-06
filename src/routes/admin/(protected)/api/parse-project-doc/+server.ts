@@ -1,5 +1,6 @@
 import { error, json } from '@sveltejs/kit';
 import mammoth from 'mammoth';
+import DOMMatrixPolyfill from 'dommatrix';
 import { parseProjectDoc } from '$lib/server/parseProjectDoc';
 import type { RequestHandler } from './$types';
 
@@ -12,7 +13,19 @@ import type { RequestHandler } from './$types';
  * mismatch). pdfjs-dist only reaches for that same native package lazily,
  * wrapped in its own try/catch, and only for canvas-rendering APIs this
  * text-only path never calls.
+ *
+ * pdfjs-dist's legacy build still has a bare `new DOMMatrix()` at its own
+ * module top level (used for internal transform math), which throws
+ * "DOMMatrix is not defined" the instant the module is imported in plain
+ * Node — it normally expects either a real browser DOM or that same
+ * canvas package to supply one. `dommatrix` is a tiny dependency-free
+ * pure-JS shim for exactly this, so it's set on `globalThis` once, before
+ * pdfjs-dist is ever imported, without pulling any native code back in.
  */
+if (typeof globalThis.DOMMatrix === 'undefined') {
+	globalThis.DOMMatrix = DOMMatrixPolyfill;
+}
+
 async function extractPdfText(buffer: Buffer): Promise<string> {
 	const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
 	const doc = await getDocument({
