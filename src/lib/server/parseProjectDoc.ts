@@ -77,6 +77,30 @@ export const KNOWN_HEADING_LABELS = [
 	'dokumentasi'
 ];
 
+// Longest-first so e.g. "terafiliasi dengan" matches before the shorter
+// "terafiliasi" would (which would otherwise leave a stray "dengan" at
+// the front of the captured value).
+const SORTED_PDF_LABELS = [...KNOWN_HEADING_LABELS].sort((a, b) => b.length - a.length);
+
+/** Common "not filled in" placeholders (this template gets written by
+ *  hand, and admins reasonably write "belum dicantumkan" etc. instead of
+ *  just leaving a field's line blank) — treated as empty, not as a real
+ *  value, so e.g. "Kontributor Belum dicantumkan" doesn't become an
+ *  actual contributor named "Belum dicantumkan". */
+const PLACEHOLDER_VALUES = new Set([
+	'belum dicantumkan',
+	'belum ada',
+	'tidak ada',
+	'-',
+	'n/a',
+	'tba',
+	'tbd',
+	'kosong'
+]);
+function isPlaceholder(val: string) {
+	return PLACEHOLDER_VALUES.has(val.trim().toLowerCase());
+}
+
 function decodeEntities(s: string) {
 	return s
 		.replace(/&amp;/g, '&')
@@ -121,20 +145,39 @@ function docxToBlocks(html: string): Block[] {
 	return blocks;
 }
 
-/** A line is a heading only if it's an exact (case-insensitive) match to a
- *  known label — PDF text extraction has no bold/heading-size info to go on. */
+/**
+ * A line counts as a heading if it STARTS with one of the known labels
+ * (as a whole word — followed by a colon, whitespace, or nothing else on
+ * the line) — not only if the label is alone on its own line. In
+ * practice, most hand-written PDFs put the label and its value on the
+ * SAME line ("Judul AnyRecipe", "Kategori: web") rather than the label
+ * alone followed by the value on the next line; requiring the latter
+ * silently matched nothing at all for a document written the first way.
+ */
+function matchPdfHeading(line: string): { label: string; rest: string } | null {
+	const lower = line.toLowerCase();
+	for (const label of SORTED_PDF_LABELS) {
+		if (lower === label) return { label, rest: '' };
+		if (lower.startsWith(label + ':')) return { label, rest: line.slice(label.length + 1).trim() };
+		if (lower.startsWith(label + ' ')) return { label, rest: line.slice(label.length).trim() };
+	}
+	return null;
+}
+
 function pdfToBlocks(text: string): Block[] {
 	const blocks: Block[] = [];
 	for (const raw of text.split(/\r?\n/)) {
-		const line = raw.trim();
+		const line = raw.trim().replace(/^#+\s*/, '');
 		if (!line) continue;
-		const normalized = line
-			.toLowerCase()
-			.replace(/^#+\s*/, '')
-			.replace(/[:.#]+$/, '')
-			.trim();
-		if (normalized === 'judul' || KNOWN_HEADING_LABELS.includes(normalized)) {
-			blocks.push({ level: normalized === 'judul' ? 1 : 2, heading: normalized, headingRaw: line, paragraphs: [] });
+		const match = matchPdfHeading(line);
+		if (match) {
+			blocks.push({
+				level: match.label === 'judul' ? 1 : 2,
+				heading: match.label,
+				headingRaw: line.slice(0, match.label.length),
+				paragraphs: []
+			});
+			if (match.rest) blocks[blocks.length - 1].paragraphs.push(match.rest);
 		} else if (blocks.length) {
 			blocks[blocks.length - 1].paragraphs.push(line);
 		}
@@ -149,7 +192,18 @@ function linesOf(paragraphs: string[]) {
 		.filter(Boolean);
 }
 
-function assembleFields(blocks: Block[]): { fields: ParsedProjectFields; warnings: string[] } {
+/**
+ * .docx paragraphs (<p> tags) are genuinely separate paragraphs, so
+ * joining them with a blank line is correct. .pdf "paragraphs" are just
+ * individual extracted lines — plain word-wrap, not real paragraph
+ * breaks (there's no reliable blank-line signal to tell the two apart in
+ * flat PDF text) — so those need a plain space instead, or a normal
+ * wrapped sentence ends up looking like several separate paragraphs.
+ */
+function assembleFields(
+	blocks: Block[],
+	paraJoin: string
+): { fields: ParsedProjectFields; warnings: string[] } {
 	const fields: ParsedProjectFields = {
 		title: '',
 		short_description: '',
@@ -177,44 +231,49 @@ function assembleFields(blocks: Block[]): { fields: ParsedProjectFields; warning
 		} else if (h in SINGLE_LINE_FIELDS) {
 			const key = SINGLE_LINE_FIELDS[h];
 			const val = (b.paragraphs[0] ?? '').trim();
-			if (key === 'category') {
+			if (!val || isPlaceholder(val)) {
+				// left blank on purpose (or explicitly marked "belum
+				// dicantumkan" etc.) — nothing to assign, nothing to warn about.
+			} else if (key === 'category') {
 				const norm = val.toLowerCase();
 				if (['web', 'app', 'design'].includes(norm)) fields.category = norm;
-				else if (val) warnings.push(`Kategori "${val}" tidak dikenali (harus web/app/design) — dikosongkan.`);
+				else warnings.push(`Kategori "${val}" tidak dikenali (harus web/app/design) — dikosongkan.`);
 			} else if (key === 'date_start' || key === 'date_end') {
 				if (/^\d{4}-\d{2}-\d{2}$/.test(val)) fields[key] = val;
-				else if (val) warnings.push(`"${b.headingRaw}" bernilai "${val}", harus format YYYY-MM-DD — dikosongkan.`);
+				else warnings.push(`"${b.headingRaw}" bernilai "${val}", harus format YYYY-MM-DD — dikosongkan.`);
 			} else {
 				(fields[key] as string) = val;
 			}
 		} else if (h in MULTI_LINE_FIELDS) {
-			(fields[MULTI_LINE_FIELDS[h]] as string) = b.paragraphs.join('\n\n').trim();
+			const val = b.paragraphs.join(paraJoin).trim();
+			if (val && !isPlaceholder(val)) (fields[MULTI_LINE_FIELDS[h]] as string) = val;
 		} else if (h === 'kontributor') {
 			for (const line of linesOf(b.paragraphs)) {
+				if (isPlaceholder(line)) continue;
 				const m = line.match(/^(.*?)(?:\s*\((https?:\/\/[^\s)]+)\))?$/);
 				const name = (m?.[1] ?? line).trim();
-				if (name) fields.contributors.push({ name, url: m?.[2] ?? '' });
+				if (name && !isPlaceholder(name)) fields.contributors.push({ name, url: m?.[2] ?? '' });
 			}
 		} else if (h === 'tags') {
 			const raw = linesOf(b.paragraphs).join(',');
 			fields.tags = raw
 				.split(',')
 				.map((t) => t.trim())
-				.filter(Boolean);
+				.filter((t) => t && !isPlaceholder(t));
 		} else if (h in SECTION_HEADINGS) {
-			const content = b.paragraphs.join('\n\n').trim();
-			if (content) fields.sections.push({ type: SECTION_HEADINGS[h], title: '', content });
+			const content = b.paragraphs.join(paraJoin).trim();
+			if (content && !isPlaceholder(content)) fields.sections.push({ type: SECTION_HEADINGS[h], title: '', content });
 		} else if (h === 'dokumentasi') {
 			let j = i + 1;
 			let foundSubSlides = false;
 			while (j < blocks.length && blocks[j].level === 3) {
-				const content = blocks[j].paragraphs.join('\n\n').trim();
+				const content = blocks[j].paragraphs.join(paraJoin).trim();
 				fields.sections.push({ type: 'documentation', title: blocks[j].headingRaw, content });
 				foundSubSlides = true;
 				j++;
 			}
 			if (!foundSubSlides) {
-				const content = b.paragraphs.join('\n\n').trim();
+				const content = b.paragraphs.join(paraJoin).trim();
 				if (content) fields.sections.push({ type: 'documentation', title: '', content });
 			}
 			i = j - 1;
@@ -230,6 +289,6 @@ function assembleFields(blocks: Block[]): { fields: ParsedProjectFields; warning
 }
 
 export function parseProjectDoc(input: { html?: string; plainText?: string }) {
-	const blocks = input.html ? docxToBlocks(input.html) : pdfToBlocks(input.plainText ?? '');
-	return assembleFields(blocks);
+	if (input.html) return assembleFields(docxToBlocks(input.html), '\n\n');
+	return assembleFields(pdfToBlocks(input.plainText ?? ''), ' ');
 }
