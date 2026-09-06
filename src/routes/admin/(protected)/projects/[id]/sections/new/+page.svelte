@@ -7,7 +7,7 @@
 		{ name: 'type', type: 'hidden', value: data.type },
 		{ name: 'title', label: 'Judul', type: 'text' },
 		{ name: 'content', label: 'Konten', type: 'textarea' },
-		{ name: 'image_url', label: 'Gambar (opsional)', type: 'file', accept: 'image/*', isImage: true }
+		{ name: 'image_url', label: 'Gambar (opsional)', type: 'file', accept: 'image/*', isImage: true, folder: 'sections' }
 	]);
 
 	let errors = $derived(

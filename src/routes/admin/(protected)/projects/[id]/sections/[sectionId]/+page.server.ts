@@ -1,7 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { sectionContentSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
-import { resolveFileField } from '$lib/server/uploads';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
@@ -24,23 +23,14 @@ export const actions: Actions = {
 	default: async ({ params, request, locals: { supabase } }) => {
 		const formData = await request.formData();
 
-		const { data: current } = await supabase
-			.from('project_sections')
-			.select('image_url')
-			.eq('id', params.sectionId)
-			.single();
-
-		let image_url: string | null;
-		try {
-			image_url = await resolveFileField(supabase, formData, 'image_url', current?.image_url ?? null, 'sections');
-		} catch (e) {
-			return fail(400, { error: e instanceof Error ? e.message : 'Upload gagal.' });
-		}
-
+		// image_url arrives pre-resolved to a public URL string — the browser
+		// either uploads a new file directly to Supabase Storage before
+		// submitting, or leaves the existing URL untouched (see
+		// AdminForm.svelte), so there's no File/fallback logic here.
 		const raw = {
 			title: formData.get('title'),
 			content: formData.get('content'),
-			image_url
+			image_url: formData.get('image_url')
 		};
 
 		const parsed = sectionContentSchema.safeParse(raw);

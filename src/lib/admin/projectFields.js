@@ -32,7 +32,7 @@ export const projectFields = [
 	{ name: 'date_start', label: 'Tanggal mulai', type: 'date' },
 	{ name: 'date_end', label: 'Tanggal selesai', type: 'date' },
 	{ name: 'live_url', label: 'Live URL', type: 'text' },
-	{ name: 'thumbnail_url', label: 'Thumbnail', type: 'file', accept: 'image/*', isImage: true },
+	{ name: 'thumbnail_url', label: 'Thumbnail', type: 'file', accept: 'image/*', isImage: true, folder: 'thumbnails' },
 	{ name: 'tags', label: 'Tags (pisahkan dengan koma)', type: 'text' },
 	{
 		name: 'meta_title',
@@ -57,17 +57,24 @@ export const projectAdminOnlyFields = [
  * project, instead of forcing a trip to "Kelola Sections" afterward. Only
  * on the new-project form — a project already has "Kelola Sections" for
  * this once it exists, so there's no need to duplicate it on the edit form.
- * See projects/new/+page.server.ts for how each row (incl. its per-row
- * image upload) gets inserted.
+ * See projects/new/+page.server.ts for how each row gets inserted — each
+ * row's image is uploaded client-side (see AdminForm.svelte) before
+ * submit, so `image_url` arrives as a plain public URL like any other
+ * field, not a file.
  */
 export const newProjectSectionsField = {
 	name: 'sections',
 	label: 'Sections (Problem / Solution / Result / Dokumentasi)',
 	type: 'repeater',
 	itemFields: [
-		{ name: 'type', label: 'Tipe', type: 'select', options: SECTION_TYPES.map((t) => ({ value: t, label: SECTION_TYPE_LABELS[t] })) },
+		{
+			name: 'type',
+			label: 'Tipe',
+			type: 'select',
+			options: SECTION_TYPES.map((t) => ({ value: t, label: SECTION_TYPE_LABELS[t] }))
+		},
 		{ name: 'title', label: 'Judul' },
 		{ name: 'content', label: 'Konten' },
-		{ name: 'image_file', label: 'Gambar (opsional)', type: 'file', accept: 'image/*' }
+		{ name: 'image_url', label: 'Gambar (opsional)', type: 'file', accept: 'image/*', folder: 'sections' }
 	]
 };

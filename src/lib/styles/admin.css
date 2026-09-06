@@ -292,6 +292,11 @@
 	font-size: 0.78rem;
 }
 
+.upload-status {
+	font-size: 0.78rem;
+	color: #4b7bec;
+}
+
 .form-error-banner {
 	padding: 0.6rem 0.75rem;
 	margin: 0 0 1rem;

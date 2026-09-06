@@ -1,5 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
+	import { PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
 
 	/**
 	 * fields: [{
@@ -11,24 +12,27 @@
 	 *               // still accepted), for lists expected to grow over time.
 	 *   accept,     // 'file' only: <input accept=""> filter, e.g. 'image/*'
 	 *   isImage,    // 'file' only: preview as <img> instead of a plain link
+	 *   folder,     // 'file' only: which Supabase Storage folder to upload into
+	 *               // (see the upload-url endpoint's ALLOWED_FOLDERS)
 	 *   value,      // 'hidden' only: fixed value, not sourced from `values`
-	 *   itemFields  // 'repeater' only: [{ name, label, type?, options?, accept? }]
+	 *   itemFields  // 'repeater' only: [{ name, label, type?, options?, accept?, folder? }]
 	 *               // — one input per sub-field per row, defaulting to a plain
 	 *               // text input; itemField.type 'select' renders a dropdown
 	 *               // (itemField.options, same shape as a top-level select),
-	 *               // itemField.type 'file' renders a per-row file input.
-	 *               // Text/select sub-fields serialize into one JSON string in
-	 *               // a hidden input named `field.name` (see
-	 *               // contributorsListSchema for the pattern this pairs with).
-	 *               // A 'file' sub-field can't travel through that JSON, so
-	 *               // it's submitted as its own field named
-	 *               // `${field.name}__${row's stable id}__${itemField.name}`
-	 *               // — the row's id also rides along inside the JSON as
-	 *               // `_rowId` so the action can match the two back up.
+	 *               // itemField.type 'file' renders a per-row file input whose
+	 *               // *uploaded URL* (not the file itself) becomes row[itemField.name].
 	 * }]
 	 * values/errors come from the +page.server.ts load (values) and form action
-	 * fail() payload (errors), keyed by field name. multipart is always on so
-	 * 'file' fields work — harmless for plain fields too.
+	 * fail() payload (errors), keyed by field name.
+	 *
+	 * File fields never actually submit a file to the form action. Vercel's
+	 * Serverless Functions cap request bodies at 4.5MB — fine for one small
+	 * photo, but easy to blow past with a real thumbnail plus several section
+	 * images in one submission. So the moment a file is chosen, it's uploaded
+	 * straight to Supabase Storage via a signed URL (see the upload-url
+	 * endpoint), and only the resulting public URL — a plain string — ends up
+	 * in the field that actually gets submitted. The <input type="file"> itself
+	 * is never given a `name`, so it's inert as far as the form POST goes.
 	 */
 	let {
 		fields,
@@ -47,6 +51,55 @@
 	}
 	function optionLabel(opt) {
 		return typeof opt === 'string' ? opt : opt.label;
+	}
+
+	// ---- direct-to-storage upload ----
+	async function uploadViaSignedUrl(file, folder) {
+		const res = await fetch('/admin/api/upload-url', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ folder, filename: file.name })
+		});
+		if (!res.ok) throw new Error('Gagal menyiapkan upload.');
+		const { signedUrl, publicUrl } = await res.json();
+
+		const putRes = await fetch(signedUrl, {
+			method: 'PUT',
+			headers: {
+				apikey: PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+				authorization: `Bearer ${PUBLIC_SUPABASE_PUBLISHABLE_KEY}`,
+				'content-type': file.type || 'application/octet-stream',
+				'x-upsert': 'true'
+			},
+			body: file
+		});
+		if (!putRes.ok) throw new Error('Gagal mengunggah file.');
+		return publicUrl;
+	}
+
+	// ---- top-level file field state ----
+	let fileState = $state(
+		Object.fromEntries(
+			fields
+				.filter((f) => f.type === 'file')
+				.map((f) => [f.name, { uploading: false, error: '', url: values[f.name] ?? '' }])
+		)
+	);
+
+	async function onTopLevelFileChange(field, e) {
+		const file = e.currentTarget.files?.[0];
+		if (!file) return;
+		fileState[field.name] = { ...fileState[field.name], uploading: true, error: '' };
+		try {
+			const url = await uploadViaSignedUrl(file, field.folder);
+			fileState[field.name] = { uploading: false, error: '', url };
+		} catch (err) {
+			fileState[field.name] = {
+				...fileState[field.name],
+				uploading: false,
+				error: err instanceof Error ? err.message : 'Upload gagal.'
+			};
+		}
 	}
 
 	// ---- repeater state ----
@@ -86,17 +139,33 @@
 		repeaterRows[fieldName] = repeaterRows[fieldName].filter((_, i) => i !== index);
 	}
 	function repeaterJson(fieldName) {
-		return JSON.stringify(repeaterRows[fieldName].map(({ __id, ...rest }) => ({ ...rest, _rowId: __id })));
+		return JSON.stringify(
+			repeaterRows[fieldName].map(({ __id, __uploading, __uploadError, ...rest }) => ({ ...rest, _rowId: __id }))
+		);
 	}
-	function repeaterFileFieldName(field, row, itemField) {
-		return `${field.name}__${row.__id}__${itemField.name}`;
+	async function onRepeaterFileChange(row, itemField, e) {
+		const file = e.currentTarget.files?.[0];
+		if (!file) return;
+		row.__uploading = true;
+		row.__uploadError = '';
+		try {
+			row[itemField.name] = await uploadViaSignedUrl(file, itemField.folder);
+		} catch (err) {
+			row.__uploadError = err instanceof Error ? err.message : 'Upload gagal.';
+		} finally {
+			row.__uploading = false;
+		}
 	}
+
+	let anyUploading = $derived(
+		Object.values(fileState).some((s) => s.uploading) ||
+			Object.values(repeaterRows).some((rows) => rows.some((r) => r.__uploading))
+	);
 </script>
 
 <form
 	class="admin-form"
 	method="POST"
-	enctype="multipart/form-data"
 	use:enhance={() => {
 		submitting = true;
 		return async ({ update }) => {
@@ -136,9 +205,16 @@
 									<span class="repeater-file-label">{itemField.label}</span>
 									<input
 										type="file"
-										name={repeaterFileFieldName(field, row, itemField)}
 										accept={itemField.accept}
+										onchange={(e) => onRepeaterFileChange(row, itemField, e)}
 									/>
+									{#if row.__uploading}
+										<span class="upload-status">Mengunggah...</span>
+									{:else if row.__uploadError}
+										<span class="field-error">{row.__uploadError}</span>
+									{:else if row[itemField.name]}
+										<span class="upload-status">✓ Terunggah</span>
+									{/if}
 								</span>
 							{:else}
 								<input type="text" placeholder={itemField.label} bind:value={row[itemField.name]} />
@@ -204,13 +280,19 @@
 						{/each}
 					</datalist>
 				{:else if field.type === 'file'}
-					<input type="file" name={field.name} accept={field.accept} />
-					{#if values[field.name]}
+					<input type="file" accept={field.accept} onchange={(e) => onTopLevelFileChange(field, e)} />
+					<input type="hidden" name={field.name} value={fileState[field.name]?.url ?? ''} />
+					{#if fileState[field.name]?.uploading}
+						<span class="upload-status">Mengunggah...</span>
+					{:else if fileState[field.name]?.error}
+						<span class="field-error">{fileState[field.name].error}</span>
+					{/if}
+					{#if fileState[field.name]?.url}
 						<div class="current-file-preview">
 							{#if field.isImage}
-								<img src={values[field.name]} alt="File saat ini" />
+								<img src={fileState[field.name].url} alt="File saat ini" />
 							{:else}
-								<a href={values[field.name]} target="_blank" rel="noopener noreferrer">Lihat file saat ini</a>
+								<a href={fileState[field.name].url} target="_blank" rel="noopener noreferrer">Lihat file saat ini</a>
 							{/if}
 						</div>
 					{/if}
@@ -225,8 +307,14 @@
 	{/each}
 
 	<div class="form-actions">
-		<button type="submit" class="btn-primary" disabled={submitting}>
-			{submitting ? 'Menyimpan...' : submitLabel}
+		<button type="submit" class="btn-primary" disabled={submitting || anyUploading}>
+			{#if anyUploading}
+				Menunggu upload selesai...
+			{:else if submitting}
+				Menyimpan...
+			{:else}
+				{submitLabel}
+			{/if}
 		</button>
 		<a class="btn-secondary" href={cancelHref}>Batal</a>
 	</div>
