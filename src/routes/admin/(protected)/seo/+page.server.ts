@@ -87,6 +87,12 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const goalClicks = rows.filter((r) => r.event_type === 'click' && metaValue(r.metadata, 'goal'));
 	const goalCounts = topN(goalClicks, (r) => String(metaValue(r.metadata, 'goal') ?? ''), 10);
 
+	// Klik per jenis elemen (link/button/image) — tagged client-side by
+	// AnalyticsTracker.svelte's onClick, including bare <img> clicks that
+	// aren't inside any link/button at all.
+	const clickEvents = rows.filter((r) => r.event_type === 'click');
+	const elementTypeCounts = topN(clickEvents, (r) => String(metaValue(r.metadata, 'element_type') ?? 'lainnya'), 10);
+
 	// Core Web Vitals (LCP/CLS) — real Google ranking factors, averaged
 	// across whatever pageloads reported them.
 	const webVitalRows = rows.filter((r) => r.event_type === 'web_vital');
@@ -127,6 +133,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		topBrowsers: topN(rows, (r) => r.browser),
 		topDevices: topN(rows, (r) => r.device_type),
 		topGoals: goalCounts,
+		topClickTypes: elementTypeCounts,
 		topNotFound: topN(
 			rows.filter((r) => r.event_type === 'not_found'),
 			(r) => r.path
@@ -137,6 +144,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		recent: rows.slice(0, 50).map((r) => ({
 			...r,
 			goal: r.event_type === 'click' ? (metaValue(r.metadata, 'goal') as string | undefined) : undefined,
+			elementType: r.event_type === 'click' ? (metaValue(r.metadata, 'element_type') as string | undefined) : undefined,
 			webVitalMetric: r.event_type === 'web_vital' ? (metaValue(r.metadata, 'metric') as string | undefined) : undefined,
 			webVitalValue:
 				r.event_type === 'web_vital'

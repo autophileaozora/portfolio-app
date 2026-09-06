@@ -54,6 +54,12 @@
 		web_vital: 'Web Vital',
 		not_found: '404'
 	};
+	const CLICK_TYPE_LABELS = {
+		link: 'Link',
+		button: 'Tombol',
+		image: 'Gambar',
+		lainnya: 'Lainnya'
+	};
 	const GOAL_LABELS = {
 		cv_download: 'Download CV',
 		resume_download: 'Download Resume',
@@ -169,6 +175,16 @@
 				{/each}
 			</div>
 			<div class="analytics-list">
+				<h3>Klik per Jenis Elemen</h3>
+				{#each data.analytics.topClickTypes as row (row.label)}
+					<div class="analytics-list-row">
+						<span>{CLICK_TYPE_LABELS[row.label] ?? row.label}</span><b>{row.count}</b>
+					</div>
+				{:else}
+					<p class="repeater-empty">Belum ada.</p>
+				{/each}
+			</div>
+			<div class="analytics-list">
 				<h3>Goal Tercapai</h3>
 				{#each data.analytics.topGoals as row (row.label)}
 					<div class="analytics-list-row"><span>{GOAL_LABELS[row.label] ?? row.label}</span><b>{row.count}</b></div>
@@ -263,7 +279,9 @@
 										scroll {ev.scroll_percent}%
 									{:else if ev.event_type === 'click' && ev.goal}
 										🎯 {GOAL_LABELS[ev.goal] ?? ev.goal} — {ev.label ?? '—'}
-									{:else if ev.event_type === 'click' || ev.event_type === 'error' || ev.event_type === 'not_found'}
+									{:else if ev.event_type === 'click'}
+										[{CLICK_TYPE_LABELS[ev.elementType] ?? ev.elementType ?? '—'}] {ev.label ?? '—'}
+									{:else if ev.event_type === 'error' || ev.event_type === 'not_found'}
 										{ev.label ?? '—'}
 									{:else if ev.event_type === 'web_vital'}
 										{ev.webVitalMetric}: {ev.webVitalValue ?? '—'}

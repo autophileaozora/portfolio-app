@@ -131,14 +131,31 @@
 	}
 
 	function onClick(e) {
-		const target = e.target.closest?.('a, button');
+		// The interactive ancestor (a/button) is what functionally matters
+		// for navigation/goal purposes — but the click may have actually
+		// landed ON an <img> nested inside one (e.g. a project thumbnail
+		// wrapped in a link), or on a bare <img> with no link/button at all
+		// (nothing "happens", but it's still a real signal someone was
+		// interested in that image). Both cases get recorded; a bare image
+		// just has no `goal` and its own element_type.
+		const interactiveEl = e.target.closest?.('a, button');
+		const imgEl = e.target.closest?.('img');
+		const target = interactiveEl || imgEl;
 		if (!target) return;
-		const label = (target.textContent || target.getAttribute('aria-label') || target.href || '')
-			.trim()
-			.replace(/\s+/g, ' ')
-			.slice(0, 120);
-		const goal = detectGoal(target);
-		send('click', goal ? { label, metadata: { goal } } : { label });
+
+		const elementType = interactiveEl ? (interactiveEl.tagName === 'A' ? 'link' : 'button') : 'image';
+
+		let label = '';
+		if (imgEl && imgEl !== interactiveEl) {
+			label = imgEl.getAttribute('alt') || imgEl.currentSrc || imgEl.src || '';
+		}
+		if (!label) {
+			label = target.textContent || target.getAttribute('aria-label') || target.href || '';
+		}
+		label = label.trim().replace(/\s+/g, ' ').slice(0, 120);
+
+		const goal = interactiveEl ? detectGoal(interactiveEl) : null;
+		send('click', { label, metadata: goal ? { element_type: elementType, goal } : { element_type: elementType } });
 	}
 
 	// Lets other components report a real conversion that a click alone
