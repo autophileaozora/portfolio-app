@@ -4,8 +4,8 @@ import type { Database } from '$lib/supabase/database.types';
 /**
  * The 4 home-page stat cards are tracked automatically from real data
  * (published project count, skill count, unique contributors across all
- * published projects, and years since the earliest work experience
- * started) — see recomputeAutoStats below.
+ * published projects, and total career length summed across every work
+ * experience entry) — see recomputeAutoStats below.
  *
  * Per the user's explicit choice, these stay ordinary rows in the `stats`
  * table (still editable by hand on /admin/stats, same CRUD as any other
@@ -31,14 +31,26 @@ const AUTO_STAT_ROWS = {
 
 type AutoStatKey = keyof typeof AUTO_STAT_ROWS;
 
-const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
+/**
+ * Whole months between two dates (end defaults to "now" for an ongoing
+ * role with no date_end) — same month-counting logic as
+ * lib/utils/formatDuration.js, used per-experience-row here instead of
+ * for a single project's display string.
+ */
+function monthsBetween(start: string, end: string | null) {
+	const startDate = new Date(start);
+	const endDate = end ? new Date(end) : new Date();
+	let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+	if (endDate.getDate() < startDate.getDate()) months -= 1;
+	return Math.max(0, months);
+}
 
 async function computeAutoStatValues(supabase: SupabaseClient<Database>): Promise<Record<AutoStatKey, number>> {
 	const [projectsCountRes, skillsCountRes, contributorsRes, experienceRes] = await Promise.all([
 		supabase.from('projects').select('*', { count: 'exact', head: true }).eq('is_published', true),
 		supabase.from('skills').select('*', { count: 'exact', head: true }),
 		supabase.from('projects').select('contributors_list').eq('is_published', true),
-		supabase.from('experience').select('date_start')
+		supabase.from('experience').select('date_start, date_end')
 	]);
 
 	const uniqueContributors = new Set<string>();
@@ -51,12 +63,15 @@ async function computeAutoStatValues(supabase: SupabaseClient<Database>): Promis
 		}
 	}
 
-	const startTimes = (experienceRes.data ?? [])
-		.map((e) => e.date_start)
-		.filter((d): d is string => Boolean(d))
-		.map((d) => new Date(d).getTime())
-		.filter((t) => !Number.isNaN(t));
-	const yearsInIt = startTimes.length ? Math.max(0, Math.floor((Date.now() - Math.min(...startTimes)) / MS_PER_YEAR)) : 0;
+	// Per the user's explicit choice: sum each experience entry's OWN
+	// duration in months (not the span from the earliest start to now,
+	// which overcounts if there were gaps between jobs, or undercounts
+	// concurrent/overlapping roles), then convert the total to years.
+	const totalMonths = (experienceRes.data ?? []).reduce(
+		(sum, e) => (e.date_start ? sum + monthsBetween(e.date_start, e.date_end) : sum),
+		0
+	);
+	const yearsInIt = Math.floor(totalMonths / 12);
 
 	return {
 		years_in_it: yearsInIt,
