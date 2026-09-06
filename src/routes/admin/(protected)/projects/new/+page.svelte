@@ -172,6 +172,94 @@
 	// — this only covers the fetch() itself failing (e.g. offline).
 	let networkError = $state('');
 
+	// ---- Document import (template-based, no AI — see parseProjectDoc.ts) ----
+	let showTemplateHelp = $state(false);
+	let importState = $state({ uploading: false, error: '', warnings: [] });
+	let importedViaDoc = $state(false);
+	// Images are never extracted from the document (by design) — this stays
+	// true until every image slot the import touched has been filled by
+	// hand, then disappears on its own.
+	let missingImages = $derived(importedViaDoc && (!thumbnailState.url || sections.some((s) => !s.image_url)));
+
+	const TEMPLATE_HELP_TEXT = `Format yang didukung (heading, lalu isinya di baris berikutnya):
+
+Judul                 (di .docx: style Heading 1 / di PDF: baris "Judul")
+Deskripsi
+Kategori              -> web / app / design
+Role
+Kontributor           -> satu nama per baris, boleh + (link)
+Terafiliasi
+Tanggal Mulai         -> format YYYY-MM-DD
+Tanggal Selesai       -> format YYYY-MM-DD
+Live URL
+Tags                  -> pisahkan dengan koma
+Problem
+Solution
+Result
+Dokumentasi           -> di .docx: pakai Heading 3 per slide di bawahnya
+                          di PDF: semua isi jadi satu slide
+SEO Meta Title        (opsional)
+SEO Meta Description  (opsional)
+
+Untuk .docx: beri baris heading itu style "Heading 1/2/3" bawaan Word,
+bukan mengetik tanda #. Untuk PDF: tulis labelnya sendirian persis
+seperti di atas pada barisnya sendiri (tanpa #).
+Gambar (thumbnail & section) tidak ikut terisi otomatis — tetap upload
+manual di step "Media & SEO" / "Sections".`;
+
+	async function onImportDocChange(e) {
+		const file = e.currentTarget.files?.[0];
+		if (!file) return;
+		importState = { uploading: true, error: '', warnings: [] };
+		try {
+			const url = await uploadViaSignedUrl(file, 'imports');
+			const res = await fetch('/admin/api/parse-project-doc', {
+				method: 'POST',
+				headers: { 'content-type': 'application/json' },
+				body: JSON.stringify({ url, filename: file.name })
+			});
+			if (!res.ok) {
+				const body = await res.json().catch(() => ({}));
+				throw new Error(body.message || 'Gagal membaca dokumen.');
+			}
+			const { fields, warnings } = await res.json();
+
+			title = fields.title ?? '';
+			slugTouched = false; // let it re-derive from the newly-imported title
+			short_description = fields.short_description ?? '';
+			category = fields.category ?? '';
+			role = fields.role ?? '';
+			contributors = (fields.contributors ?? []).map((c) => ({
+				__id: crypto.randomUUID(),
+				name: c.name,
+				url: c.url
+			}));
+			associated_with = fields.associated_with ?? '';
+			date_start = fields.date_start ?? '';
+			date_end = fields.date_end ?? '';
+			live_url = fields.live_url ?? '';
+			tags = fields.tags ?? [];
+			meta_title = fields.meta_title ?? '';
+			meta_description = fields.meta_description ?? '';
+			sections = (fields.sections ?? []).map((s) => ({
+				__id: crypto.randomUUID(),
+				type: s.type,
+				title: s.title,
+				content: s.content,
+				image_url: ''
+			}));
+
+			importedViaDoc = true;
+			importState = { uploading: false, error: '', warnings };
+		} catch (err) {
+			importState = {
+				uploading: false,
+				error: err instanceof Error ? err.message : 'Gagal impor dokumen.',
+				warnings: []
+			};
+		}
+	}
+
 	function goNext() {
 		if (step < TOTAL_STEPS) {
 			direction = 1;
@@ -269,6 +357,12 @@
 	{#if form?.error || networkError}
 		<p class="form-error-banner">{form?.error || networkError}</p>
 	{/if}
+	{#if missingImages}
+		<p class="form-warning-banner">
+			⚠️ Gambar belum terisi dari dokumen (thumbnail dan/atau section) — pastikan diisi manual di step "Media &amp; SEO"
+			/ "Sections" sebelum submit.
+		</p>
+	{/if}
 
 	{#key step}
 		<div
@@ -281,6 +375,38 @@
 					<span class="wizard-step-icon"><i class="fa-solid {STEPS[0].icon}"></i></span>
 					<h2 class="wizard-step-title">Info Dasar</h2>
 				</div>
+
+				<div class="wizard-import-box">
+					<div class="wizard-import-header">
+						<i class="fa-solid fa-file-import"></i>
+						<span>Isi Otomatis dari Dokumen (opsional)</span>
+					</div>
+					<p class="wizard-step-sub">
+						Upload .docx atau PDF yang mengikuti format heading baku —
+						<button type="button" class="wizard-link-btn" onclick={() => (showTemplateHelp = !showTemplateHelp)}>
+							{showTemplateHelp ? 'sembunyikan formatnya' : 'lihat formatnya'}
+						</button>.
+					</p>
+					{#if showTemplateHelp}
+						<pre class="wizard-template-help">{TEMPLATE_HELP_TEXT}</pre>
+					{/if}
+					<input type="file" accept=".docx,.pdf" onchange={onImportDocChange} />
+					{#if importState.uploading}
+						<span class="upload-status">Membaca dokumen...</span>
+					{:else if importState.error}
+						<span class="field-error">{importState.error}</span>
+					{:else if importedViaDoc}
+						<span class="upload-status">✓ Konten berhasil diisi dari dokumen.</span>
+					{/if}
+					{#if importState.warnings.length}
+						<ul class="wizard-import-warnings">
+							{#each importState.warnings as w (w)}
+								<li>{w}</li>
+							{/each}
+						</ul>
+					{/if}
+				</div>
+
 				<label>
 					Judul
 					<input type="text" bind:value={title} />
