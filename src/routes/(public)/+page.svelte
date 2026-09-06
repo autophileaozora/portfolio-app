@@ -28,6 +28,11 @@
 				: '')
 	);
 
+	// Prefer a dedicated share image set in /admin/seo (often a designed
+	// banner rather than a face photo); fall back to the avatar.
+	let shareImage = $derived(data.seoSettings?.og_image_url || data.profile?.avatar_url || null);
+	let siteName = $derived(data.seoSettings?.site_name || data.profile?.full_name || undefined);
+
 	let socialLinks = $derived(
 		[data.profile?.social_linkedin, data.profile?.social_github, data.profile?.social_instagram].filter(
 			(url) => url && url !== 'https://github.com'
@@ -375,12 +380,13 @@
 	{#if seoDescription}<meta property="og:description" content={seoDescription} />{/if}
 	<meta property="og:url" content={data.canonicalUrl} />
 	<meta property="og:locale" content="id_ID" />
-	{#if data.profile?.avatar_url}<meta property="og:image" content={data.profile.avatar_url} />{/if}
+	{#if siteName}<meta property="og:site_name" content={siteName} />{/if}
+	{#if shareImage}<meta property="og:image" content={shareImage} />{/if}
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={seoTitle} />
 	{#if seoDescription}<meta name="twitter:description" content={seoDescription} />{/if}
-	{#if data.profile?.avatar_url}<meta name="twitter:image" content={data.profile.avatar_url} />{/if}
+	{#if shareImage}<meta name="twitter:image" content={shareImage} />{/if}
 
 	{#if data.profile?.full_name}
 		{@html jsonLdScriptTag(personJsonLd)}

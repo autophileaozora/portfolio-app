@@ -26,6 +26,11 @@
 	let seoDescription = $derived(
 		data.project.meta_description || data.project.short_description || `Project: ${data.project.title}`
 	);
+	// Prefer the project's own thumbnail; fall back to the site-wide
+	// default share image (set in /admin/seo) if the project has none —
+	// still omitted entirely (no generic placeholder) if neither is set.
+	let ogImage = $derived(data.ogImage || data.seoSettings?.og_image_url || null);
+	let siteName = $derived(data.seoSettings?.site_name || data.profile?.full_name || undefined);
 
 	function formatDateRange(start, end) {
 		const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '');
@@ -105,19 +110,20 @@
 	<meta property="og:title" content={seoTitle} />
 	<meta property="og:description" content={seoDescription} />
 	<meta property="og:url" content={data.canonicalUrl} />
-	{#if data.ogImage}<meta property="og:image" content={data.ogImage} />{/if}
+	{#if siteName}<meta property="og:site_name" content={siteName} />{/if}
+	{#if ogImage}<meta property="og:image" content={ogImage} />{/if}
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={seoTitle} />
 	<meta name="twitter:description" content={seoDescription} />
-	{#if data.ogImage}<meta name="twitter:image" content={data.ogImage} />{/if}
+	{#if ogImage}<meta name="twitter:image" content={ogImage} />{/if}
 
 	{@html jsonLdScriptTag({
 		'@context': 'https://schema.org',
 		'@type': 'CreativeWork',
 		name: data.project.title,
 		description: seoDescription,
-		image: data.ogImage ?? undefined,
+		image: ogImage ?? undefined,
 		url: data.canonicalUrl,
 		author: data.profile?.full_name ? { '@type': 'Person', name: data.profile.full_name } : undefined,
 		datePublished: data.project.date_start ?? undefined,
@@ -125,6 +131,7 @@
 	})}
 </svelte:head>
 
+<main>
 <div class="container">
 	<header class="hero" id="home">
 		<div class="meta-row">
@@ -207,7 +214,14 @@
 <section class="carousel-section" id="project">
 	<div class="carousel-dots">
 		{#each docSlides.slice(0, 3) as _, idx}
-			<div class="dot" class:active={idx === activeDotIndex()} onclick={() => onDotClick(idx)}></div>
+			<button
+				type="button"
+				class="dot"
+				class:active={idx === activeDotIndex()}
+				aria-label="Lihat slide dokumentasi {idx + 1}"
+				aria-current={idx === activeDotIndex()}
+				onclick={() => onDotClick(idx)}
+			></button>
 		{/each}
 	</div>
 
@@ -286,6 +300,7 @@
 		</div>
 	</div>
 </section>
+</main>
 
 <style>
 	.contributor-link {

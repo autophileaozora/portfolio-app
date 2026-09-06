@@ -12,6 +12,7 @@
 		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', available: true },
 		{ href: '/admin/stats', label: 'Stats', icon: 'fa-chart-simple', available: true },
 		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user', available: true },
+		{ href: '/admin/seo', label: 'SEO', icon: 'fa-magnifying-glass-chart', available: true },
 		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: true },
 		{ href: '/admin/edit-requests', label: 'Edit Requests', icon: 'fa-pen-to-square', available: true }
 	];

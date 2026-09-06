@@ -2,7 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
 const BUCKET = 'public-assets';
-const ALLOWED_FOLDERS = ['thumbnails', 'sections', 'experience', 'avatars', 'documents', 'imports'];
+const ALLOWED_FOLDERS = ['thumbnails', 'sections', 'experience', 'avatars', 'documents', 'imports', 'branding'];
 
 /**
  * Issues a signed Supabase Storage upload URL so the browser can PUT a

@@ -17,6 +17,8 @@
 			? `Kumpulan project ${data.profile.full_name} sebagai Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ''}.`
 			: ''
 	);
+	let shareImage = $derived(data.seoSettings?.og_image_url || data.profile?.avatar_url || null);
+	let siteName = $derived(data.seoSettings?.site_name || data.profile?.full_name || undefined);
 
 	// --- Floating filter bar (ported from projects/main.js initFloatFilterBar) ---
 	let floatBarEl;
@@ -130,20 +132,28 @@
 	{#if seoDescription}<meta property="og:description" content={seoDescription} />{/if}
 	<meta property="og:url" content={data.canonicalUrl} />
 	<meta property="og:locale" content="id_ID" />
+	{#if siteName}<meta property="og:site_name" content={siteName} />{/if}
+	{#if shareImage}<meta property="og:image" content={shareImage} />{/if}
 
-	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:card" content={shareImage ? 'summary_large_image' : 'summary'} />
 	<meta name="twitter:title" content={seoTitle} />
 	{#if seoDescription}<meta name="twitter:description" content={seoDescription} />{/if}
+	{#if shareImage}<meta name="twitter:image" content={shareImage} />{/if}
 
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </svelte:head>
 
 <header class="site-header">
 	<div class="hero-wrap" id="home">
+		<!-- Purely decorative animated background — the actual page topic
+		     still needs a real, crawlable <h1> for SEO/screen readers, just
+		     not rendered visually on top of the animation. -->
+		<h1 class="sr-only">{seoTitle}</h1>
 		<VantaRingsBackground />
 	</div>
 </header>
 
+<main>
 <section class="projects-section" id="project" bind:this={projectsSectionEl}>
 	<section class="cards-grid-container">
 		{#each cards as card}
@@ -192,40 +202,33 @@
 
 	{#if pages.length > 1}
 		<div class="pagination-container">
-			<a
-				href="#"
+			<button
+				type="button"
 				class="page-link page-prev"
 				aria-label="Previous page"
-				aria-disabled={activePage === 1}
-				onclick={(e) => {
-					e.preventDefault();
+				disabled={activePage === 1}
+				onclick={() => {
 					if (activePage > 1) activePage -= 1;
-				}}><span class="page-link-text">Prev</span></a
+				}}><span class="page-link-text">Prev</span></button
 			>
 			{#each pages as p}
-				<a
-					href="#"
-					class="page-link"
-					class:active={p === activePage}
-					onclick={(e) => {
-						e.preventDefault();
-						activePage = p;
-					}}>{p}</a
+				<button type="button" class="page-link" class:active={p === activePage} onclick={() => (activePage = p)}
+					>{p}</button
 				>
 			{/each}
-			<a
-				href="#"
+			<button
+				type="button"
 				class="page-link page-next"
 				aria-label="Next page"
-				aria-disabled={activePage === totalPages}
-				onclick={(e) => {
-					e.preventDefault();
+				disabled={activePage === totalPages}
+				onclick={() => {
 					if (activePage < totalPages) activePage += 1;
-				}}><span class="page-link-text">Next</span></a
+				}}><span class="page-link-text">Next</span></button
 			>
 		</div>
 	{/if}
 </section>
+</main>
 
 <!-- Floating Filter Bar -->
 <div class="float-filter-bar" class:show={barVisible} bind:this={floatBarEl}>

@@ -367,6 +367,33 @@ export type Database = {
         }
         Relationships: []
       }
+      seo_settings: {
+        Row: {
+          favicon_url: string | null
+          google_site_verification: string | null
+          id: number
+          og_image_url: string | null
+          site_name: string
+          updated_at: string
+        }
+        Insert: {
+          favicon_url?: string | null
+          google_site_verification?: string | null
+          id?: number
+          og_image_url?: string | null
+          site_name?: string
+          updated_at?: string
+        }
+        Update: {
+          favicon_url?: string | null
+          google_site_verification?: string | null
+          id?: number
+          og_image_url?: string | null
+          site_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       skills: {
         Row: {
           created_at: string

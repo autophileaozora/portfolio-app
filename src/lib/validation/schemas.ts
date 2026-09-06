@@ -249,3 +249,10 @@ export const profileSchema = z.object({
 	connect_text: z.string().trim().max(160).optional().default("Let's Connected"),
 	footer_copyright: z.string().trim().max(200).optional().default('© 2026 Hello Imanuel. All Rights Reserved.')
 });
+
+export const seoSettingsSchema = z.object({
+	site_name: z.string().trim().max(160).optional().default(''),
+	favicon_url: nullableText(500),
+	og_image_url: nullableText(500),
+	google_site_verification: nullableText(200)
+});
