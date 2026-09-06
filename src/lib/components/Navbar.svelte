@@ -19,9 +19,10 @@
 	const UNAVAILABLE_MESSAGE = 'Maaf, fitur sedang dikembangkan.';
 	const SECTION_IDS = ['home', 'summary', 'experience', 'project', 'projects', 'contact', 'messages', 'others'];
 
+	let onHomePage = $derived($page.url.pathname === '/');
 	let onProjectsPage = $derived($page.url.pathname === '/projects');
 	let onDetailPage = $derived($page.url.pathname.startsWith('/projects/'));
-	let theme = $derived($page.url.pathname === '/' ? 'dark' : onDetailPage ? 'light' : undefined);
+	let theme = $derived(onHomePage ? 'dark' : onDetailPage ? 'light' : undefined);
 	let navClass = $derived(
 		theme === 'dark' ? 'navbar navbar--on-dark' : theme === 'light' ? 'navbar navbar--on-light' : 'navbar'
 	);
@@ -102,13 +103,20 @@
 </script>
 
 <nav bind:this={navEl} id="navbar" class={navClass} class:scrolled class:hidden={navHidden}>
-	<a href="/" class="navbar-logo" data-sveltekit-reload={onProjectsPage ? true : undefined}>helloimanuel.</a>
+	<a href="/" class="navbar-logo" data-sveltekit-reload={onHomePage ? undefined : true}>helloimanuel.</a>
 
 	<ul class="navbar-links" class:open={hamburgerOpen} id="navLinks">
 		{#each NAV_LINKS as link}
 			{#if link.label === 'HOME'}
 				<li>
-					<a href="/" class:active={homeActive} onclick={closeMenu}>HOME</a>
+					<a
+						href="/"
+						class:active={homeActive}
+						data-sveltekit-reload={onHomePage ? undefined : true}
+						onclick={closeMenu}
+					>
+						HOME
+					</a>
 				</li>
 			{:else if link.unavailable}
 				<li>
