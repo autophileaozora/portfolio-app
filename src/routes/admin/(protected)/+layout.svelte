@@ -90,22 +90,20 @@
 </div>
 
 <style>
-	/* Default browser body margin (8px) is enough to push the page a hair
-	   taller than 100dvh, which was giving the outer document its own
-	   scrollbar ON TOP OF .admin-content's — two scrollbars stacked at the
-	   edge. Zeroing it out here (scoped to this layout, so it only applies
-	   while an admin page is mounted) leaves exactly one. */
+	/* Zeroing the default browser body margin so the sticky sidebar below
+	   lines up flush with the viewport edge (scoped to this layout, so it
+	   only applies while an admin page is mounted). The page scrolls
+	   normally — no fixed-height/overflow trick — the sidebar just stays
+	   in view via `position: sticky`, which needs no separate scroll
+	   container of its own and can't produce a second scrollbar. */
 	:global(html),
 	:global(body) {
 		margin: 0;
 		padding: 0;
-		height: 100%;
-		overflow: hidden;
 	}
 
 	.admin-shell {
-		height: 100dvh;
-		overflow: hidden;
+		min-height: 100dvh;
 		display: flex;
 		background: #f4f4f6;
 		font-family:
@@ -117,12 +115,20 @@
 	.admin-sidebar {
 		width: 230px;
 		flex-shrink: 0;
+		position: sticky;
+		top: 0;
+		height: 100dvh;
 		overflow-y: auto;
+		scrollbar-width: none; /* Firefox */
 		background: #17171c;
 		color: #fff;
 		display: flex;
 		flex-direction: column;
 		padding: 1.5rem 1rem;
+	}
+
+	.admin-sidebar::-webkit-scrollbar {
+		display: none; /* Chrome/Safari/Edge */
 	}
 
 	.admin-brand {
@@ -230,8 +236,6 @@
 		flex: 1;
 		padding: 2rem 2.5rem;
 		min-width: 0;
-		height: 100%;
-		overflow-y: auto;
 	}
 
 	/* --- mobile: sidebar becomes a slide-in panel behind a topbar --- */
@@ -248,21 +252,8 @@
 	}
 
 	@media (max-width: 860px) {
-		:global(html),
-		:global(body) {
-			height: auto;
-			overflow: visible;
-		}
-
 		.admin-shell {
 			flex-direction: column;
-			height: auto;
-			overflow: visible;
-		}
-
-		.admin-content {
-			height: auto;
-			overflow-y: visible;
 		}
 
 		.admin-topbar {
