@@ -363,8 +363,12 @@
 						>
 					</div>
 					<div class="document-links-row">
-						<a href="#contact" class="doc-link">Curriculum Vitae</a>
-						<a href="#contact" class="doc-link">Resume</a>
+						{#if data.profile?.cv_url}
+							<a href="{data.profile.cv_url}?download=CV.pdf" download="CV.pdf" class="doc-link">Curriculum Vitae</a>
+						{/if}
+						{#if data.profile?.resume_url}
+							<a href="{data.profile.resume_url}?download=Resume.pdf" download="Resume.pdf" class="doc-link">Resume</a>
+						{/if}
 					</div>
 				</div>
 			</div>
