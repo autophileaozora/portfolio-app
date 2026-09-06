@@ -227,6 +227,14 @@
             /* Saat keluar (exit), hanya fade out menghilang */
             transition: opacity 0.5s ease, visibility 0.5s;
             z-index: 1;
+            /* Each slide's own documentation image becomes its background
+               (set inline as --slide-bg per slide); with no image, this is
+               just transparent and the section's own gradient behind shows
+               through instead. */
+            background-image: var(--slide-bg, none);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
         .carousel-slide.active {

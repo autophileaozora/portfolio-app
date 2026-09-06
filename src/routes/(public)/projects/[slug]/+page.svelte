@@ -223,13 +223,14 @@
 
 	<div class="carousel-track">
 		{#each docSlides as slide, idx}
-			<div class="carousel-slide" class:active={idx === currentSlide}>
+			<div
+				class="carousel-slide"
+				class:active={idx === currentSlide}
+				style={slide.image ? `--slide-bg: url('${slide.image}')` : ''}
+			>
 				<div class="glass-card-wrapper">
 					<div class="glass-card"></div>
 					<div class="glass-content">
-						{#if slide.image}
-							<img src={slide.image} alt={slide.title} class="glass-content-image" />
-						{/if}
 						<h4>{slide.title}</h4>
 						<p>{slide.body}</p>
 					</div>
@@ -318,13 +319,5 @@
 
 	.request-edit-link:hover {
 		opacity: 1;
-	}
-
-	.glass-content-image {
-		width: 100%;
-		max-height: 160px;
-		object-fit: cover;
-		border-radius: 12px;
-		margin-bottom: 0.75rem;
 	}
 </style>
