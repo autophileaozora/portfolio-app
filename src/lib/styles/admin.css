@@ -219,6 +219,59 @@
 	font-size: 0.82rem;
 }
 
+.repeater-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.repeater-label {
+	font-size: 0.85rem;
+	color: #33333c;
+}
+
+.repeater-row {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.repeater-row input {
+	flex: 1;
+	min-width: 0;
+	font: inherit;
+	padding: 0.55rem 0.7rem;
+	border-radius: 8px;
+	border: 1px solid #d4d4db;
+}
+
+.repeater-remove {
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	border: 1px solid #d4d4db;
+	background: #fff;
+	color: #dc2626;
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.repeater-remove:hover {
+	background: rgba(220, 38, 38, 0.08);
+}
+
+.repeater-empty {
+	margin: 0;
+	font-size: 0.82rem;
+	color: #9a9aa2;
+}
+
+.repeater-add {
+	align-self: flex-start;
+}
+
 .field-error {
 	color: #dc2626;
 	font-size: 0.78rem;

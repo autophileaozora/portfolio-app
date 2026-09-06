@@ -4,11 +4,19 @@
 	/**
 	 * fields: [{
 	 *   name, label, required, default,
-	 *   type: 'text'|'number'|'textarea'|'date'|'checkbox'|'select'|'file'|'hidden',
-	 *   options,   // 'select' only: [{ value, label }] or plain strings
-	 *   accept,    // 'file' only: <input accept=""> filter, e.g. 'image/*'
-	 *   isImage,   // 'file' only: preview as <img> instead of a plain link
-	 *   value      // 'hidden' only: fixed value, not sourced from `values`
+	 *   type: 'text'|'number'|'textarea'|'date'|'checkbox'|'select'|'searchable-select'|'file'|'hidden'|'repeater',
+	 *   options,    // 'select'/'searchable-select': [{ value, label }] or plain strings —
+	 *               // 'searchable-select' is a <datalist>-backed input: options are
+	 *               // suggestions, not a hard constraint (typing anything else is
+	 *               // still accepted), for lists expected to grow over time.
+	 *   accept,     // 'file' only: <input accept=""> filter, e.g. 'image/*'
+	 *   isImage,    // 'file' only: preview as <img> instead of a plain link
+	 *   value,      // 'hidden' only: fixed value, not sourced from `values`
+	 *   itemFields  // 'repeater' only: [{ name, label }] — one text input per
+	 *               // sub-field per row. Rows serialize to a JSON string in a
+	 *               // hidden input named `field.name` on submit; the action
+	 *               // parses it back (see contributorsListSchema for the
+	 *               // pattern this pairs with).
 	 * }]
 	 * values/errors come from the +page.server.ts load (values) and form action
 	 * fail() payload (errors), keyed by field name. multipart is always on so
@@ -31,6 +39,39 @@
 	}
 	function optionLabel(opt) {
 		return typeof opt === 'string' ? opt : opt.label;
+	}
+
+	// ---- repeater state ----
+	// Keyed by field name; each row gets a client-only __id so #each can key
+	// on something stable even before/without a real identity from the DB.
+	function parseRepeaterValue(raw) {
+		const arr = typeof raw === 'string' ? safeJsonParse(raw) : Array.isArray(raw) ? raw : [];
+		return arr.map((row) => ({ ...row, __id: crypto.randomUUID() }));
+	}
+	function safeJsonParse(str) {
+		try {
+			const parsed = JSON.parse(str);
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}
+
+	let repeaterRows = $state(
+		Object.fromEntries(
+			fields.filter((f) => f.type === 'repeater').map((f) => [f.name, parseRepeaterValue(values[f.name])])
+		)
+	);
+
+	function addRepeaterRow(field) {
+		const blankRow = Object.fromEntries(field.itemFields.map((f) => [f.name, '']));
+		repeaterRows[field.name] = [...repeaterRows[field.name], { ...blankRow, __id: crypto.randomUUID() }];
+	}
+	function removeRepeaterRow(fieldName, index) {
+		repeaterRows[fieldName] = repeaterRows[fieldName].filter((_, i) => i !== index);
+	}
+	function repeaterJson(fieldName) {
+		return JSON.stringify(repeaterRows[fieldName].map(({ __id, ...rest }) => rest));
 	}
 </script>
 
@@ -60,6 +101,34 @@
 				<input type="checkbox" name={field.name} checked={values[field.name] ?? field.default ?? false} />
 				{field.label}
 			</label>
+		{:else if field.type === 'repeater'}
+			<div class="repeater-field">
+				<span class="repeater-label">{field.label}</span>
+				{#each repeaterRows[field.name] as row, i (row.__id)}
+					<div class="repeater-row">
+						{#each field.itemFields as itemField (itemField.name)}
+							<input type="text" placeholder={itemField.label} bind:value={row[itemField.name]} />
+						{/each}
+						<button
+							type="button"
+							class="repeater-remove"
+							aria-label="Hapus baris"
+							onclick={() => removeRepeaterRow(field.name, i)}
+						>
+							&times;
+						</button>
+					</div>
+				{:else}
+					<p class="repeater-empty">Belum ada.</p>
+				{/each}
+				<button type="button" class="btn-secondary repeater-add" onclick={() => addRepeaterRow(field)}>
+					+ Tambah {field.label}
+				</button>
+				<input type="hidden" name={field.name} value={repeaterJson(field.name)} />
+				{#if errors[field.name]}
+					<span class="field-error">{errors[field.name]}</span>
+				{/if}
+			</div>
 		{:else}
 			<label>
 				{field.label}
@@ -85,6 +154,20 @@
 							</option>
 						{/each}
 					</select>
+				{:else if field.type === 'searchable-select'}
+					<input
+						type="text"
+						name={field.name}
+						list="{field.name}-datalist"
+						value={values[field.name] ?? ''}
+						required={field.required}
+						autocomplete="off"
+					/>
+					<datalist id="{field.name}-datalist">
+						{#each field.options as opt (optionValue(opt))}
+							<option value={optionValue(opt)}>{optionLabel(opt)}</option>
+						{/each}
+					</datalist>
 				{:else if field.type === 'file'}
 					<input type="file" name={field.name} accept={field.accept} />
 					{#if values[field.name]}

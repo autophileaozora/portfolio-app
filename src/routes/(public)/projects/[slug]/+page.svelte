@@ -1,20 +1,43 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import '$lib/styles/project-detail.css';
+	import { formatDuration } from '$lib/utils/formatDuration.js';
 
 	let { data } = $props();
 
 	let project = $derived({
 		title: data.project.title,
-		contributors: data.project.contributors,
+		contributors: data.project.contributors_list ?? [],
 		associatedWith: data.project.associated_with,
 		category: data.project.category,
 		dates: formatDateRange(data.project.date_start, data.project.date_end),
+		duration: formatDuration(data.project.date_start, data.project.date_end),
 		role: data.project.role,
 		description: data.project.short_description,
 		liveUrl: data.project.live_url,
 		tags: (data.project.project_tags ?? []).map((pt) => pt.tags?.label).filter(Boolean)
 	});
+
+	let seoTitle = $derived(data.project.meta_title || `${data.project.title} — Andrian Imanuel Sinaga`);
+	let seoDescription = $derived(
+		data.project.meta_description || data.project.short_description || `Project: ${data.project.title}`
+	);
+
+	// JSON-LD tag for the head, built for two reasons neither of which is
+	// obvious from a plain template string:
+	// 1) json.stringify does not escape closing-tag-like sequences, so a
+	//    description containing one verbatim would break out of the tag —
+	//    escaping every angle bracket as a unicode sequence (still valid
+	//    JSON, decodes back to the same string) closes that off.
+	// 2) the opening/closing tag names are built via concat, not written
+	//    out whole, because a literal occurrence elsewhere in this file
+	//    previously confused the Svelte compiler's own tag scanning.
+	function jsonLdScriptTag(obj) {
+		const json = JSON.stringify(obj).replace(/</g, '\\u003c');
+		const open = '<' + 'script type="application/ld+json">';
+		const close = '<' + '/script>';
+		return open + json + close;
+	}
 
 	function formatDateRange(start, end) {
 		const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '');
@@ -42,7 +65,7 @@
 			slug: p.slug,
 			title: p.title,
 			role: p.role,
-			duration: p.duration,
+			duration: formatDuration(p.date_start, p.date_end),
 			category: p.category,
 			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
 		}))
@@ -84,7 +107,32 @@
 </script>
 
 <svelte:head>
-	<title>Portfolio - {project.title}</title>
+	<title>{seoTitle}</title>
+	<meta name="description" content={seoDescription} />
+	<link rel="canonical" href={data.canonicalUrl} />
+
+	<meta property="og:type" content="article" />
+	<meta property="og:title" content={seoTitle} />
+	<meta property="og:description" content={seoDescription} />
+	<meta property="og:url" content={data.canonicalUrl} />
+	<meta property="og:image" content={data.ogImage} />
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={seoTitle} />
+	<meta name="twitter:description" content={seoDescription} />
+	<meta name="twitter:image" content={data.ogImage} />
+
+	{@html jsonLdScriptTag({
+		'@context': 'https://schema.org',
+		'@type': 'CreativeWork',
+		name: data.project.title,
+		description: seoDescription,
+		image: data.ogImage,
+		url: data.canonicalUrl,
+		author: { '@type': 'Person', name: 'Andrian Imanuel Sinaga' },
+		datePublished: data.project.date_start ?? undefined,
+		keywords: project.tags.join(', ') || undefined
+	})}
 </svelte:head>
 
 <div class="container">
@@ -92,7 +140,14 @@
 		<div class="meta-row">
 			<div class="meta-item">
 				<div class="label">Contributor :</div>
-				<div class="value">{project.contributors}</div>
+				<div class="value">
+					{#each project.contributors as c, i (i)}
+						{#if c.url}<a href={c.url} target="_blank" rel="noreferrer" class="contributor-link">{c.name}</a
+							>{:else}{c.name}{/if}{#if i < project.contributors.length - 1}<span>, </span>{/if}
+					{:else}
+						—
+					{/each}
+				</div>
 			</div>
 			<div class="meta-item">
 				<div class="label">Associated with :</div>
@@ -105,6 +160,10 @@
 			<div class="meta-item">
 				<div class="label">Dates :</div>
 				<div class="value">{project.dates}</div>
+			</div>
+			<div class="meta-item">
+				<div class="label">Duration :</div>
+				<div class="value">{project.duration}</div>
 			</div>
 			<div class="meta-item">
 				<div class="label">Roles :</div>
@@ -127,9 +186,12 @@
 		</div>
 	</header>
 
-	{#if project.liveUrl}
-		<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">SEE LIVE PROJECT &rarr;</a>
-	{/if}
+	<div class="hero-actions">
+		{#if project.liveUrl}
+			<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">SEE LIVE PROJECT &rarr;</a>
+		{/if}
+		<a href="/projects/{data.project.slug}/request-edit" class="request-edit-link">Request Edit</a>
+	</div>
 
 	<section class="cards-grid">
 		{#each sections as section}
@@ -226,3 +288,30 @@
 		</div>
 	</div>
 </section>
+
+<style>
+	.contributor-link {
+		color: inherit;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.hero-actions {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.request-edit-link {
+		font-size: 0.85rem;
+		color: inherit;
+		opacity: 0.7;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+
+	.request-edit-link:hover {
+		opacity: 1;
+	}
+</style>

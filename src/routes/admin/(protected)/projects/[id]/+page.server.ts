@@ -22,7 +22,13 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 		.filter(Boolean)
 		.join(', ');
 
-	return { project, tagsText };
+	const { count: pendingEditRequestCount } = await supabase
+		.from('project_edit_requests')
+		.select('*', { count: 'exact', head: true })
+		.eq('project_id', params.id)
+		.eq('status', 'pending');
+
+	return { project, tagsText, pendingEditRequestCount: pendingEditRequestCount ?? 0 };
 };
 
 export const actions: Actions = {
@@ -53,14 +59,15 @@ export const actions: Actions = {
 			title: formData.get('title'),
 			short_description: formData.get('short_description'),
 			role: formData.get('role'),
-			duration: formData.get('duration'),
 			category: formData.get('category'),
 			thumbnail_url,
-			contributors: formData.get('contributors'),
+			contributors_list: formData.get('contributors_list'),
 			associated_with: formData.get('associated_with'),
 			date_start: formData.get('date_start'),
 			date_end: formData.get('date_end'),
 			live_url: formData.get('live_url'),
+			meta_title: formData.get('meta_title'),
+			meta_description: formData.get('meta_description'),
 			is_published: formData.get('is_published') === 'on',
 			is_featured: formData.get('is_featured') === 'on'
 		};

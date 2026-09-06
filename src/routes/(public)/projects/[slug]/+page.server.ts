@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals: { supabase }, setHeaders }) => {
+export const load: PageServerLoad = async ({ params, url, locals: { supabase }, setHeaders }) => {
 	const { data: project, error: projectError } = await supabase
 		.from('projects')
 		.select('*, project_tags(tags(label)), project_sections(*)')
@@ -24,8 +24,16 @@ export const load: PageServerLoad = async ({ params, locals: { supabase }, setHe
 
 	setHeaders({ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' });
 
+	const ogImage = project.thumbnail_url
+		? project.thumbnail_url.startsWith('http')
+			? project.thumbnail_url
+			: `${url.origin}${project.thumbnail_url}`
+		: `${url.origin}/assets/hero.png`;
+
 	return {
 		project,
-		otherProjects: otherProjects ?? []
+		otherProjects: otherProjects ?? [],
+		canonicalUrl: `${url.origin}/projects/${params.slug}`,
+		ogImage
 	};
 };

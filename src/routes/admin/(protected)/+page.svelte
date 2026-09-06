@@ -8,7 +8,8 @@
 		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', countKey: 'testimonials' },
 		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user' },
 		{ href: '/admin/projects', label: 'Projects', icon: 'fa-diagram-project', countKey: 'projects' },
-		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', isMessages: true }
+		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', pendingKey: 'pendingMessagesCount' },
+		{ href: '/admin/edit-requests', label: 'Edit Requests', icon: 'fa-pen-to-square', pendingKey: 'pendingEditRequestsCount' }
 	];
 </script>
 
@@ -34,8 +35,8 @@
 				<i class="fa-solid {card.icon}"></i>
 				<span class="card-label">{card.label}</span>
 				<span class="card-sub">
-					{#if card.isMessages}
-						{data.pendingMessagesCount > 0 ? `${data.pendingMessagesCount} pending` : 'Tidak ada yang pending'}
+					{#if card.pendingKey}
+						{data[card.pendingKey] > 0 ? `${data[card.pendingKey]} pending` : 'Tidak ada yang pending'}
 					{:else if card.countKey}
 						{data.counts[card.countKey]} item
 					{:else}

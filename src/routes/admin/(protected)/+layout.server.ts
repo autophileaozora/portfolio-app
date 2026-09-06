@@ -7,10 +7,14 @@ export const load: LayoutServerLoad = async ({ locals: { safeGetSession, supabas
 
 	setHeaders({ 'cache-control': 'no-store' });
 
-	const { count: pendingMessagesCount } = await supabase
-		.from('messages')
-		.select('*', { count: 'exact', head: true })
-		.eq('status', 'pending');
+	const [{ count: pendingMessagesCount }, { count: pendingEditRequestsCount }] = await Promise.all([
+		supabase.from('messages').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+		supabase.from('project_edit_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+	]);
 
-	return { user: { email: user.email }, pendingMessagesCount: pendingMessagesCount ?? 0 };
+	return {
+		user: { email: user.email },
+		pendingMessagesCount: pendingMessagesCount ?? 0,
+		pendingEditRequestsCount: pendingEditRequestsCount ?? 0
+	};
 };

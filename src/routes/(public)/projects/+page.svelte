@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import '$lib/styles/projects.css';
 	import VantaRingsBackground from '$lib/components/VantaRingsBackground.svelte';
+	import { formatDuration } from '$lib/utils/formatDuration.js';
 
 	let { data } = $props();
 	let cards = $derived(
@@ -9,7 +10,7 @@
 			slug: p.slug,
 			title: p.title,
 			role: p.role,
-			duration: p.duration,
+			duration: formatDuration(p.date_start, p.date_end),
 			category: p.category,
 			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
 		}))

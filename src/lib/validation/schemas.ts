@@ -41,6 +41,54 @@ export const testimonialSchema = z.object({
 
 export const CATEGORY_OPTIONS = ['web', 'app', 'design'];
 
+/**
+ * Searchable-select suggestions for "Role" (see AdminForm's 'searchable-select'
+ * field type — a <datalist>-backed input, so this is a curated starting set,
+ * not a hard enum: typing something not on the list is still accepted, which
+ * matters once real project roles grow beyond what's listed here.
+ */
+export const PROJECT_ROLE_OPTIONS = [
+	'UI/UX Designer',
+	'Frontend Developer',
+	'Backend Developer',
+	'Full Stack Developer',
+	'Mobile Developer',
+	'DevOps Engineer',
+	'IT Support',
+	'Network Engineer',
+	'System Administrator',
+	'Data Analyst',
+	'Data Scientist',
+	'QA Engineer',
+	'Project Manager',
+	'Product Manager',
+	'Business Analyst',
+	'Graphic Designer',
+	'Video Editor',
+	'Content Writer',
+	'Digital Marketer',
+	'AV Technician'
+];
+
+const contributorSchema = z.object({
+	name: z.string().trim().min(1, 'Nama kontributor wajib diisi.').max(120),
+	url: nullableText(500)
+});
+
+/**
+ * The contributor repeater (AdminForm's 'repeater' field type) serializes
+ * its rows to a JSON string in a hidden input on submit — parse that back
+ * into an array here before validating each entry.
+ */
+export const contributorsListSchema = z.preprocess((v) => {
+	if (typeof v !== 'string') return v;
+	try {
+		return JSON.parse(v);
+	} catch {
+		return [];
+	}
+}, z.array(contributorSchema).max(30));
+
 export const projectSchema = z.object({
 	slug: z
 		.string()
@@ -52,16 +100,35 @@ export const projectSchema = z.object({
 	title: z.string().trim().min(1, 'Judul wajib diisi.').max(200),
 	short_description: z.string().trim().max(2000).optional().default(''),
 	role: z.string().trim().max(120).optional().default(''),
-	duration: z.string().trim().max(120).optional().default(''),
+	// duration is intentionally NOT here — it's always computed from
+	// date_start/date_end at render time (see lib/utils/formatDuration.js),
+	// never typed by hand or stored.
 	category: z.enum(['', ...CATEGORY_OPTIONS]).optional().default(''),
 	thumbnail_url: nullableText(500),
-	contributors: z.string().trim().max(300).optional().default(''),
+	contributors_list: contributorsListSchema,
 	associated_with: z.string().trim().max(300).optional().default(''),
 	date_start: nullableDate(),
 	date_end: nullableDate(),
 	live_url: nullableText(500),
+	meta_title: nullableText(70),
+	meta_description: nullableText(200),
 	is_published: z.boolean(),
 	is_featured: z.boolean()
+});
+
+/** Fields a public "request edit" submission may propose changes to —
+ * everything content-related, but NOT slug (breaks the URL) or the
+ * publish/feature curation flags (admin-only decisions). */
+export const projectPublicEditSchema = projectSchema.omit({
+	slug: true,
+	is_published: true,
+	is_featured: true
+});
+
+export const editRequestGateSchema = z.object({
+	requester_name: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
+	requester_instagram: z.string().trim().min(1, 'Username Instagram wajib diisi.').max(60),
+	requester_whatsapp: nullableText(30)
 });
 
 export const SECTION_TYPES = ['problem', 'solution', 'result', 'documentation'] as const;

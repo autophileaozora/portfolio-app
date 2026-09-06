@@ -171,6 +171,53 @@ export type Database = {
         }
         Relationships: []
       }
+      project_edit_requests: {
+        Row: {
+          admin_note: string | null
+          created_at: string
+          id: string
+          project_id: string
+          proposed_changes: Json
+          requester_instagram: string
+          requester_name: string
+          requester_whatsapp: string | null
+          reviewed_at: string | null
+          status: string
+        }
+        Insert: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          project_id: string
+          proposed_changes: Json
+          requester_instagram: string
+          requester_name: string
+          requester_whatsapp?: string | null
+          reviewed_at?: string | null
+          status?: string
+        }
+        Update: {
+          admin_note?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string
+          proposed_changes?: Json
+          requester_instagram?: string
+          requester_name?: string
+          requester_whatsapp?: string | null
+          reviewed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_edit_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_sections: {
         Row: {
           content: string
@@ -250,6 +297,7 @@ export type Database = {
           associated_with: string
           category: string
           contributors: string
+          contributors_list: Json
           created_at: string
           date_end: string | null
           date_start: string | null
@@ -259,6 +307,8 @@ export type Database = {
           is_featured: boolean
           is_published: boolean
           live_url: string | null
+          meta_description: string | null
+          meta_title: string | null
           role: string
           short_description: string
           slug: string
@@ -270,6 +320,7 @@ export type Database = {
           associated_with?: string
           category?: string
           contributors?: string
+          contributors_list?: Json
           created_at?: string
           date_end?: string | null
           date_start?: string | null
@@ -279,6 +330,8 @@ export type Database = {
           is_featured?: boolean
           is_published?: boolean
           live_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           role?: string
           short_description?: string
           slug: string
@@ -290,6 +343,7 @@ export type Database = {
           associated_with?: string
           category?: string
           contributors?: string
+          contributors_list?: Json
           created_at?: string
           date_end?: string | null
           date_start?: string | null
@@ -299,6 +353,8 @@ export type Database = {
           is_featured?: boolean
           is_published?: boolean
           live_url?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           role?: string
           short_description?: string
           slug?: string

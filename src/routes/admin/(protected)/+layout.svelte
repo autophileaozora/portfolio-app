@@ -12,8 +12,14 @@
 		{ href: '/admin/testimonials', label: 'Testimonials', icon: 'fa-comment', available: true },
 		{ href: '/admin/stats', label: 'Stats', icon: 'fa-chart-simple', available: true },
 		{ href: '/admin/profile', label: 'Profile', icon: 'fa-user', available: true },
-		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: true }
+		{ href: '/admin/messages', label: 'Messages', icon: 'fa-envelope', available: true },
+		{ href: '/admin/edit-requests', label: 'Edit Requests', icon: 'fa-pen-to-square', available: true }
 	];
+
+	const BADGE_COUNTS = {
+		'/admin/messages': 'pendingMessagesCount',
+		'/admin/edit-requests': 'pendingEditRequestsCount'
+	};
 
 	let pathname = $derived($page.url.pathname);
 	function isActive(href) {
@@ -34,8 +40,8 @@
 					<a href={item.href} class:active={isActive(item.href)}>
 						<i class="fa-solid {item.icon}"></i>
 						{item.label}
-						{#if item.href === '/admin/messages' && data.pendingMessagesCount > 0}
-							<span class="nav-badge">{data.pendingMessagesCount}</span>
+						{#if BADGE_COUNTS[item.href] && data[BADGE_COUNTS[item.href]] > 0}
+							<span class="nav-badge">{data[BADGE_COUNTS[item.href]]}</span>
 						{/if}
 					</a>
 				{:else}

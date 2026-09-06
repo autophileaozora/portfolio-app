@@ -22,14 +22,15 @@ export const actions: Actions = {
 			title: formData.get('title'),
 			short_description: formData.get('short_description'),
 			role: formData.get('role'),
-			duration: formData.get('duration'),
 			category: formData.get('category'),
 			thumbnail_url,
-			contributors: formData.get('contributors'),
+			contributors_list: formData.get('contributors_list'),
 			associated_with: formData.get('associated_with'),
 			date_start: formData.get('date_start'),
 			date_end: formData.get('date_end'),
 			live_url: formData.get('live_url'),
+			meta_title: formData.get('meta_title'),
+			meta_description: formData.get('meta_description'),
 			is_published: formData.get('is_published') === 'on',
 			is_featured: formData.get('is_featured') === 'on'
 		};

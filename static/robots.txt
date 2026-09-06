@@ -1,3 +1,6 @@
-# allow crawling everything by default
 User-agent: *
-Disallow:
+Allow: /
+Disallow: /admin/
+Disallow: /projects/*/request-edit
+
+Sitemap: https://portfolio-app-five-tawny-97.vercel.app/sitemap.xml
