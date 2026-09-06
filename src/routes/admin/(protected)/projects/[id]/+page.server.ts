@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { projectSchema, newProjectSectionsSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { parseTagsInput, syncProjectTags } from '$lib/server/tags';
+import { recomputeAutoStats } from '$lib/server/autoStats';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
@@ -115,6 +116,8 @@ export const actions: Actions = {
 				}
 			}
 		}
+
+		await recomputeAutoStats(supabase);
 
 		redirect(303, '/admin/projects?updated=1');
 	}

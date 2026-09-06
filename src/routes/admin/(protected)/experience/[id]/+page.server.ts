@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { experienceSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
+import { recomputeAutoStats } from '$lib/server/autoStats';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
@@ -46,6 +47,8 @@ export const actions: Actions = {
 
 		const { error: updateError } = await supabase.from('experience').update(parsed.data).eq('id', params.id);
 		if (updateError) return fail(400, { error: friendlyDbError(updateError), values: raw });
+
+		await recomputeAutoStats(supabase);
 
 		redirect(303, '/admin/experience');
 	}

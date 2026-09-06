@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { reorderRow, compactAfterDelete } from '$lib/server/ranked';
+import { recomputeAutoStats } from '$lib/server/autoStats';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
@@ -32,6 +33,8 @@ export const actions: Actions = {
 			const { error: compactError } = await compactAfterDelete(supabase, 'projects', deleted.display_order);
 			if (compactError) console.error('[admin/projects] compact failed:', compactError.message);
 		}
+
+		await recomputeAutoStats(supabase);
 
 		return { success: true };
 	},

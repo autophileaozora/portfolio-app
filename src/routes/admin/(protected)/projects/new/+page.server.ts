@@ -3,6 +3,7 @@ import { projectSchema, newProjectSectionsSchema } from '$lib/validation/schemas
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { nextDisplayOrder } from '$lib/server/ranked';
 import { parseTagsInput, syncProjectTags } from '$lib/server/tags';
+import { recomputeAutoStats } from '$lib/server/autoStats';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
@@ -75,6 +76,8 @@ export const actions: Actions = {
 				console.error('[admin/projects/new] section insert failed:', sectionsError.message);
 			}
 		}
+
+		await recomputeAutoStats(supabase);
 
 		redirect(303, '/admin/projects?created=1');
 	}

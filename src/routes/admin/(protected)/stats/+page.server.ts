@@ -1,6 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { reorderRow, compactAfterDelete } from '$lib/server/ranked';
+import { recomputeAutoStats } from '$lib/server/autoStats';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
@@ -46,5 +47,16 @@ export const actions: Actions = {
 		if (error) return fail(400, { error: friendlyDbError(error) });
 
 		return { success: true };
+	},
+
+	// Manual trigger for the 4 auto-tracked rows (Impactful Projects/
+	// Technologies/People Has Collaborate/Years in IT Fields) — they
+	// normally recompute on their own whenever a project/skill/experience
+	// changes, but this lets the admin force a fresh sync on demand (e.g.
+	// right after this feature first ships, before any other edit has
+	// happened yet to trigger it naturally).
+	recompute: async ({ locals: { supabase } }) => {
+		await recomputeAutoStats(supabase);
+		return { synced: true };
 	}
 };

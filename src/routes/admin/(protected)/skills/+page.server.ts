@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { reorderRow, compactAfterDelete, nextDisplayOrder } from '$lib/server/ranked';
 import { bulkSkillNamesSchema } from '$lib/validation/schemas';
+import { recomputeAutoStats } from '$lib/server/autoStats';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
@@ -34,6 +35,8 @@ export const actions: Actions = {
 			if (compactError) console.error('[admin/skills] compact failed:', compactError.message);
 		}
 
+		await recomputeAutoStats(supabase);
+
 		return { success: true };
 	},
 
@@ -65,6 +68,8 @@ export const actions: Actions = {
 
 		const { error } = await supabase.from('skills').insert(rows);
 		if (error) return fail(400, { error: friendlyDbError(error) });
+
+		await recomputeAutoStats(supabase);
 
 		redirect(303, `/admin/skills?bulkAdded=${rows.length}`);
 	}

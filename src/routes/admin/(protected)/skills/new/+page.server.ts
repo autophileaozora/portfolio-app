@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { skillSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { nextDisplayOrder } from '$lib/server/ranked';
+import { recomputeAutoStats } from '$lib/server/autoStats';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
@@ -21,6 +22,8 @@ export const actions: Actions = {
 		const display_order = await nextDisplayOrder(supabase, 'skills');
 		const { error } = await supabase.from('skills').insert({ ...parsed.data, display_order });
 		if (error) return fail(400, { error: friendlyDbError(error), values: raw });
+
+		await recomputeAutoStats(supabase);
 
 		redirect(303, '/admin/skills');
 	}
