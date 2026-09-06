@@ -1,6 +1,6 @@
-import { CATEGORY_OPTIONS, PROJECT_ROLE_OPTIONS, SECTION_TYPES } from '$lib/validation/schemas';
+import { CATEGORY_OPTIONS, PROJECT_ROLE_OPTIONS } from '$lib/validation/schemas';
 
-const SECTION_TYPE_LABELS = {
+export const SECTION_TYPE_LABELS = {
 	problem: 'Problem',
 	solution: 'Solution',
 	result: 'Final Result',
@@ -51,30 +51,3 @@ export const projectAdminOnlyFields = [
 	{ name: 'is_published', label: 'Terbitkan di halaman publik', type: 'checkbox', default: false },
 	{ name: 'is_featured', label: 'Tampilkan sebagai unggulan di Home', type: 'checkbox', default: false }
 ];
-
-/**
- * Batch-add Problem/Solution/Result/Dokumentasi sections while creating a
- * project, instead of forcing a trip to "Kelola Sections" afterward. Only
- * on the new-project form — a project already has "Kelola Sections" for
- * this once it exists, so there's no need to duplicate it on the edit form.
- * See projects/new/+page.server.ts for how each row gets inserted — each
- * row's image is uploaded client-side (see AdminForm.svelte) before
- * submit, so `image_url` arrives as a plain public URL like any other
- * field, not a file.
- */
-export const newProjectSectionsField = {
-	name: 'sections',
-	label: 'Sections (Problem / Solution / Result / Dokumentasi)',
-	type: 'repeater',
-	itemFields: [
-		{
-			name: 'type',
-			label: 'Tipe',
-			type: 'select',
-			options: SECTION_TYPES.map((t) => ({ value: t, label: SECTION_TYPE_LABELS[t] }))
-		},
-		{ name: 'title', label: 'Judul' },
-		{ name: 'content', label: 'Konten' },
-		{ name: 'image_url', label: 'Gambar (opsional)', type: 'file', accept: 'image/*', folder: 'sections' }
-	]
-};

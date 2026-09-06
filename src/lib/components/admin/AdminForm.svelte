@@ -1,6 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
-	import { PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
+	import { uploadViaSignedUrl } from '$lib/admin/uploadViaSignedUrl.js';
 
 	/**
 	 * fields: [{
@@ -51,30 +51,6 @@
 	}
 	function optionLabel(opt) {
 		return typeof opt === 'string' ? opt : opt.label;
-	}
-
-	// ---- direct-to-storage upload ----
-	async function uploadViaSignedUrl(file, folder) {
-		const res = await fetch('/admin/api/upload-url', {
-			method: 'POST',
-			headers: { 'content-type': 'application/json' },
-			body: JSON.stringify({ folder, filename: file.name })
-		});
-		if (!res.ok) throw new Error('Gagal menyiapkan upload.');
-		const { signedUrl, publicUrl } = await res.json();
-
-		const putRes = await fetch(signedUrl, {
-			method: 'PUT',
-			headers: {
-				apikey: PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-				authorization: `Bearer ${PUBLIC_SUPABASE_PUBLISHABLE_KEY}`,
-				'content-type': file.type || 'application/octet-stream',
-				'x-upsert': 'true'
-			},
-			body: file
-		});
-		if (!putRes.ok) throw new Error('Gagal mengunggah file.');
-		return publicUrl;
 	}
 
 	// ---- top-level file field state ----

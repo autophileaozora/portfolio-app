@@ -1,0 +1,175 @@
+.wizard-form {
+	max-width: 640px;
+}
+
+/* --- progress indicator --- */
+.wizard-progress {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 0.5rem;
+}
+
+.wizard-progress-step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.35rem;
+	flex: 1;
+	text-align: center;
+}
+
+.wizard-progress-dot {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.8rem;
+	font-weight: 700;
+	background: #f0f0f4;
+	color: #9a9aa2;
+	border: 1px solid #d4d4db;
+}
+
+.wizard-progress-step.active .wizard-progress-dot {
+	background: #6c63ff;
+	border-color: #6c63ff;
+	color: #fff;
+}
+
+.wizard-progress-step.done .wizard-progress-dot {
+	background: #e8e6ff;
+	border-color: #6c63ff;
+	color: #6c63ff;
+}
+
+.wizard-progress-label {
+	font-size: 0.72rem;
+	color: #77777f;
+}
+
+.wizard-progress-step.active .wizard-progress-label {
+	color: #33333c;
+	font-weight: 600;
+}
+
+/* --- step header --- */
+.wizard-step-title {
+	margin: 0 0 0.25rem;
+	font-size: 1.05rem;
+}
+
+.wizard-step-sub {
+	margin: 0 0 0.5rem;
+	font-size: 0.82rem;
+	color: #77777f;
+}
+
+/* --- cards (contributors / sections rows) --- */
+.wizard-card {
+	border: 1px solid #e4e4ea;
+	border-radius: 10px;
+	padding: 0.9rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	position: relative;
+}
+
+.wizard-card-remove {
+	position: absolute;
+	top: 0.6rem;
+	right: 0.6rem;
+	width: 28px;
+	height: 28px;
+	border-radius: 8px;
+	border: 1px solid #d4d4db;
+	background: #fff;
+	color: #dc2626;
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.wizard-card-remove:hover {
+	background: rgba(220, 38, 38, 0.08);
+}
+
+.wizard-card-row {
+	display: flex;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.wizard-card-row > * {
+	flex: 1;
+	min-width: 140px;
+}
+
+.wizard-cards {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+/* --- thumbnail / section image preview --- */
+.wizard-image-preview {
+	width: 100%;
+	max-height: 160px;
+	object-fit: cover;
+	border-radius: 8px;
+	border: 1px solid #e4e4ea;
+	display: block;
+	margin-top: 0.4rem;
+}
+
+/* --- tag chips --- */
+.tag-chip-box {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	padding: 0.5rem;
+	border: 1px solid #d4d4db;
+	border-radius: 8px;
+}
+
+.tag-chip-box input {
+	border: none;
+	flex: 1;
+	min-width: 100px;
+	padding: 0.2rem;
+}
+
+.tag-chip-box input:focus {
+	outline: none;
+}
+
+.tag-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.3rem;
+	background: #e8e6ff;
+	color: #4c3fd6;
+	border-radius: 999px;
+	padding: 0.2rem 0.5rem 0.2rem 0.65rem;
+	font-size: 0.8rem;
+}
+
+.tag-chip button {
+	background: none;
+	border: none;
+	color: inherit;
+	cursor: pointer;
+	font-size: 0.9rem;
+	line-height: 1;
+	padding: 0;
+}
+
+/* --- nav buttons --- */
+.wizard-nav {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-top: 0.5rem;
+}
