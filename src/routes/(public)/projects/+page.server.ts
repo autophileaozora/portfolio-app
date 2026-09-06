@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders }) => {
+export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders, url }) => {
 	const { data: projects, error: projectsError } = await supabase
 		.from('projects')
 		.select('*')
@@ -12,6 +12,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders })
 	setHeaders({ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' });
 
 	return {
-		projects: projects ?? []
+		projects: projects ?? [],
+		canonicalUrl: `${url.origin}/projects`
 	};
 };

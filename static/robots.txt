@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /projects/*/request-edit
 
-Sitemap: https://portfolio-app-five-tawny-97.vercel.app/sitemap.xml
+Sitemap: https://helloimanuel.vercel.app/sitemap.xml

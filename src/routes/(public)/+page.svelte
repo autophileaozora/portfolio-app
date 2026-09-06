@@ -1,13 +1,52 @@
 <script>
 	import { onMount } from 'svelte';
 	import '$lib/styles/home.css';
+	import { jsonLdScriptTag } from '$lib/utils/jsonLd.js';
 
 	let { data } = $props();
 
+	// The personal-brand handle the user goes by (e.g. "helloimanuel") —
+	// derived from the email's local part rather than hardcoded, so it
+	// stays correct if that ever changes without needing a code edit.
+	let brandHandle = $derived(data.profile?.email ? data.profile.email.split('@')[0] : '');
+
+	// SEO title/description are built to explicitly carry the target
+	// search terms (web developer, IT support) alongside the real name,
+	// brand handle, and location — while still preferring the admin's own
+	// written bio (summary_paragraph) as the description whenever it's
+	// set, since unique real content is better for search than a
+	// templated sentence.
 	let seoTitle = $derived(
-		[data.profile?.full_name, data.profile?.title].filter(Boolean).join(' | ') || 'Portfolio'
+		data.profile?.full_name
+			? `${data.profile.full_name}${brandHandle ? ` (${brandHandle})` : ''} — Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ''}`
+			: 'Portfolio'
 	);
-	let seoDescription = $derived(data.profile?.summary_paragraph || data.profile?.title || '');
+	let seoDescription = $derived(
+		data.profile?.summary_paragraph ||
+			(data.profile?.full_name
+				? `Portfolio ${data.profile.full_name} — Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ' di Indonesia'}.`
+				: '')
+	);
+
+	let socialLinks = $derived(
+		[data.profile?.social_linkedin, data.profile?.social_github, data.profile?.social_instagram].filter(
+			(url) => url && url !== 'https://github.com'
+		)
+	);
+
+	let personJsonLd = $derived({
+		'@context': 'https://schema.org',
+		'@type': 'Person',
+		name: data.profile?.full_name,
+		alternateName: brandHandle || undefined,
+		url: data.canonicalUrl,
+		image: data.profile?.avatar_url || undefined,
+		jobTitle: data.profile?.title || undefined,
+		description: data.profile?.summary_paragraph || undefined,
+		address: data.profile?.location ? { '@type': 'PostalAddress', addressLocality: data.profile.location } : undefined,
+		knowsAbout: ['Web Development', 'IT Support', 'Network Administration'],
+		sameAs: socialLinks.length ? socialLinks : undefined
+	});
 
 	// Purely decorative CSS variants for the hero carousel — cycled by index
 	// since they're a visual treatment, not real project data.
@@ -329,6 +368,24 @@
 <svelte:head>
 	<title>{seoTitle}</title>
 	{#if seoDescription}<meta name="description" content={seoDescription} />{/if}
+	<link rel="canonical" href={data.canonicalUrl} />
+
+	<meta property="og:type" content="profile" />
+	<meta property="og:title" content={seoTitle} />
+	{#if seoDescription}<meta property="og:description" content={seoDescription} />{/if}
+	<meta property="og:url" content={data.canonicalUrl} />
+	<meta property="og:locale" content="id_ID" />
+	{#if data.profile?.avatar_url}<meta property="og:image" content={data.profile.avatar_url} />{/if}
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={seoTitle} />
+	{#if seoDescription}<meta name="twitter:description" content={seoDescription} />{/if}
+	{#if data.profile?.avatar_url}<meta name="twitter:image" content={data.profile.avatar_url} />{/if}
+
+	{#if data.profile?.full_name}
+		{@html jsonLdScriptTag(personJsonLd)}
+	{/if}
+
 	<link
 		href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
 		rel="stylesheet"
@@ -357,20 +414,26 @@
 
 				<div class="profile-right">
 					<div class="social-icons-row">
-						<a href={data.profile?.social_linkedin || 'https://linkedin.com'} target="_blank" rel="noreferrer" aria-label="LinkedIn" class="github-circle-btn"
-							><i class="fa-brands fa-linkedin-in"></i></a
-						>
+						{#if data.profile?.social_linkedin}
+							<a href={data.profile.social_linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" class="github-circle-btn"
+								><i class="fa-brands fa-linkedin-in"></i></a
+							>
+						{/if}
 						{#if data.profile?.email}
 							<a href={`mailto:${data.profile.email}`} aria-label="Email" class="github-circle-btn"
 								><i class="fa-solid fa-envelope"></i></a
 							>
 						{/if}
-						<a href={data.profile?.social_github || 'https://github.com'} target="_blank" rel="noreferrer" aria-label="GitHub" class="github-circle-btn"
-							><i class="fa-brands fa-github"></i></a
-						>
-						<a href={data.profile?.social_instagram || 'https://instagram.com'} target="_blank" rel="noreferrer" aria-label="Instagram" class="github-circle-btn"
-							><i class="fa-brands fa-instagram"></i></a
-						>
+						{#if data.profile?.social_github && data.profile.social_github !== 'https://github.com'}
+							<a href={data.profile.social_github} target="_blank" rel="noreferrer" aria-label="GitHub" class="github-circle-btn"
+								><i class="fa-brands fa-github"></i></a
+							>
+						{/if}
+						{#if data.profile?.social_instagram}
+							<a href={data.profile.social_instagram} target="_blank" rel="noreferrer" aria-label="Instagram" class="github-circle-btn"
+								><i class="fa-brands fa-instagram"></i></a
+							>
+						{/if}
 					</div>
 					<div class="document-links-row">
 						{#if data.profile?.cv_url}

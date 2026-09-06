@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders }) => {
+export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders, url }) => {
 	const [
 		{ data: featuredProjects, error: projectsError },
 		{ data: experience, error: experienceError },
@@ -29,6 +29,7 @@ export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders })
 		featuredProjects: featuredProjects ?? [],
 		experience: experience ?? [],
 		skills: skills ?? [],
-		stats: stats ?? []
+		stats: stats ?? [],
+		canonicalUrl: `${url.origin}/`
 	};
 };

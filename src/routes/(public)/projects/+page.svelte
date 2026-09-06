@@ -6,6 +6,18 @@
 
 	let { data } = $props();
 
+	let brandHandle = $derived(data.profile?.email ? data.profile.email.split('@')[0] : '');
+	let seoTitle = $derived(
+		data.profile?.full_name
+			? `Portfolio ${data.profile.full_name}${brandHandle ? ` (${brandHandle})` : ''} — Web Developer & IT Support`
+			: 'Portfolio'
+	);
+	let seoDescription = $derived(
+		data.profile?.full_name
+			? `Kumpulan project ${data.profile.full_name} sebagai Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ''}.`
+			: ''
+	);
+
 	// --- Floating filter bar (ported from projects/main.js initFloatFilterBar) ---
 	let floatBarEl;
 	let projectsSectionEl;
@@ -109,8 +121,20 @@
 </script>
 
 <svelte:head>
-	<title>Hello Imanuel · Portfolio 2026</title>
-	<meta name="description" content="Hello Imanuel – UI/UX Designer & Developer Portfolio 2026" />
+	<title>{seoTitle}</title>
+	{#if seoDescription}<meta name="description" content={seoDescription} />{/if}
+	<link rel="canonical" href={data.canonicalUrl} />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={seoTitle} />
+	{#if seoDescription}<meta property="og:description" content={seoDescription} />{/if}
+	<meta property="og:url" content={data.canonicalUrl} />
+	<meta property="og:locale" content="id_ID" />
+
+	<meta name="twitter:card" content="summary" />
+	<meta name="twitter:title" content={seoTitle} />
+	{#if seoDescription}<meta name="twitter:description" content={seoDescription} />{/if}
+
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 </svelte:head>
 

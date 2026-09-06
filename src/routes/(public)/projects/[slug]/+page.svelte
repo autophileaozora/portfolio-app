@@ -2,6 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import '$lib/styles/project-detail.css';
 	import { formatDuration } from '$lib/utils/formatDuration.js';
+	import { jsonLdScriptTag } from '$lib/utils/jsonLd.js';
 
 	let { data } = $props();
 
@@ -25,22 +26,6 @@
 	let seoDescription = $derived(
 		data.project.meta_description || data.project.short_description || `Project: ${data.project.title}`
 	);
-
-	// JSON-LD tag for the head, built for two reasons neither of which is
-	// obvious from a plain template string:
-	// 1) json.stringify does not escape closing-tag-like sequences, so a
-	//    description containing one verbatim would break out of the tag —
-	//    escaping every angle bracket as a unicode sequence (still valid
-	//    JSON, decodes back to the same string) closes that off.
-	// 2) the opening/closing tag names are built via concat, not written
-	//    out whole, because a literal occurrence elsewhere in this file
-	//    previously confused the Svelte compiler's own tag scanning.
-	function jsonLdScriptTag(obj) {
-		const json = JSON.stringify(obj).replace(/</g, '\\u003c');
-		const open = '<' + 'script type="application/ld+json">';
-		const close = '<' + '/script>';
-		return open + json + close;
-	}
 
 	function formatDateRange(start, end) {
 		const fmt = (d) => (d ? new Date(d).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '');
