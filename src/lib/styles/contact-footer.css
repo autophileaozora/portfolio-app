@@ -45,7 +45,19 @@
     box-shadow: none;
 }
 
-.messages-card {
+/* Compound selector (.messages-card.flat-card, not just .messages-card) —
+   this element also carries the generic .flat-card class (shared with
+   other, differently-themed pages' own cards: home.css and projects.css
+   each define their OWN .flat-card with `background: var(--bg-card)`,
+   and --bg-card is themed per page — dark navy on home.css, plain white
+   on projects.css). A bare `.messages-card { ... }` has the exact same
+   specificity as `.flat-card { ... }`, so whichever stylesheet happened
+   to inject later into the page won the cascade — this card looked
+   white on some pages/loads and correctly dark navy on others, with no
+   relation to which page you're actually on. The compound selector below
+   is more specific than either single-class rule, so it wins
+   deterministically regardless of load order. */
+.messages-card.flat-card {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
     padding: 26px;
