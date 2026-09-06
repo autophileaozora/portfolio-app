@@ -1,6 +1,10 @@
 import { error, json } from '@sveltejs/kit';
 import mammoth from 'mammoth';
 import DOMMatrixPolyfill from 'dommatrix';
+// A real, STATIC import (unlike pdf.js's own internal worker loading —
+// see below) so Vercel's function bundler can actually trace and ship
+// this file, instead of silently dropping it.
+import * as pdfjsWorker from 'pdfjs-dist/legacy/build/pdf.worker.mjs';
 import { parseProjectDoc } from '$lib/server/parseProjectDoc';
 import type { RequestHandler } from './$types';
 
@@ -24,6 +28,24 @@ import type { RequestHandler } from './$types';
  */
 if (typeof globalThis.DOMMatrix === 'undefined') {
 	globalThis.DOMMatrix = DOMMatrixPolyfill;
+}
+
+/**
+ * In Node, pdfjs-dist runs its parsing on the "main thread" (no real Web
+ * Worker) via a "fake worker" fallback — but that fallback still tries to
+ * fetch the worker module's code by dynamically `import()`-ing whatever
+ * string `GlobalWorkerOptions.workerSrc` happens to hold at the time
+ * (defaults to the literal string `"./pdf.worker.mjs"`). Because that's a
+ * *runtime string*, not a specifier a bundler can see ahead of time,
+ * Vercel's function bundler never ships that file — the fake-worker
+ * fallback then fails with "Cannot find module .../pdf.worker.mjs".
+ * pdf.js itself provides the escape hatch: if `globalThis.pdfjsWorker` is
+ * already set, it's used directly instead of ever attempting that
+ * dynamic import — so importing the worker module ourselves, normally,
+ * and registering it here avoids the whole problem.
+ */
+if (typeof globalThis.pdfjsWorker === 'undefined') {
+	globalThis.pdfjsWorker = pdfjsWorker;
 }
 
 async function extractPdfText(buffer: Buffer): Promise<string> {
