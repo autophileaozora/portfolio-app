@@ -5,7 +5,8 @@
 
 	const fields = [
 		{ name: 'title', label: 'Judul', type: 'text' },
-		{ name: 'content', label: 'Konten', type: 'textarea' }
+		{ name: 'content', label: 'Konten', type: 'textarea' },
+		{ name: 'image_url', label: 'Gambar (opsional)', type: 'file', accept: 'image/*', isImage: true }
 	];
 
 	let values = $derived(form?.values ?? data.section);

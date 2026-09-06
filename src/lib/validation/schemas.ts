@@ -117,12 +117,14 @@ export const projectSchema = z.object({
 });
 
 /** Fields a public "request edit" submission may propose changes to —
- * everything content-related, but NOT slug (breaks the URL) or the
- * publish/feature curation flags (admin-only decisions). */
+ * everything content-related, but NOT slug (breaks the URL), the
+ * publish/feature curation flags, or SEO meta (all admin-only decisions). */
 export const projectPublicEditSchema = projectSchema.omit({
 	slug: true,
 	is_published: true,
-	is_featured: true
+	is_featured: true,
+	meta_title: true,
+	meta_description: true
 });
 
 export const editRequestGateSchema = z.object({
@@ -136,10 +138,35 @@ export const SECTION_TYPES = ['problem', 'solution', 'result', 'documentation'] 
 export const sectionSchema = z.object({
 	type: z.enum(SECTION_TYPES),
 	title: z.string().trim().max(200).optional().default(''),
-	content: z.string().trim().max(3000).optional().default('')
+	content: z.string().trim().max(3000).optional().default(''),
+	image_url: nullableText(500)
 });
 
 export const sectionContentSchema = sectionSchema.omit({ type: true });
+
+/**
+ * Public request-edit's documentation-slide repeater (title + content +
+ * pasted image URL — no file upload, same reasoning as thumbnail_url on
+ * the public form: anon can't write to storage). Submitted as a JSON
+ * string in a hidden input, same pattern as contributorsListSchema.
+ * Treated as the full desired set of documentation slides on approval —
+ * the admin action replaces the project's existing ones with this list
+ * rather than trying to diff/merge against specific rows.
+ */
+const documentationSlideSchema = z.object({
+	title: z.string().trim().max(200).optional().default(''),
+	content: z.string().trim().max(3000).optional().default(''),
+	image_url: nullableText(500)
+});
+
+export const documentationSlidesSchema = z.preprocess((v) => {
+	if (typeof v !== 'string') return v;
+	try {
+		return JSON.parse(v);
+	} catch {
+		return [];
+	}
+}, z.array(documentationSlideSchema).max(20));
 
 export const messageSchema = z.object({
 	// formData.get() returns null (not undefined) for a field that isn't

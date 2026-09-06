@@ -15,6 +15,10 @@
 		if (!Array.isArray(list) || !list.length) return '—';
 		return list.join(', ');
 	}
+	function slidesSummary(list) {
+		if (!Array.isArray(list) || !list.length) return '(kosong)';
+		return list.map((s) => s.title || '(tanpa judul)').join(' | ');
+	}
 	function currentTags(p) {
 		return (p.project_tags ?? []).map((pt) => pt.tags?.label).filter(Boolean);
 	}
@@ -23,6 +27,8 @@
 		return String(v);
 	}
 
+	// meta_title/meta_description are never in `proposed` — public
+	// submissions can't touch SEO fields at all (see projectPublicEditSchema).
 	const FIELDS = [
 		{ key: 'title', label: 'Judul' },
 		{ key: 'short_description', label: 'Deskripsi singkat' },
@@ -32,9 +38,7 @@
 		{ key: 'date_start', label: 'Tanggal mulai' },
 		{ key: 'date_end', label: 'Tanggal selesai' },
 		{ key: 'live_url', label: 'Live URL' },
-		{ key: 'thumbnail_url', label: 'Thumbnail URL' },
-		{ key: 'meta_title', label: 'SEO meta title' },
-		{ key: 'meta_description', label: 'SEO meta description' }
+		{ key: 'thumbnail_url', label: 'Thumbnail URL' }
 	];
 
 	let rejecting = $state(false);
@@ -92,10 +96,35 @@
 					<td>{tagsSummary(currentTags(project))}</td>
 					<td>{tagsSummary(proposed.tags)}</td>
 				</tr>
+				<tr>
+					<td>Slide Dokumentasi</td>
+					<td>{slidesSummary(data.currentDocumentationSlides)}</td>
+					<td>{slidesSummary(proposed.documentation_slides)}</td>
+				</tr>
 			</tbody>
 		</table>
 	</div>
 </div>
+
+{#if Array.isArray(proposed.documentation_slides) && proposed.documentation_slides.length}
+	<div class="admin-form" style="max-width:none; margin-bottom:1.5rem;">
+		<h3 style="margin-top:0;">Detail Slide Dokumentasi yang Diusulkan</h3>
+		<p class="dashboard-sub">
+			Menyetujui akan mengganti seluruh slide dokumentasi project ini dengan daftar di bawah ini.
+		</p>
+		<div class="edit-request-slides">
+			{#each proposed.documentation_slides as slide, i (i)}
+				<div class="edit-request-slide">
+					{#if slide.image_url}
+						<img src={slide.image_url} alt={slide.title || ''} class="edit-request-slide-image" />
+					{/if}
+					<strong>{slide.title || '(tanpa judul)'}</strong>
+					<p>{slide.content || '—'}</p>
+				</div>
+			{/each}
+		</div>
+	</div>
+{/if}
 
 {#if req.status === 'pending'}
 	<div class="form-actions">
@@ -114,3 +143,32 @@
 		{/if}
 	</div>
 {/if}
+
+<style>
+	.edit-request-slides {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+		gap: 1rem;
+	}
+
+	.edit-request-slide {
+		border: 1px solid var(--admin-border, #e2e2e2);
+		border-radius: 8px;
+		padding: 0.75rem;
+	}
+
+	.edit-request-slide p {
+		margin: 0.25rem 0 0;
+		font-size: 0.9rem;
+		opacity: 0.8;
+	}
+
+	.edit-request-slide-image {
+		width: 100%;
+		max-height: 140px;
+		object-fit: cover;
+		border-radius: 6px;
+		margin-bottom: 0.5rem;
+	}
+</style>
+

@@ -2,6 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { sectionSchema, SECTION_TYPES } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { nextSectionOrder } from '$lib/server/ranked';
+import { resolveFileField } from '$lib/server/uploads';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, url, locals: { supabase } }) => {
@@ -27,10 +28,19 @@ export const load: PageServerLoad = async ({ params, url, locals: { supabase } }
 export const actions: Actions = {
 	default: async ({ params, request, locals: { supabase } }) => {
 		const formData = await request.formData();
+
+		let image_url: string | null;
+		try {
+			image_url = await resolveFileField(supabase, formData, 'image_url', null, 'sections');
+		} catch (e) {
+			return fail(400, { error: e instanceof Error ? e.message : 'Upload gagal.' });
+		}
+
 		const raw = {
 			type: formData.get('type'),
 			title: formData.get('title'),
-			content: formData.get('content')
+			content: formData.get('content'),
+			image_url
 		};
 
 		const parsed = sectionSchema.safeParse(raw);

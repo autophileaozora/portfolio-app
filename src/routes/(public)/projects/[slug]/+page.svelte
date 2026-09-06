@@ -58,7 +58,9 @@
 		}))
 	);
 
-	let docSlides = $derived(sectionsByType('documentation').map((s) => ({ title: s.title, body: s.content })));
+	let docSlides = $derived(
+		sectionsByType('documentation').map((s) => ({ title: s.title, body: s.content, image: s.image_url }))
+	);
 
 	let otherProjects = $derived(
 		data.otherProjects.map((p) => ({
@@ -225,6 +227,9 @@
 				<div class="glass-card-wrapper">
 					<div class="glass-card"></div>
 					<div class="glass-content">
+						{#if slide.image}
+							<img src={slide.image} alt={slide.title} class="glass-content-image" />
+						{/if}
 						<h4>{slide.title}</h4>
 						<p>{slide.body}</p>
 					</div>
@@ -313,5 +318,13 @@
 
 	.request-edit-link:hover {
 		opacity: 1;
+	}
+
+	.glass-content-image {
+		width: 100%;
+		max-height: 160px;
+		object-fit: cover;
+		border-radius: 12px;
+		margin-bottom: 0.75rem;
 	}
 </style>

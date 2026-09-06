@@ -13,21 +13,38 @@
 
 	// Anonymous visitors can't write to storage (see uploads.ts / storage
 	// policies — authenticated only), so thumbnail becomes a pasted URL
-	// instead of a file upload here, unlike the admin form.
-	const publicFields = projectFields.map((f) =>
-		f.name === 'thumbnail_url'
-			? { name: 'thumbnail_url', label: 'URL Thumbnail (opsional, tempel link gambar)', type: 'text' }
-			: f
-	);
+	// instead of a file upload here, unlike the admin form. meta_title/
+	// meta_description are dropped entirely — SEO stays admin-only.
+	const publicFields = projectFields
+		.filter((f) => f.name !== 'meta_title' && f.name !== 'meta_description')
+		.map((f) =>
+			f.name === 'thumbnail_url'
+				? { name: 'thumbnail_url', label: 'URL Thumbnail (opsional, tempel link gambar)', type: 'text' }
+				: f
+		);
+
+	const documentationField = {
+		name: 'documentation_slides',
+		label: 'Slide Dokumentasi',
+		type: 'repeater',
+		itemFields: [
+			{ name: 'title', label: 'Judul' },
+			{ name: 'content', label: 'Konten' },
+			{ name: 'image_url', label: 'URL Gambar (opsional)' }
+		]
+	};
 
 	let editFields = $derived([
 		{ name: 'requester_name', type: 'hidden', value: requesterName },
 		{ name: 'requester_instagram', type: 'hidden', value: requesterInstagram },
 		{ name: 'requester_whatsapp', type: 'hidden', value: requesterWhatsapp },
-		...publicFields
+		...publicFields,
+		documentationField
 	]);
 
-	let editValues = $derived(form?.values ?? { ...data.project, tags: data.tagsText });
+	let editValues = $derived(
+		form?.values ?? { ...data.project, tags: data.tagsText, documentation_slides: data.documentationSlides }
+	);
 	let errors = $derived(
 		Object.fromEntries(Object.entries(form?.fieldErrors ?? {}).map(([k, v]) => [k, v?.[0]]))
 	);
@@ -81,7 +98,11 @@
 		<div class="admin-page-header">
 			<h1>Edit: {data.project.title}</h1>
 		</div>
-		<p class="dashboard-sub">Perubahan kamu akan direview dulu oleh admin sebelum tayang di halaman publik.</p>
+		<p class="dashboard-sub">
+			Perubahan kamu akan direview dulu oleh admin sebelum tayang di halaman publik. Daftar "Slide Dokumentasi" di
+			bawah sudah diisi slide yang ada sekarang — edit, hapus, atau tambah baris sesuai kebutuhan; daftar akhir yang
+			kamu kirim akan menggantikan slide yang ada.
+		</p>
 		<AdminForm
 			fields={editFields}
 			values={editValues}

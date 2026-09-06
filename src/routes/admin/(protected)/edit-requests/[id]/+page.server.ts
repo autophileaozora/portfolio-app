@@ -15,7 +15,14 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 		error(404, 'Edit request not found');
 	}
 
-	return { editRequest };
+	const { data: currentDocumentationSlides } = await supabase
+		.from('project_sections')
+		.select('title, content, image_url')
+		.eq('project_id', editRequest.project_id)
+		.eq('type', 'documentation')
+		.order('display_order');
+
+	return { editRequest, currentDocumentationSlides: currentDocumentationSlides ?? [] };
 };
 
 export const actions: Actions = {
@@ -29,7 +36,7 @@ export const actions: Actions = {
 		if (editRequest.status !== 'pending') return fail(400, { error: 'Permintaan ini sudah direview.' });
 
 		const proposed = editRequest.proposed_changes as Record<string, unknown>;
-		const { tags, ...projectFields } = proposed;
+		const { tags, documentation_slides, ...projectFields } = proposed;
 
 		const { error: updateError } = await supabase
 			.from('projects')
@@ -42,6 +49,33 @@ export const actions: Actions = {
 				await syncProjectTags(supabase, editRequest.project_id, tags);
 			} catch (e) {
 				console.error('[admin/edit-requests approve] tag sync failed:', e instanceof Error ? e.message : e);
+			}
+		}
+
+		if (Array.isArray(documentation_slides)) {
+			// Same "replace the whole set" strategy as syncProjectTags — the
+			// proposed list is the full desired state, not a diff against
+			// specific existing rows.
+			const { error: deleteError } = await supabase
+				.from('project_sections')
+				.delete()
+				.eq('project_id', editRequest.project_id)
+				.eq('type', 'documentation');
+			if (deleteError) {
+				console.error('[admin/edit-requests approve] clearing old documentation slides failed:', deleteError.message);
+			} else if (documentation_slides.length) {
+				const rows = documentation_slides.map((slide, i) => ({
+					project_id: editRequest.project_id,
+					type: 'documentation',
+					title: slide.title ?? '',
+					content: slide.content ?? '',
+					image_url: slide.image_url ?? null,
+					display_order: i + 1
+				}));
+				const { error: insertError } = await supabase.from('project_sections').insert(rows);
+				if (insertError) {
+					console.error('[admin/edit-requests approve] inserting documentation slides failed:', insertError.message);
+				}
 			}
 		}
 

@@ -1,5 +1,9 @@
 import { error, fail } from '@sveltejs/kit';
-import { editRequestGateSchema, projectPublicEditSchema } from '$lib/validation/schemas';
+import {
+	editRequestGateSchema,
+	projectPublicEditSchema,
+	documentationSlidesSchema
+} from '$lib/validation/schemas';
 import { parseTagsInput } from '$lib/server/tags';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -21,7 +25,14 @@ export const load: PageServerLoad = async ({ params, locals: { supabase } }) => 
 		.filter(Boolean)
 		.join(', ');
 
-	return { project, tagsText };
+	const { data: documentationSections } = await supabase
+		.from('project_sections')
+		.select('title, content, image_url')
+		.eq('project_id', project.id)
+		.eq('type', 'documentation')
+		.order('display_order');
+
+	return { project, tagsText, documentationSlides: documentationSections ?? [] };
 };
 
 export const actions: Actions = {
@@ -43,15 +54,17 @@ export const actions: Actions = {
 			associated_with: formData.get('associated_with'),
 			date_start: formData.get('date_start'),
 			date_end: formData.get('date_end'),
-			live_url: formData.get('live_url'),
-			meta_title: formData.get('meta_title'),
-			meta_description: formData.get('meta_description')
+			live_url: formData.get('live_url')
+			// meta_title/meta_description deliberately not read here — SEO stays
+			// admin-only (projectPublicEditSchema omits them regardless, but
+			// there's no reason to even collect them from a public submission).
 		};
 
 		const gateParsed = editRequestGateSchema.safeParse(gateRaw);
 		const projectParsed = projectPublicEditSchema.safeParse(projectRaw);
+		const slidesParsed = documentationSlidesSchema.safeParse(formData.get('documentation_slides'));
 
-		if (!gateParsed.success || !projectParsed.success) {
+		if (!gateParsed.success || !projectParsed.success || !slidesParsed.success) {
 			return fail(400, {
 				error: 'Periksa kembali isian.',
 				values: { ...gateRaw, ...projectRaw },
@@ -70,7 +83,8 @@ export const actions: Actions = {
 		const tagsRaw = String(formData.get('tags') ?? '');
 		const proposed_changes = {
 			...projectParsed.data,
-			tags: parseTagsInput(tagsRaw)
+			tags: parseTagsInput(tagsRaw),
+			documentation_slides: slidesParsed.data
 		};
 
 		const { error: insertError } = await supabase.from('project_edit_requests').insert({
