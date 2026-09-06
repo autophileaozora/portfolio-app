@@ -72,7 +72,7 @@
 			role: p.role,
 			duration: formatDuration(p.date_start, p.date_end),
 			category: p.category,
-			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
+			thumbnail: p.thumbnail_url || null
 		}))
 	);
 
@@ -120,19 +120,19 @@
 	<meta property="og:title" content={seoTitle} />
 	<meta property="og:description" content={seoDescription} />
 	<meta property="og:url" content={data.canonicalUrl} />
-	<meta property="og:image" content={data.ogImage} />
+	{#if data.ogImage}<meta property="og:image" content={data.ogImage} />{/if}
 
 	<meta name="twitter:card" content="summary_large_image" />
 	<meta name="twitter:title" content={seoTitle} />
 	<meta name="twitter:description" content={seoDescription} />
-	<meta name="twitter:image" content={data.ogImage} />
+	{#if data.ogImage}<meta name="twitter:image" content={data.ogImage} />{/if}
 
 	{@html jsonLdScriptTag({
 		'@context': 'https://schema.org',
 		'@type': 'CreativeWork',
 		name: data.project.title,
 		description: seoDescription,
-		image: data.ogImage,
+		image: data.ogImage ?? undefined,
 		url: data.canonicalUrl,
 		author: data.profile?.full_name ? { '@type': 'Person', name: data.profile.full_name } : undefined,
 		datePublished: data.project.date_start ?? undefined,
@@ -261,7 +261,9 @@
 							<img src="/assets/arrow_button.png" alt="Arrow" class="arrow-icon" />
 						</a>
 						<div class="thumbnail-wrapper">
-							<img src={card.thumbnail} alt="{card.title} Preview" class="card-thumbnail" />
+							{#if card.thumbnail}
+								<img src={card.thumbnail} alt="{card.title} Preview" class="card-thumbnail" />
+							{/if}
 						</div>
 					</div>
 					<article class="project-card">

@@ -64,7 +64,7 @@
 			role: p.role,
 			duration: formatDuration(p.date_start, p.date_end),
 			category: p.category,
-			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
+			thumbnail: p.thumbnail_url || null
 		}))
 	);
 
@@ -129,7 +129,9 @@
 						<img src="/assets/arrow_button.png" alt="Arrow" class="arrow-icon" />
 					</a>
 					<div class="thumbnail-wrapper">
-						<img src={card.thumbnail} alt="{card.title} Preview" class="card-thumbnail" />
+						{#if card.thumbnail}
+							<img src={card.thumbnail} alt="{card.title} Preview" class="card-thumbnail" />
+						{/if}
 					</div>
 				</div>
 

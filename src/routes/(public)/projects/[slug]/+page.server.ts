@@ -24,11 +24,14 @@ export const load: PageServerLoad = async ({ params, url, locals: { supabase }, 
 
 	setHeaders({ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' });
 
+	// No static fallback image — if the project has no thumbnail, the
+	// og:image/twitter:image meta tags are just omitted (see +page.svelte)
+	// rather than pointing at a generic placeholder graphic.
 	const ogImage = project.thumbnail_url
 		? project.thumbnail_url.startsWith('http')
 			? project.thumbnail_url
 			: `${url.origin}${project.thumbnail_url}`
-		: `${url.origin}/assets/hero.png`;
+		: null;
 
 	return {
 		project,

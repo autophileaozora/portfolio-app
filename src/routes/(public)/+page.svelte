@@ -43,7 +43,7 @@
 		data.experience.map((e, i) => ({
 			role: `as ${e.role_title}`,
 			date: formatDateRange(e.date_start, e.date_end),
-			img: e.image_url || '/assets/project_mesh.jpg',
+			img: e.image_url || null,
 			alt: e.role_title,
 			hue: HUE_STYLES[i % HUE_STYLES.length]
 		}))
@@ -65,7 +65,7 @@
 
 	let projects = $derived(
 		data.featuredProjects.map((p, i) => ({
-			img: p.thumbnail_url || '/assets/project_mesh.jpg',
+			img: p.thumbnail_url || null,
 			hue: HUE_STYLES[i % HUE_STYLES.length],
 			alt: p.title,
 			tags: projectTags(p),
@@ -332,7 +332,9 @@
 			<div class="profile-row">
 				<div class="profile-left">
 					<div class="avatar-container">
-						<img src={data.profile?.avatar_url || '/assets/avatar.jpg'} alt={data.profile?.full_name ?? ''} class="avatar-img" />
+						{#if data.profile?.avatar_url}
+							<img src={data.profile.avatar_url} alt={data.profile?.full_name ?? ''} class="avatar-img" />
+						{/if}
 					</div>
 					<div class="profile-text-details">
 						<h1 class="profile-name">{(data.profile?.full_name ?? '').toUpperCase()}</h1>
@@ -410,7 +412,7 @@
 						<div class="summary-carousel-track" bind:this={summaryTrackEl}>
 							{#each summaryCards as card}
 								<div class="summary-card-item" data-role={card.role} data-date={card.date}>
-									<img src={card.img} alt={card.alt} class="summary-card-img {card.hue}" />
+									{#if card.img}<img src={card.img} alt={card.alt} class="summary-card-img {card.hue}" />{/if}
 								</div>
 							{/each}
 						</div>
@@ -476,7 +478,7 @@
 					{#each projects as project}
 						<div class="proj-card">
 							<div class="proj-img-wrapper">
-								<img src={project.img} alt={project.alt} class="proj-img {project.hue}" />
+								{#if project.img}<img src={project.img} alt={project.alt} class="proj-img {project.hue}" />{/if}
 							</div>
 							<div class="proj-info">
 								<div class="proj-tags">
