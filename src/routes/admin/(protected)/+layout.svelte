@@ -25,6 +25,14 @@
 	function isActive(href) {
 		return href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 	}
+
+	// Sidebar collapses into a slide-in panel under the mobile breakpoint
+	// (see the @media block below) — this only tracks whether that panel
+	// is open; on desktop it has no effect (sidebar always visible there).
+	let sidebarOpen = $state(false);
+	function closeSidebar() {
+		sidebarOpen = false;
+	}
 </script>
 
 <svelte:head>
@@ -32,12 +40,28 @@
 </svelte:head>
 
 <div class="admin-shell">
-	<aside class="admin-sidebar">
+	<div class="admin-topbar">
+		<button
+			class="admin-menu-toggle"
+			aria-label={sidebarOpen ? 'Tutup menu' : 'Buka menu'}
+			aria-expanded={sidebarOpen}
+			onclick={() => (sidebarOpen = !sidebarOpen)}
+		>
+			<i class="fa-solid {sidebarOpen ? 'fa-xmark' : 'fa-bars'}"></i>
+		</button>
 		<div class="admin-brand">Portfolio Admin</div>
+	</div>
+
+	{#if sidebarOpen}
+		<button class="admin-backdrop" aria-label="Tutup menu" onclick={closeSidebar}></button>
+	{/if}
+
+	<aside class="admin-sidebar" class:open={sidebarOpen}>
+		<div class="admin-brand admin-brand-desktop">Portfolio Admin</div>
 		<nav>
 			{#each NAV_ITEMS as item (item.href)}
 				{#if item.available}
-					<a href={item.href} class:active={isActive(item.href)}>
+					<a href={item.href} class:active={isActive(item.href)} onclick={closeSidebar}>
 						<i class="fa-solid {item.icon}"></i>
 						{item.label}
 						{#if BADGE_COUNTS[item.href] && data[BADGE_COUNTS[item.href]] > 0}
@@ -191,5 +215,108 @@
 		flex: 1;
 		padding: 2rem 2.5rem;
 		min-width: 0;
+	}
+
+	/* --- mobile: sidebar becomes a slide-in panel behind a topbar --- */
+	.admin-topbar {
+		display: none;
+	}
+
+	.admin-backdrop {
+		display: none;
+	}
+
+	.admin-brand-desktop {
+		display: block;
+	}
+
+	@media (max-width: 860px) {
+		.admin-shell {
+			flex-direction: column;
+		}
+
+		.admin-topbar {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+			padding: 0.9rem 1rem;
+			background: #17171c;
+			color: #fff;
+			position: sticky;
+			top: 0;
+			z-index: 40;
+		}
+
+		.admin-topbar .admin-brand {
+			margin: 0;
+			padding: 0;
+		}
+
+		.admin-brand-desktop {
+			display: none;
+		}
+
+		.admin-menu-toggle {
+			width: 36px;
+			height: 36px;
+			flex-shrink: 0;
+			border-radius: 8px;
+			border: 1px solid #33333c;
+			background: transparent;
+			color: #fff;
+			font-size: 0.95rem;
+			cursor: pointer;
+			transition:
+				background 0.2s ease,
+				transform 0.15s ease;
+		}
+
+		.admin-menu-toggle:active {
+			transform: scale(0.94);
+		}
+
+		.admin-menu-toggle:hover {
+			background: #24242b;
+		}
+
+		.admin-backdrop {
+			display: block;
+			position: fixed;
+			inset: 0;
+			border: none;
+			background: rgba(0, 0, 0, 0.4);
+			z-index: 45;
+			padding: 0;
+			cursor: default;
+			animation: admin-backdrop-in 0.2s ease;
+		}
+
+		@keyframes admin-backdrop-in {
+			from {
+				opacity: 0;
+			}
+			to {
+				opacity: 1;
+			}
+		}
+
+		.admin-sidebar {
+			position: fixed;
+			inset: 0 25% 0 0;
+			width: auto;
+			max-width: 300px;
+			z-index: 50;
+			transform: translateX(-100%);
+			transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+			box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+		}
+
+		.admin-sidebar.open {
+			transform: translateX(0);
+		}
+
+		.admin-content {
+			padding: 1.25rem;
+		}
 	}
 </style>

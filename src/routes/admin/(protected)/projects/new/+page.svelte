@@ -1,5 +1,6 @@
 <script>
-	import { enhance } from '$app/forms';
+	import { applyAction, deserialize } from '$app/forms';
+	import { fly, fade, scale } from 'svelte/transition';
 	import { uploadViaSignedUrl } from '$lib/admin/uploadViaSignedUrl.js';
 	import { CATEGORY_OPTIONS, PROJECT_ROLE_OPTIONS, SECTION_TYPES } from '$lib/validation/schemas';
 	import { SECTION_TYPE_LABELS } from '$lib/admin/projectFields.js';
@@ -8,20 +9,29 @@
 	let { form } = $props();
 
 	/**
-	 * A 5-step wizard instead of one long scroll. Every field still lives in
-	 * ONE <form> that submits once at the end — steps are shown/hidden with
-	 * the `hidden` attribute (not {#if}), which only toggles CSS display and
-	 * never unmounts the inputs, so values from earlier steps are still part
-	 * of the FormData when the final step submits. The +page.server.ts
-	 * action is untouched: it reads the exact same field names it always
-	 * has, so this is a front-end-only rewrite of the old single-page form.
+	 * A 5-step wizard instead of one long scroll. Every field lives in a
+	 * plain `$state` variable regardless of which step is showing — the
+	 * <form> never relies on native FormData collection (no `name`
+	 * attributes at all), so each step's content can freely mount/unmount
+	 * via {#if} with a real transition instead of being stuck with the
+	 * `hidden`-attribute trick a plain form would need. Submission builds
+	 * FormData by hand and posts it through the same low-level path
+	 * `use:enhance` itself uses (see $app/forms' `deserialize`), so
+	 * redirects/errors/field errors from +page.server.ts behave exactly as
+	 * they would with a native form — the server action is untouched.
 	 */
-	const STEP_LABELS = ['Info Dasar', 'Kontributor', 'Media & SEO', 'Sections', 'Publikasi'];
-	const TOTAL_STEPS = STEP_LABELS.length;
+	const STEPS = [
+		{ label: 'Info Dasar', icon: 'fa-circle-info' },
+		{ label: 'Kontributor', icon: 'fa-users' },
+		{ label: 'Media & SEO', icon: 'fa-image' },
+		{ label: 'Sections', icon: 'fa-layer-group' },
+		{ label: 'Publikasi', icon: 'fa-rocket' }
+	];
+	const TOTAL_STEPS = STEPS.length;
 	let step = $state(1);
+	let maxStepReached = $state(1);
+	let direction = $state(1); // 1 = forward, -1 = backward — drives which way the step transition slides
 
-	// If the action fails validation, jump back to the earliest step that
-	// has an error so it's not hidden out of view.
 	const FIELD_STEP = {
 		title: 1,
 		slug: 1,
@@ -41,7 +51,10 @@
 	$effect(() => {
 		const errs = form?.fieldErrors;
 		if (errs && Object.keys(errs).length) {
-			step = Math.min(...Object.keys(errs).map((k) => FIELD_STEP[k] ?? 1));
+			const target = Math.min(...Object.keys(errs).map((k) => FIELD_STEP[k] ?? 1));
+			direction = target < step ? -1 : 1;
+			step = target;
+			maxStepReached = Math.max(maxStepReached, target);
 		}
 	});
 
@@ -155,13 +168,71 @@
 
 	let anyUploading = $derived(thumbnailState.uploading || sections.some((s) => s.__uploading));
 	let submitting = $state(false);
+	// Separate from `form` (which SvelteKit's own action-result flow owns)
+	// — this only covers the fetch() itself failing (e.g. offline).
+	let networkError = $state('');
 
 	function goNext() {
-		step = Math.min(TOTAL_STEPS, step + 1);
+		if (step < TOTAL_STEPS) {
+			direction = 1;
+			step += 1;
+			maxStepReached = Math.max(maxStepReached, step);
+		}
 	}
 	function goBack() {
-		step = Math.max(1, step - 1);
+		if (step > 1) {
+			direction = -1;
+			step -= 1;
+		}
 	}
+	function jumpTo(i) {
+		const target = i + 1;
+		if (target === step) return;
+		if (target > maxStepReached) return; // no skipping ahead of what's been reached
+		direction = target < step ? -1 : 1;
+		step = target;
+	}
+
+	async function handleSubmit(e) {
+		e.preventDefault();
+		submitting = true;
+		networkError = '';
+
+		const fd = new FormData();
+		fd.set('title', title);
+		fd.set('slug', slug);
+		fd.set('short_description', short_description);
+		fd.set('category', category);
+		fd.set('role', role);
+		fd.set('contributors_list', contributorsJson);
+		fd.set('associated_with', associated_with);
+		fd.set('date_start', date_start);
+		fd.set('date_end', date_end);
+		fd.set('live_url', live_url);
+		fd.set('thumbnail_url', thumbnailState.url);
+		fd.set('tags', tagsText);
+		fd.set('meta_title', meta_title);
+		fd.set('meta_description', meta_description);
+		fd.set('sections', sectionsJson);
+		if (is_published) fd.set('is_published', 'on');
+		if (is_featured) fd.set('is_featured', 'on');
+
+		try {
+			const response = await fetch(location.pathname, {
+				method: 'POST',
+				headers: { accept: 'application/json', 'x-sveltekit-action': 'true' },
+				body: fd
+			});
+			const result = deserialize(await response.text());
+			await applyAction(result);
+		} catch {
+			networkError = 'Gagal terhubung ke server. Coba lagi.';
+		} finally {
+			submitting = false;
+		}
+	}
+
+	const transitionParams = { duration: 260, easing: (t) => 1 - Math.pow(1 - t, 3) };
 </script>
 
 <svelte:head>
@@ -172,199 +243,228 @@
 	<h1>Tambah Project</h1>
 </div>
 
-<div class="wizard-progress">
-	{#each STEP_LABELS as label, i (label)}
-		<div class="wizard-progress-step" class:active={step === i + 1} class:done={step > i + 1}>
-			<div class="wizard-progress-dot">{i + 1}</div>
-			<span class="wizard-progress-label">{label}</span>
-		</div>
+<div class="wizard-progress" style="--wizard-progress-frac: {(step - 1) / (TOTAL_STEPS - 1)}">
+	{#each STEPS as s, i (s.label)}
+		<button
+			type="button"
+			class="wizard-progress-step"
+			class:active={step === i + 1}
+			class:done={step > i + 1}
+			class:clickable={i + 1 <= maxStepReached && i + 1 !== step}
+			onclick={() => jumpTo(i)}
+		>
+			<span class="wizard-progress-dot">
+				{#if step > i + 1}
+					<i class="fa-solid fa-check"></i>
+				{:else}
+					{i + 1}
+				{/if}
+			</span>
+			<span class="wizard-progress-label">{s.label}</span>
+		</button>
 	{/each}
 </div>
 
-<form
-	method="POST"
-	class="admin-form wizard-form"
-	use:enhance={() => {
-		submitting = true;
-		return async ({ update }) => {
-			await update();
-			submitting = false;
-		};
-	}}
->
-	{#if form?.error}
-		<p class="form-error-banner">{form.error}</p>
+<form class="admin-form wizard-form" onsubmit={handleSubmit}>
+	{#if form?.error || networkError}
+		<p class="form-error-banner">{form?.error || networkError}</p>
 	{/if}
 
-	<section hidden={step !== 1}>
-		<h2 class="wizard-step-title">Info Dasar</h2>
-		<label>
-			Judul
-			<input type="text" name="title" bind:value={title} />
-			{#if form?.fieldErrors?.title}<span class="field-error">{form.fieldErrors.title[0]}</span>{/if}
-		</label>
-		<label>
-			Slug (URL)
-			<input type="text" name="slug" bind:value={slug} oninput={() => (slugTouched = true)} />
-			{#if form?.fieldErrors?.slug}<span class="field-error">{form.fieldErrors.slug[0]}</span>{/if}
-		</label>
-		<label>
-			Deskripsi singkat
-			<textarea name="short_description" bind:value={short_description}></textarea>
-		</label>
-		<label>
-			Kategori
-			<select name="category" bind:value={category}>
-				<option value="">—</option>
-				{#each CATEGORY_OPTIONS as opt (opt)}<option value={opt}>{opt}</option>{/each}
-			</select>
-		</label>
-		<label>
-			Role
-			<input type="text" name="role" list="role-datalist" bind:value={role} autocomplete="off" />
-			<datalist id="role-datalist">
-				{#each PROJECT_ROLE_OPTIONS as opt (opt)}<option value={opt}></option>{/each}
-			</datalist>
-		</label>
-	</section>
-
-	<section hidden={step !== 2}>
-		<h2 class="wizard-step-title">Kontributor</h2>
-		<p class="wizard-step-sub">Opsional — bisa lebih dari satu, masing-masing dengan link ke sosial media.</p>
-		<div class="wizard-cards">
-			{#each contributors as c, i (c.__id)}
-				<div class="wizard-card">
-					<button
-						type="button"
-						class="wizard-card-remove"
-						aria-label="Hapus"
-						onclick={() => removeContributor(i)}
-					>
-						&times;
-					</button>
-					<div class="wizard-card-row">
-						<input type="text" placeholder="Nama" bind:value={c.name} />
-						<input type="text" placeholder="Link sosial media (opsional)" bind:value={c.url} />
-					</div>
+	{#key step}
+		<div
+			class="wizard-step-panel"
+			in:fly={{ x: direction * 24, duration: transitionParams.duration, easing: transitionParams.easing }}
+			out:fade={{ duration: 120 }}
+		>
+			{#if step === 1}
+				<div class="wizard-step-header">
+					<span class="wizard-step-icon"><i class="fa-solid {STEPS[0].icon}"></i></span>
+					<h2 class="wizard-step-title">Info Dasar</h2>
 				</div>
-			{:else}
-				<p class="repeater-empty">Belum ada kontributor.</p>
-			{/each}
-		</div>
-		<button type="button" class="btn-secondary repeater-add" onclick={addContributor}>
-			+ Tambah Kontributor
-		</button>
-		<input type="hidden" name="contributors_list" value={contributorsJson} />
-	</section>
-
-	<section hidden={step !== 3}>
-		<h2 class="wizard-step-title">Media, Tautan & SEO</h2>
-		<label>
-			Thumbnail
-			<input type="file" accept="image/*" onchange={onThumbnailChange} />
-		</label>
-		<input type="hidden" name="thumbnail_url" value={thumbnailState.url} />
-		{#if thumbnailState.uploading}
-			<span class="upload-status">Mengunggah...</span>
-		{:else if thumbnailState.error}
-			<span class="field-error">{thumbnailState.error}</span>
-		{/if}
-		{#if thumbnailState.preview || thumbnailState.url}
-			<img src={thumbnailState.preview || thumbnailState.url} alt="Preview thumbnail" class="wizard-image-preview" />
-		{/if}
-
-		<label>
-			Terafiliasi dengan
-			<input type="text" name="associated_with" bind:value={associated_with} />
-		</label>
-		<label>
-			Tanggal mulai
-			<input type="date" name="date_start" bind:value={date_start} />
-		</label>
-		<label>
-			Tanggal selesai
-			<input type="date" name="date_end" bind:value={date_end} />
-		</label>
-		<label>
-			Live URL
-			<input type="text" name="live_url" bind:value={live_url} />
-		</label>
-		<label>
-			Tags
-			<div class="tag-chip-box">
-				{#each tags as tag, i (tag)}
-					<span class="tag-chip">
-						{tag}
-						<button type="button" aria-label="Hapus tag" onclick={() => removeTag(i)}>&times;</button>
-					</span>
-				{/each}
-				<input
-					type="text"
-					placeholder="Ketik lalu Enter"
-					bind:value={tagInput}
-					onkeydown={onTagKeydown}
-					onblur={commitTag}
-				/>
-			</div>
-		</label>
-		<input type="hidden" name="tags" value={tagsText} />
-		<label>
-			SEO: Meta title (kosongkan untuk pakai Judul)
-			<input type="text" name="meta_title" bind:value={meta_title} />
-		</label>
-		<label>
-			SEO: Meta description (kosongkan untuk pakai Deskripsi singkat)
-			<textarea name="meta_description" bind:value={meta_description}></textarea>
-		</label>
-	</section>
-
-	<section hidden={step !== 4}>
-		<h2 class="wizard-step-title">Sections</h2>
-		<p class="wizard-step-sub">
-			Problem / Solution / Result / Dokumentasi — opsional, bisa juga ditambah belakangan lewat "Kelola Sections".
-		</p>
-		<div class="wizard-cards">
-			{#each sections as s, i (s.__id)}
-				<div class="wizard-card">
-					<button type="button" class="wizard-card-remove" aria-label="Hapus" onclick={() => removeSection(i)}>
-						&times;
-					</button>
-					<div class="wizard-card-row">
-						<select bind:value={s.type}>
-							{#each SECTION_TYPES as t (t)}<option value={t}>{SECTION_TYPE_LABELS[t]}</option>{/each}
-						</select>
-						<input type="text" placeholder="Judul" bind:value={s.title} />
-					</div>
-					<textarea placeholder="Konten" bind:value={s.content}></textarea>
-					<input type="file" accept="image/*" onchange={(e) => onSectionFileChange(s, e)} />
-					{#if s.__uploading}
-						<span class="upload-status">Mengunggah...</span>
-					{:else if s.__uploadError}
-						<span class="field-error">{s.__uploadError}</span>
-					{/if}
-					{#if s.__preview || s.image_url}
-						<img src={s.__preview || s.image_url} alt="Preview section" class="wizard-image-preview" />
-					{/if}
+				<label>
+					Judul
+					<input type="text" bind:value={title} />
+					{#if form?.fieldErrors?.title}<span class="field-error">{form.fieldErrors.title[0]}</span>{/if}
+				</label>
+				<label>
+					Slug (URL)
+					<input type="text" bind:value={slug} oninput={() => (slugTouched = true)} />
+					{#if form?.fieldErrors?.slug}<span class="field-error">{form.fieldErrors.slug[0]}</span>{/if}
+				</label>
+				<label>
+					Deskripsi singkat
+					<textarea bind:value={short_description}></textarea>
+				</label>
+				<label>
+					Kategori
+					<select bind:value={category}>
+						<option value="">—</option>
+						{#each CATEGORY_OPTIONS as opt (opt)}<option value={opt}>{opt}</option>{/each}
+					</select>
+				</label>
+				<label>
+					Role
+					<input type="text" list="role-datalist" bind:value={role} autocomplete="off" />
+					<datalist id="role-datalist">
+						{#each PROJECT_ROLE_OPTIONS as opt (opt)}<option value={opt}></option>{/each}
+					</datalist>
+				</label>
+			{:else if step === 2}
+				<div class="wizard-step-header">
+					<span class="wizard-step-icon"><i class="fa-solid {STEPS[1].icon}"></i></span>
+					<h2 class="wizard-step-title">Kontributor</h2>
 				</div>
-			{:else}
-				<p class="repeater-empty">Belum ada section.</p>
-			{/each}
-		</div>
-		<button type="button" class="btn-secondary repeater-add" onclick={addSection}>+ Tambah Section</button>
-		<input type="hidden" name="sections" value={sectionsJson} />
-	</section>
+				<p class="wizard-step-sub">Opsional — bisa lebih dari satu, masing-masing dengan link ke sosial media.</p>
+				<div class="wizard-cards">
+					{#each contributors as c, i (c.__id)}
+						<div
+							class="wizard-card"
+							in:scale={{ start: 0.94, duration: 200, easing: transitionParams.easing }}
+							out:fade={{ duration: 150 }}
+						>
+							<button
+								type="button"
+								class="wizard-card-remove"
+								aria-label="Hapus"
+								onclick={() => removeContributor(i)}
+							>
+								&times;
+							</button>
+							<div class="wizard-card-row">
+								<input type="text" placeholder="Nama" bind:value={c.name} />
+								<input type="text" placeholder="Link sosial media (opsional)" bind:value={c.url} />
+							</div>
+						</div>
+					{/each}
+				</div>
+				<button type="button" class="wizard-add-tile" onclick={addContributor}>
+					<i class="fa-solid fa-plus"></i> Tambah Kontributor
+				</button>
+			{:else if step === 3}
+				<div class="wizard-step-header">
+					<span class="wizard-step-icon"><i class="fa-solid {STEPS[2].icon}"></i></span>
+					<h2 class="wizard-step-title">Media, Tautan & SEO</h2>
+				</div>
+				<label>
+					Thumbnail
+					<div class="wizard-file-row">
+						<input type="file" accept="image/*" onchange={onThumbnailChange} />
+						{#if thumbnailState.uploading}
+							<span class="upload-status">Mengunggah...</span>
+						{:else if thumbnailState.error}
+							<span class="field-error">{thumbnailState.error}</span>
+						{/if}
+					</div>
+				</label>
+				{#if thumbnailState.preview || thumbnailState.url}
+					<img
+						src={thumbnailState.preview || thumbnailState.url}
+						alt="Preview thumbnail"
+						class="wizard-image-preview"
+					/>
+				{/if}
 
-	<section hidden={step !== 5}>
-		<h2 class="wizard-step-title">Publikasi</h2>
-		<label class="checkbox-label">
-			<input type="checkbox" name="is_published" bind:checked={is_published} />
-			Terbitkan di halaman publik
-		</label>
-		<label class="checkbox-label">
-			<input type="checkbox" name="is_featured" bind:checked={is_featured} />
-			Tampilkan sebagai unggulan di Home
-		</label>
-	</section>
+				<label>
+					Terafiliasi dengan
+					<input type="text" bind:value={associated_with} />
+				</label>
+				<label>
+					Tanggal mulai
+					<input type="date" bind:value={date_start} />
+				</label>
+				<label>
+					Tanggal selesai
+					<input type="date" bind:value={date_end} />
+				</label>
+				<label>
+					Live URL
+					<input type="text" bind:value={live_url} />
+				</label>
+				<label>
+					Tags
+					<div class="tag-chip-box">
+						{#each tags as tag, i (tag)}
+							<span class="tag-chip" transition:scale={{ start: 0.8, duration: 150 }}>
+								{tag}
+								<button type="button" aria-label="Hapus tag" onclick={() => removeTag(i)}>&times;</button>
+							</span>
+						{/each}
+						<input
+							type="text"
+							placeholder="Ketik lalu Enter"
+							bind:value={tagInput}
+							onkeydown={onTagKeydown}
+							onblur={commitTag}
+						/>
+					</div>
+				</label>
+				<label>
+					SEO: Meta title (kosongkan untuk pakai Judul)
+					<input type="text" bind:value={meta_title} />
+				</label>
+				<label>
+					SEO: Meta description (kosongkan untuk pakai Deskripsi singkat)
+					<textarea bind:value={meta_description}></textarea>
+				</label>
+			{:else if step === 4}
+				<div class="wizard-step-header">
+					<span class="wizard-step-icon"><i class="fa-solid {STEPS[3].icon}"></i></span>
+					<h2 class="wizard-step-title">Sections</h2>
+				</div>
+				<p class="wizard-step-sub">
+					Problem / Solution / Result / Dokumentasi — opsional, bisa juga ditambah belakangan lewat "Kelola
+					Sections".
+				</p>
+				<div class="wizard-cards">
+					{#each sections as s, i (s.__id)}
+						<div
+							class="wizard-card"
+							in:scale={{ start: 0.94, duration: 200, easing: transitionParams.easing }}
+							out:fade={{ duration: 150 }}
+						>
+							<button type="button" class="wizard-card-remove" aria-label="Hapus" onclick={() => removeSection(i)}>
+								&times;
+							</button>
+							<div class="wizard-card-row">
+								<select bind:value={s.type}>
+									{#each SECTION_TYPES as t (t)}<option value={t}>{SECTION_TYPE_LABELS[t]}</option>{/each}
+								</select>
+								<input type="text" placeholder="Judul" bind:value={s.title} />
+							</div>
+							<textarea placeholder="Konten" bind:value={s.content}></textarea>
+							<div class="wizard-file-row">
+								<input type="file" accept="image/*" onchange={(e) => onSectionFileChange(s, e)} />
+								{#if s.__uploading}
+									<span class="upload-status">Mengunggah...</span>
+								{:else if s.__uploadError}
+									<span class="field-error">{s.__uploadError}</span>
+								{/if}
+							</div>
+							{#if s.__preview || s.image_url}
+								<img src={s.__preview || s.image_url} alt="Preview section" class="wizard-image-preview" />
+							{/if}
+						</div>
+					{/each}
+				</div>
+				<button type="button" class="wizard-add-tile" onclick={addSection}>
+					<i class="fa-solid fa-plus"></i> Tambah Section
+				</button>
+			{:else if step === 5}
+				<div class="wizard-step-header">
+					<span class="wizard-step-icon"><i class="fa-solid {STEPS[4].icon}"></i></span>
+					<h2 class="wizard-step-title">Publikasi</h2>
+				</div>
+				<label class="checkbox-label">
+					<input type="checkbox" bind:checked={is_published} />
+					Terbitkan di halaman publik
+				</label>
+				<label class="checkbox-label">
+					<input type="checkbox" bind:checked={is_featured} />
+					Tampilkan sebagai unggulan di Home
+				</label>
+			{/if}
+		</div>
+	{/key}
 
 	<div class="wizard-nav">
 		{#if step > 1}
