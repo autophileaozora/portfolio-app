@@ -12,11 +12,19 @@
 	 *   accept,     // 'file' only: <input accept=""> filter, e.g. 'image/*'
 	 *   isImage,    // 'file' only: preview as <img> instead of a plain link
 	 *   value,      // 'hidden' only: fixed value, not sourced from `values`
-	 *   itemFields  // 'repeater' only: [{ name, label }] — one text input per
-	 *               // sub-field per row. Rows serialize to a JSON string in a
-	 *               // hidden input named `field.name` on submit; the action
-	 *               // parses it back (see contributorsListSchema for the
-	 *               // pattern this pairs with).
+	 *   itemFields  // 'repeater' only: [{ name, label, type?, options?, accept? }]
+	 *               // — one input per sub-field per row, defaulting to a plain
+	 *               // text input; itemField.type 'select' renders a dropdown
+	 *               // (itemField.options, same shape as a top-level select),
+	 *               // itemField.type 'file' renders a per-row file input.
+	 *               // Text/select sub-fields serialize into one JSON string in
+	 *               // a hidden input named `field.name` (see
+	 *               // contributorsListSchema for the pattern this pairs with).
+	 *               // A 'file' sub-field can't travel through that JSON, so
+	 *               // it's submitted as its own field named
+	 *               // `${field.name}__${row's stable id}__${itemField.name}`
+	 *               // — the row's id also rides along inside the JSON as
+	 *               // `_rowId` so the action can match the two back up.
 	 * }]
 	 * values/errors come from the +page.server.ts load (values) and form action
 	 * fail() payload (errors), keyed by field name. multipart is always on so
@@ -46,7 +54,10 @@
 	// on something stable even before/without a real identity from the DB.
 	function parseRepeaterValue(raw) {
 		const arr = typeof raw === 'string' ? safeJsonParse(raw) : Array.isArray(raw) ? raw : [];
-		return arr.map((row) => ({ ...row, __id: crypto.randomUUID() }));
+		return arr.map((row) => {
+			const { _rowId, ...rest } = row;
+			return { ...rest, __id: _rowId || crypto.randomUUID() };
+		});
 	}
 	function safeJsonParse(str) {
 		try {
@@ -64,14 +75,21 @@
 	);
 
 	function addRepeaterRow(field) {
-		const blankRow = Object.fromEntries(field.itemFields.map((f) => [f.name, '']));
+		const blankRow = Object.fromEntries(
+			field.itemFields
+				.filter((f) => f.type !== 'file')
+				.map((f) => [f.name, f.type === 'select' && f.options?.length ? optionValue(f.options[0]) : ''])
+		);
 		repeaterRows[field.name] = [...repeaterRows[field.name], { ...blankRow, __id: crypto.randomUUID() }];
 	}
 	function removeRepeaterRow(fieldName, index) {
 		repeaterRows[fieldName] = repeaterRows[fieldName].filter((_, i) => i !== index);
 	}
 	function repeaterJson(fieldName) {
-		return JSON.stringify(repeaterRows[fieldName].map(({ __id, ...rest }) => rest));
+		return JSON.stringify(repeaterRows[fieldName].map(({ __id, ...rest }) => ({ ...rest, _rowId: __id })));
+	}
+	function repeaterFileFieldName(field, row, itemField) {
+		return `${field.name}__${row.__id}__${itemField.name}`;
 	}
 </script>
 
@@ -107,7 +125,24 @@
 				{#each repeaterRows[field.name] as row, i (row.__id)}
 					<div class="repeater-row">
 						{#each field.itemFields as itemField (itemField.name)}
-							<input type="text" placeholder={itemField.label} bind:value={row[itemField.name]} />
+							{#if itemField.type === 'select'}
+								<select bind:value={row[itemField.name]}>
+									{#each itemField.options as opt (optionValue(opt))}
+										<option value={optionValue(opt)}>{optionLabel(opt)}</option>
+									{/each}
+								</select>
+							{:else if itemField.type === 'file'}
+								<span class="repeater-file-field">
+									<span class="repeater-file-label">{itemField.label}</span>
+									<input
+										type="file"
+										name={repeaterFileFieldName(field, row, itemField)}
+										accept={itemField.accept}
+									/>
+								</span>
+							{:else}
+								<input type="text" placeholder={itemField.label} bind:value={row[itemField.name]} />
+							{/if}
 						{/each}
 						<button
 							type="button"

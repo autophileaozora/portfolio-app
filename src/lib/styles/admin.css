@@ -232,17 +232,32 @@
 
 .repeater-row {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 0.5rem;
 	align-items: center;
 }
 
-.repeater-row input {
+.repeater-row input,
+.repeater-row select {
 	flex: 1;
 	min-width: 0;
 	font: inherit;
 	padding: 0.55rem 0.7rem;
 	border-radius: 8px;
 	border: 1px solid #d4d4db;
+}
+
+.repeater-file-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2rem;
+	flex: 1;
+	min-width: 160px;
+}
+
+.repeater-file-label {
+	font-size: 0.75rem;
+	color: #77777f;
 }
 
 .repeater-remove {

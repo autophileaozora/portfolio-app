@@ -1,9 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { projectSchema } from '$lib/validation/schemas';
+import { projectSchema, newProjectSectionsSchema } from '$lib/validation/schemas';
 import { friendlyDbError } from '$lib/server/adminErrors';
 import { nextDisplayOrder } from '$lib/server/ranked';
 import { parseTagsInput, syncProjectTags } from '$lib/server/tags';
-import { resolveFileField } from '$lib/server/uploads';
+import { resolveFileField, uploadFile } from '$lib/server/uploads';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
@@ -57,6 +57,42 @@ export const actions: Actions = {
 			await syncProjectTags(supabase, inserted.id, parseTagsInput(tagsRaw));
 		} catch (e) {
 			console.error('[admin/projects/new] tag sync failed:', e instanceof Error ? e.message : e);
+		}
+
+		const sectionsParsed = newProjectSectionsSchema.safeParse(formData.get('sections'));
+		if (sectionsParsed.success && sectionsParsed.data.length) {
+			// Fresh project, no existing sections — order per (type) can just be
+			// counted in-memory here instead of round-tripping nextSectionOrder.
+			const orderByType: Record<string, number> = {};
+			const rows = await Promise.all(
+				sectionsParsed.data.map(async (row) => {
+					let image_url: string | null = null;
+					const file = formData.get(`sections__${row._rowId}__image_file`);
+					if (file instanceof File && file.size > 0) {
+						try {
+							image_url = await uploadFile(supabase, file, 'sections');
+						} catch (e) {
+							console.error(
+								'[admin/projects/new] section image upload failed:',
+								e instanceof Error ? e.message : e
+							);
+						}
+					}
+					orderByType[row.type] = (orderByType[row.type] ?? 0) + 1;
+					return {
+						project_id: inserted.id,
+						type: row.type,
+						title: row.title,
+						content: row.content,
+						image_url,
+						display_order: orderByType[row.type]
+					};
+				})
+			);
+			const { error: sectionsError } = await supabase.from('project_sections').insert(rows);
+			if (sectionsError) {
+				console.error('[admin/projects/new] section insert failed:', sectionsError.message);
+			}
 		}
 
 		redirect(303, `/admin/projects/${inserted.id}`);

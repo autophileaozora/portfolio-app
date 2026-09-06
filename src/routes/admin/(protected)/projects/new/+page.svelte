@@ -1,10 +1,10 @@
 <script>
 	import AdminForm from '$lib/components/admin/AdminForm.svelte';
-	import { projectFields, projectAdminOnlyFields } from '$lib/admin/projectFields.js';
+	import { projectFields, projectAdminOnlyFields, newProjectSectionsField } from '$lib/admin/projectFields.js';
 
 	let { form } = $props();
 
-	const fields = [...projectFields, ...projectAdminOnlyFields];
+	const fields = [...projectFields, newProjectSectionsField, ...projectAdminOnlyFields];
 
 	let errors = $derived(
 		Object.fromEntries(Object.entries(form?.fieldErrors ?? {}).map(([k, v]) => [k, v?.[0]]))

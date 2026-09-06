@@ -168,6 +168,30 @@ export const documentationSlidesSchema = z.preprocess((v) => {
 	}
 }, z.array(documentationSlideSchema).max(20));
 
+/**
+ * The "add sections while creating a project" repeater on the admin new-
+ * project form. Only type/title/content travel through this JSON blob —
+ * each row's image is a real <input type="file">, which can't go through
+ * JSON, so it's submitted as its own multipart field named
+ * `sections__<rowId>__image_file` and matched back up via `_rowId`
+ * (see AdminForm.svelte's repeater and projects/new/+page.server.ts).
+ */
+const newProjectSectionRowSchema = z.object({
+	type: z.enum(SECTION_TYPES),
+	title: z.string().trim().max(200).optional().default(''),
+	content: z.string().trim().max(3000).optional().default(''),
+	_rowId: z.string().optional().default('')
+});
+
+export const newProjectSectionsSchema = z.preprocess((v) => {
+	if (typeof v !== 'string') return v;
+	try {
+		return JSON.parse(v);
+	} catch {
+		return [];
+	}
+}, z.array(newProjectSectionRowSchema).max(60));
+
 export const messageSchema = z.object({
 	// formData.get() returns null (not undefined) for a field that isn't
 	// present at all, which z.optional() doesn't accept — normalize first.
