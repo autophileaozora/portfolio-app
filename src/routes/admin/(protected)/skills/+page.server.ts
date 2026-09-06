@@ -1,6 +1,7 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { friendlyDbError } from '$lib/server/adminErrors';
-import { reorderRow, compactAfterDelete } from '$lib/server/ranked';
+import { reorderRow, compactAfterDelete, nextDisplayOrder } from '$lib/server/ranked';
+import { bulkSkillNamesSchema } from '$lib/validation/schemas';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
@@ -46,5 +47,25 @@ export const actions: Actions = {
 		if (error) return fail(400, { error: friendlyDbError(error) });
 
 		return { success: true };
+	},
+
+	// Skills' doc-import is bulk (per the user's explicit choice, unlike
+	// every other resource's one-record-per-upload flow) — a single
+	// document listing several skill names inserts all of them at once,
+	// each getting the next sequential display_order.
+	bulkImport: async ({ request, locals: { supabase } }) => {
+		const formData = await request.formData();
+		const parsed = bulkSkillNamesSchema.safeParse(formData.get('names_json'));
+		if (!parsed.success) {
+			return fail(400, { error: parsed.error.flatten().formErrors[0] ?? 'Data tidak valid.' });
+		}
+
+		const startOrder = await nextDisplayOrder(supabase, 'skills');
+		const rows = parsed.data.map((name, i) => ({ name, display_order: startOrder + i }));
+
+		const { error } = await supabase.from('skills').insert(rows);
+		if (error) return fail(400, { error: friendlyDbError(error) });
+
+		redirect(303, `/admin/skills?bulkAdded=${rows.length}`);
 	}
 };

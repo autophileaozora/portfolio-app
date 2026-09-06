@@ -1,27 +1,39 @@
 import { error, json } from '@sveltejs/kit';
 import { extractDocText } from '$lib/server/extractDocText';
-import { parseProjectDoc } from '$lib/server/parseProjectDoc';
+import {
+	parseExperienceDoc,
+	parseTestimonialDoc,
+	parseStatDoc,
+	parseProfileDoc,
+	parseSkillsBulkDoc
+} from '$lib/server/parseSimpleDoc';
 import type { RequestHandler } from './$types';
 
 /**
- * Extracts wizard fields from a project write-up the admin already
- * uploaded to Storage (see /admin/api/upload-url, folder 'imports') —
- * this endpoint takes the resulting URL, not the file itself, so a
- * document with several embedded screenshots doesn't have to pass
- * through this request body at all (the same 4.5MB Vercel Serverless
- * Function limit that forced images onto the signed-URL path applies
- * here too; fetching the file server-to-server isn't subject to it).
- *
- * A raw +server.ts route isn't covered by the (protected) layout's
- * load-based guard, so the session check below is this endpoint's only
- * gate, same as upload-url.
+ * Generic sibling of /admin/api/parse-project-doc, for every resource
+ * that isn't Projects — Experience/Testimonials/Stats/Profile each parse
+ * to one flat record, Skills parses to a bulk list of names. Same
+ * upload-then-parse shape: the client already uploaded the doc to Storage
+ * via a signed URL (folder 'imports'), this endpoint fetches it server-
+ * to-server and returns the extracted fields.
  */
+const PARSERS = {
+	experience: parseExperienceDoc,
+	testimonials: parseTestimonialDoc,
+	stats: parseStatDoc,
+	profile: parseProfileDoc,
+	skills: parseSkillsBulkDoc
+} as const;
+
+type Resource = keyof typeof PARSERS;
+
 export const POST: RequestHandler = async ({ request, locals: { safeGetSession } }) => {
 	const { user } = await safeGetSession();
 	if (!user) error(401, 'Unauthorized');
 
-	const { url, filename } = await request.json();
+	const { url, filename, resource } = await request.json();
 	if (!url || typeof url !== 'string') error(400, 'URL dokumen tidak valid.');
+	if (!resource || !(resource in PARSERS)) error(400, 'Resource tidak dikenali.');
 
 	const ext = String(filename ?? '')
 		.split('.')
@@ -41,6 +53,6 @@ export const POST: RequestHandler = async ({ request, locals: { safeGetSession }
 		error(400, `Gagal membaca dokumen: ${e instanceof Error ? e.message : 'unknown error'}`);
 	}
 
-	const { fields, warnings } = parseProjectDoc({ html, plainText });
-	return json({ fields, warnings });
+	const result = PARSERS[resource as Resource]({ html, plainText });
+	return json(result);
 };

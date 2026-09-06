@@ -16,10 +16,7 @@
 <AdminTable
 	columns={[
 		{ key: 'role_title', label: 'Jabatan' },
-		{ key: 'company_name', label: 'Perusahaan' },
-		{ key: 'role_type', label: 'Tipe' },
-		{ key: 'date_start', label: 'Mulai' },
-		{ key: 'date_end', label: 'Selesai' }
+		{ key: 'role_type', label: 'Tipe' }
 	]}
 	rows={data.experience}
 	basePath="/admin/experience"

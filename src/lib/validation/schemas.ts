@@ -16,6 +16,20 @@ export const skillSchema = z.object({
 	name: z.string().trim().min(1, 'Nama wajib diisi.').max(80)
 });
 
+/**
+ * Skills' bulk doc-import (see DocImportBox.svelte + parseSkillsBulkDoc)
+ * submits every parsed name at once as a JSON array in a hidden input,
+ * same pattern as contributorsListSchema below.
+ */
+export const bulkSkillNamesSchema = z.preprocess((v) => {
+	if (typeof v !== 'string') return v;
+	try {
+		return JSON.parse(v);
+	} catch {
+		return [];
+	}
+}, z.array(z.string().trim().min(1).max(80)).min(1, 'Tidak ada nama skill untuk ditambahkan.').max(100));
+
 export const statSchema = z.object({
 	label: z.string().trim().min(1, 'Label wajib diisi.').max(80),
 	value: z.coerce.number().int().min(0, 'Value tidak boleh negatif.')

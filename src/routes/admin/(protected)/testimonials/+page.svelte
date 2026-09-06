@@ -3,9 +3,7 @@
 
 	let { data } = $props();
 
-	let rows = $derived(
-		data.testimonials.map((t) => ({ ...t, is_published_label: t.is_published ? 'Ya' : 'Tidak' }))
-	);
+	let rows = data.testimonials;
 </script>
 
 <svelte:head>
@@ -20,9 +18,7 @@
 <AdminTable
 	columns={[
 		{ key: 'author_name', label: 'Nama' },
-		{ key: 'author_role', label: 'Peran' },
-		{ key: 'quote', label: 'Quote' },
-		{ key: 'is_published_label', label: 'Terbit' }
+		{ key: 'author_role', label: 'Peran' }
 	]}
 	{rows}
 	basePath="/admin/testimonials"

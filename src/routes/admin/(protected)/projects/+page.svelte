@@ -17,13 +17,7 @@
 				: ''
 	);
 
-	let rows = $derived(
-		data.projects.map((p) => ({
-			...p,
-			is_published_label: p.is_published ? 'Ya' : 'Tidak',
-			is_featured_label: p.is_featured ? 'Ya' : 'Tidak'
-		}))
-	);
+	let rows = data.projects;
 </script>
 
 <svelte:head>
@@ -42,10 +36,7 @@
 <AdminTable
 	columns={[
 		{ key: 'title', label: 'Judul' },
-		{ key: 'slug', label: 'Slug' },
-		{ key: 'category', label: 'Kategori' },
-		{ key: 'is_published_label', label: 'Terbit' },
-		{ key: 'is_featured_label', label: 'Unggulan' }
+		{ key: 'category', label: 'Kategori' }
 	]}
 	{rows}
 	basePath="/admin/projects"
