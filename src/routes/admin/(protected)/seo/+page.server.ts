@@ -25,6 +25,12 @@ function topN<T>(list: T[], keyFn: (item: T) => string | null, n = 6) {
 		.map(([label, count]) => ({ label, count }));
 }
 
+/** Safe accessor into the flexible `metadata` JSONB column. */
+function metaValue(metadata: unknown, key: string): unknown {
+	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+	return (metadata as Record<string, unknown>)[key];
+}
+
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const { data: seoSettings, error: seoError } = await supabase
 		.from('seo_settings')
@@ -53,22 +59,90 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 	const sessionIds = new Set(rows.map((r) => r.session_id));
 	const newSessionIds = new Set(rows.filter((r) => r.is_new_session).map((r) => r.session_id));
 
+	// Entry/exit page + bounce rate — derived purely from the pageview
+	// rows already fetched above, grouped by session and ordered by time;
+	// no extra collection needed, just a different way of looking at the
+	// same data.
+	const pageviewsBySession = new Map<string, typeof pageviews>();
+	for (const pv of pageviews) {
+		const list = pageviewsBySession.get(pv.session_id) ?? [];
+		list.push(pv);
+		pageviewsBySession.set(pv.session_id, list);
+	}
+	const entryPaths: string[] = [];
+	const exitPaths: string[] = [];
+	let bouncedSessions = 0;
+	for (const list of pageviewsBySession.values()) {
+		const sorted = [...list].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+		const first = sorted[0];
+		const last = sorted[sorted.length - 1];
+		if (first?.path) entryPaths.push(first.path);
+		if (last?.path) exitPaths.push(last.path);
+		if (sorted.length === 1) bouncedSessions += 1;
+	}
+
+	// Goal completions (CV/Resume download, WhatsApp, live-project click,
+	// message sent) — clicks tagged with metadata.goal by
+	// AnalyticsTracker.svelte's detectGoal()/the ContactFooter success hook.
+	const goalClicks = rows.filter((r) => r.event_type === 'click' && metaValue(r.metadata, 'goal'));
+	const goalCounts = topN(goalClicks, (r) => String(metaValue(r.metadata, 'goal') ?? ''), 10);
+
+	// Core Web Vitals (LCP/CLS) — real Google ranking factors, averaged
+	// across whatever pageloads reported them.
+	const webVitalRows = rows.filter((r) => r.event_type === 'web_vital');
+	const lcpValues = webVitalRows
+		.filter((r) => metaValue(r.metadata, 'metric') === 'LCP')
+		.map((r) => metaValue(r.metadata, 'value_ms'))
+		.filter((v): v is number => typeof v === 'number');
+	const clsValues = webVitalRows
+		.filter((r) => metaValue(r.metadata, 'metric') === 'CLS')
+		.map((r) => metaValue(r.metadata, 'value'))
+		.filter((v): v is number => typeof v === 'number');
+
 	const analytics = {
 		hasData: rows.length > 0,
 		totalPageviews: pageviews.length,
 		uniqueSessions: sessionIds.size,
 		newSessions: newSessionIds.size,
 		returningSessions: Math.max(0, sessionIds.size - newSessionIds.size),
+		bounceRatePercent: pageviewsBySession.size ? Math.round((bouncedSessions / pageviewsBySession.size) * 100) : 0,
 		avgDurationSeconds: durations.length
 			? Math.round(durations.reduce((sum, r) => sum + (r.duration_seconds ?? 0), 0) / durations.length)
 			: 0,
 		errorCount: rows.filter((r) => r.event_type === 'error').length,
+		notFoundCount: rows.filter((r) => r.event_type === 'not_found').length,
+		avgLcpMs: lcpValues.length ? Math.round(lcpValues.reduce((s, v) => s + v, 0) / lcpValues.length) : null,
+		avgCls: clsValues.length ? Math.round((clsValues.reduce((s, v) => s + v, 0) / clsValues.length) * 1000) / 1000 : null,
 		topPages: topN(pageviews, (r) => r.path),
+		topEntryPages: topN(
+			entryPaths.map((path) => ({ path })),
+			(r) => r.path
+		),
+		topExitPages: topN(
+			exitPaths.map((path) => ({ path })),
+			(r) => r.path
+		),
 		topReferrers: topN(pageviews, (r) => hostnameOf(r.referrer)),
 		topCountries: topN(rows, (r) => r.country),
 		topBrowsers: topN(rows, (r) => r.browser),
 		topDevices: topN(rows, (r) => r.device_type),
-		recent: rows.slice(0, 50)
+		topGoals: goalCounts,
+		topNotFound: topN(
+			rows.filter((r) => r.event_type === 'not_found'),
+			(r) => r.path
+		),
+		// Pre-extracted here (rather than left as raw `metadata` for the
+		// template to dig into) so the values reaching +page.svelte are
+		// already plain strings/numbers, not the general Json union type.
+		recent: rows.slice(0, 50).map((r) => ({
+			...r,
+			goal: r.event_type === 'click' ? (metaValue(r.metadata, 'goal') as string | undefined) : undefined,
+			webVitalMetric: r.event_type === 'web_vital' ? (metaValue(r.metadata, 'metric') as string | undefined) : undefined,
+			webVitalValue:
+				r.event_type === 'web_vital'
+					? ((metaValue(r.metadata, 'value_ms') ?? metaValue(r.metadata, 'value')) as number | undefined)
+					: undefined
+		}))
 	};
 
 	return { seoSettings: seoSettings ?? {}, analytics };

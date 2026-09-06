@@ -38,12 +38,29 @@
 	function formatDate(iso) {
 		return new Date(iso).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 	}
+	// Google's own published Core Web Vitals thresholds.
+	function lcpIsGood(ms) {
+		return ms != null && ms < 2500;
+	}
+	function clsIsGood(v) {
+		return v != null && v < 0.1;
+	}
 	const EVENT_LABELS = {
 		pageview: 'Kunjungan',
 		click: 'Klik',
 		scroll: 'Scroll',
 		duration: 'Durasi',
-		error: 'Error'
+		error: 'Error',
+		web_vital: 'Web Vital',
+		not_found: '404'
+	};
+	const GOAL_LABELS = {
+		cv_download: 'Download CV',
+		resume_download: 'Download Resume',
+		whatsapp_click: 'Klik WhatsApp',
+		email_click: 'Klik Email',
+		live_project_click: 'Klik Live Project',
+		message_sent: 'Kirim Pesan'
 	};
 </script>
 
@@ -104,9 +121,25 @@
 				<div class="analytics-card-value">{formatDuration(data.analytics.avgDurationSeconds)}</div>
 				<div class="analytics-card-label">Rata-rata Durasi Kunjungan</div>
 			</div>
+			<div class="analytics-card">
+				<div class="analytics-card-value">{data.analytics.bounceRatePercent}%</div>
+				<div class="analytics-card-label">Bounce Rate (1 halaman lalu pergi)</div>
+			</div>
 			<div class="analytics-card" class:analytics-card-warn={data.analytics.errorCount > 0}>
 				<div class="analytics-card-value">{data.analytics.errorCount}</div>
 				<div class="analytics-card-label">Error Teknis (JS)</div>
+			</div>
+			<div class="analytics-card" class:analytics-card-warn={data.analytics.notFoundCount > 0}>
+				<div class="analytics-card-value">{data.analytics.notFoundCount}</div>
+				<div class="analytics-card-label">Halaman 404 / Link Rusak</div>
+			</div>
+			<div class="analytics-card" class:analytics-card-warn={data.analytics.avgLcpMs != null && !lcpIsGood(data.analytics.avgLcpMs)}>
+				<div class="analytics-card-value">{data.analytics.avgLcpMs != null ? `${(data.analytics.avgLcpMs / 1000).toFixed(1)}s` : '—'}</div>
+				<div class="analytics-card-label">LCP rata-rata (kecepatan muat, faktor SEO)</div>
+			</div>
+			<div class="analytics-card" class:analytics-card-warn={data.analytics.avgCls != null && !clsIsGood(data.analytics.avgCls)}>
+				<div class="analytics-card-value">{data.analytics.avgCls ?? '—'}</div>
+				<div class="analytics-card-label">CLS rata-rata (kestabilan layout, faktor SEO)</div>
 			</div>
 		</div>
 
@@ -119,6 +152,38 @@
 					<p class="repeater-empty">Belum ada.</p>
 				{/each}
 			</div>
+			<div class="analytics-list">
+				<h3>Halaman Masuk (Entry Page)</h3>
+				{#each data.analytics.topEntryPages as row (row.label)}
+					<div class="analytics-list-row"><span>{row.label}</span><b>{row.count}</b></div>
+				{:else}
+					<p class="repeater-empty">Belum ada.</p>
+				{/each}
+			</div>
+			<div class="analytics-list">
+				<h3>Halaman Keluar (Exit Page)</h3>
+				{#each data.analytics.topExitPages as row (row.label)}
+					<div class="analytics-list-row"><span>{row.label}</span><b>{row.count}</b></div>
+				{:else}
+					<p class="repeater-empty">Belum ada.</p>
+				{/each}
+			</div>
+			<div class="analytics-list">
+				<h3>Goal Tercapai</h3>
+				{#each data.analytics.topGoals as row (row.label)}
+					<div class="analytics-list-row"><span>{GOAL_LABELS[row.label] ?? row.label}</span><b>{row.count}</b></div>
+				{:else}
+					<p class="repeater-empty">Belum ada.</p>
+				{/each}
+			</div>
+			{#if data.analytics.topNotFound.length}
+				<div class="analytics-list">
+					<h3>Halaman 404 / Link Rusak</h3>
+					{#each data.analytics.topNotFound as row (row.label)}
+						<div class="analytics-list-row"><span>{row.label}</span><b>{row.count}</b></div>
+					{/each}
+				</div>
+			{/if}
 			<div class="analytics-list">
 				<h3>Sumber Trafik (Referrer)</h3>
 				{#each data.analytics.topReferrers as row (row.label)}
@@ -196,8 +261,12 @@
 										{formatDuration(ev.duration_seconds)}, scroll {ev.scroll_percent ?? 0}%
 									{:else if ev.event_type === 'scroll'}
 										scroll {ev.scroll_percent}%
-									{:else if ev.event_type === 'click' || ev.event_type === 'error'}
+									{:else if ev.event_type === 'click' && ev.goal}
+										🎯 {GOAL_LABELS[ev.goal] ?? ev.goal} — {ev.label ?? '—'}
+									{:else if ev.event_type === 'click' || ev.event_type === 'error' || ev.event_type === 'not_found'}
 										{ev.label ?? '—'}
+									{:else if ev.event_type === 'web_vital'}
+										{ev.webVitalMetric}: {ev.webVitalValue ?? '—'}
 									{:else}
 										—
 									{/if}

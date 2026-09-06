@@ -100,6 +100,17 @@
 				formElement.reset();
 				msgModalOpen = false;
 				showToast('Message sent successfully! Thank you.');
+				// A goal worth counting distinctly from a generic click — the
+				// submit button being pressed doesn't confirm it actually
+				// went through, this branch does. AnalyticsTracker.svelte
+				// (mounted higher up in the public layout) listens for this.
+				try {
+					window.dispatchEvent(
+						new CustomEvent('analytics:goal', { detail: { goal: 'message_sent', label: 'Pesan terkirim' } })
+					);
+				} catch {
+					// Analytics must never break the actual feature.
+				}
 			} else if (result.type === 'failure') {
 				sendError = result.data?.error ?? 'Gagal mengirim pesan.';
 			} else {

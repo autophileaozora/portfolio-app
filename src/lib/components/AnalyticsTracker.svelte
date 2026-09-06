@@ -63,7 +63,7 @@
 			// sendBeacon survives the page actually unloading, which a normal
 			// fetch does not reliably do — used for the "on the way out"
 			// events (duration/final scroll depth).
-			if (navigator.sendBeacon && (eventType === 'duration' || eventType === 'scroll')) {
+			if (navigator.sendBeacon && (eventType === 'duration' || eventType === 'scroll' || eventType === 'web_vital')) {
 				navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' }));
 			} else {
 				fetch('/api/track', {
@@ -83,7 +83,14 @@
 		pageEnteredAt = performance.now();
 		maxScrollPercent = 0;
 		scrollMilestonesSent = new Set();
-		send('pageview');
+		// A 404 (or any error boundary) isn't real content — flagged as its
+		// own event type instead of inflating "top pages", so broken/dead
+		// links pointing at this site show up distinctly on the dashboard.
+		if ($page.status && $page.status >= 400) {
+			send('not_found', { label: `${$page.status} ${$page.error?.message ?? ''}`.trim() });
+		} else {
+			send('pageview');
+		}
 	}
 
 	function sendDuration() {
@@ -108,6 +115,21 @@
 		}
 	}
 
+	// Href patterns that mark a click as a real business "goal" for a
+	// portfolio site (did anyone actually download the CV, message on
+	// WhatsApp, open a live project, or email?) rather than just noise —
+	// shown as its own section on the dashboard instead of buried in the
+	// generic click list.
+	function detectGoal(target) {
+		const href = target.href || '';
+		if (/[?&]download=CV\.pdf/i.test(href)) return 'cv_download';
+		if (/[?&]download=Resume\.pdf/i.test(href)) return 'resume_download';
+		if (/wa\.me|api\.whatsapp\.com/i.test(href)) return 'whatsapp_click';
+		if (/^mailto:/i.test(href)) return 'email_click';
+		if (target.classList?.contains('cta-button')) return 'live_project_click';
+		return null;
+	}
+
 	function onClick(e) {
 		const target = e.target.closest?.('a, button');
 		if (!target) return;
@@ -115,7 +137,62 @@
 			.trim()
 			.replace(/\s+/g, ' ')
 			.slice(0, 120);
-		send('click', { label });
+		const goal = detectGoal(target);
+		send('click', goal ? { label, metadata: { goal } } : { label });
+	}
+
+	// Lets other components report a real conversion that a click alone
+	// can't confirm (e.g. the message form actually succeeding, not just
+	// the submit button being pressed) without importing this module
+	// directly — see ContactFooter.svelte's message-sent handler.
+	function onGoalEvent(e) {
+		const { goal, label } = e.detail ?? {};
+		if (!goal) return;
+		send('click', { label: label ?? goal, metadata: { goal } });
+	}
+
+	// Core Web Vitals — LCP and CLS, hand-rolled via the native
+	// PerformanceObserver (no web-vitals dependency). Both are real Google
+	// ranking factors, so this ties directly back to the site's SEO goal,
+	// not just "more data for its own sake". INP (the third Core Web
+	// Vital) is deliberately skipped — accurately attributing it needs
+	// more plumbing than a quick native observer reasonably gives you;
+	// said so here rather than reporting a shaky number as if it were
+	// solid.
+	function trackWebVitals() {
+		try {
+			let lcp = null;
+			new PerformanceObserver((list) => {
+				const entries = list.getEntries();
+				const last = entries[entries.length - 1];
+				if (last) lcp = Math.round(last.startTime);
+			}).observe({ type: 'largest-contentful-paint', buffered: true });
+
+			let cls = 0;
+			new PerformanceObserver((list) => {
+				for (const entry of list.getEntries()) {
+					if (!entry.hadRecentInput) cls += entry.value;
+				}
+			}).observe({ type: 'layout-shift', buffered: true });
+
+			const report = () => {
+				if (lcp != null) send('web_vital', { label: 'LCP', metadata: { metric: 'LCP', value_ms: lcp } });
+				send('web_vital', { label: 'CLS', metadata: { metric: 'CLS', value: Math.round(cls * 1000) / 1000 } });
+			};
+			// LCP/CLS both keep updating until the page is hidden/unloaded —
+			// report the final values then, same moment as duration.
+			window.addEventListener('pagehide', report, { once: true });
+			document.addEventListener(
+				'visibilitychange',
+				() => {
+					if (document.visibilityState === 'hidden') report();
+				},
+				{ once: true }
+			);
+		} catch {
+			// PerformanceObserver or these entry types aren't supported —
+			// just skip Core Web Vitals for this visitor, no big deal.
+		}
 	}
 
 	function onWindowError(e) {
@@ -131,6 +208,7 @@
 	onMount(() => {
 		sessionId = getSessionId();
 		trackPageview();
+		trackWebVitals();
 
 		window.addEventListener('scroll', onScroll, { passive: true });
 		document.addEventListener('click', onClick, true);
@@ -138,6 +216,7 @@
 		window.addEventListener('unhandledrejection', onUnhandledRejection);
 		window.addEventListener('pagehide', sendDuration);
 		document.addEventListener('visibilitychange', onVisibilityChange);
+		window.addEventListener('analytics:goal', onGoalEvent);
 
 		return () => {
 			window.removeEventListener('scroll', onScroll);
@@ -146,6 +225,7 @@
 			window.removeEventListener('unhandledrejection', onUnhandledRejection);
 			window.removeEventListener('pagehide', sendDuration);
 			document.removeEventListener('visibilitychange', onVisibilityChange);
+			window.removeEventListener('analytics:goal', onGoalEvent);
 		};
 	});
 

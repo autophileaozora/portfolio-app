@@ -3,7 +3,7 @@ import { parseUserAgent } from '$lib/server/parseUserAgent';
 import type { Json } from '$lib/supabase/database.types';
 import type { RequestHandler } from './$types';
 
-const EVENT_TYPES = new Set(['pageview', 'click', 'scroll', 'error', 'duration']);
+const EVENT_TYPES = new Set(['pageview', 'click', 'scroll', 'error', 'duration', 'web_vital', 'not_found']);
 
 function str(v: unknown, max: number): string | null {
 	if (typeof v !== 'string' || !v.trim()) return null;
