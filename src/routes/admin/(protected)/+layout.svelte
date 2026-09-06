@@ -90,6 +90,19 @@
 </div>
 
 <style>
+	/* Default browser body margin (8px) is enough to push the page a hair
+	   taller than 100dvh, which was giving the outer document its own
+	   scrollbar ON TOP OF .admin-content's — two scrollbars stacked at the
+	   edge. Zeroing it out here (scoped to this layout, so it only applies
+	   while an admin page is mounted) leaves exactly one. */
+	:global(html),
+	:global(body) {
+		margin: 0;
+		padding: 0;
+		height: 100%;
+		overflow: hidden;
+	}
+
 	.admin-shell {
 		height: 100dvh;
 		overflow: hidden;
@@ -235,6 +248,12 @@
 	}
 
 	@media (max-width: 860px) {
+		:global(html),
+		:global(body) {
+			height: auto;
+			overflow: visible;
+		}
+
 		.admin-shell {
 			flex-direction: column;
 			height: auto;
