@@ -39,6 +39,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          duration_seconds: number | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          is_new_session: boolean
+          label: string | null
+          language: string | null
+          metadata: Json | null
+          os: string | null
+          path: string | null
+          referrer: string | null
+          region: string | null
+          screen_height: number | null
+          screen_width: number | null
+          scroll_percent: number | null
+          session_id: string
+          timezone: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          is_new_session?: boolean
+          label?: string | null
+          language?: string | null
+          metadata?: Json | null
+          os?: string | null
+          path?: string | null
+          referrer?: string | null
+          region?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          scroll_percent?: number | null
+          session_id: string
+          timezone?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_seconds?: number | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          is_new_session?: boolean
+          label?: string | null
+          language?: string | null
+          metadata?: Json | null
+          os?: string | null
+          path?: string | null
+          referrer?: string | null
+          region?: string | null
+          screen_height?: number | null
+          screen_width?: number | null
+          scroll_percent?: number | null
+          session_id?: string
+          timezone?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: []
+      }
       experience: {
         Row: {
           company_name: string
