@@ -12,7 +12,8 @@
 }
 
 .wizard-form {
-	max-width: 680px;
+	max-width: none;
+	width: 100%;
 	padding: 2rem;
 	border-radius: 20px;
 	box-shadow:

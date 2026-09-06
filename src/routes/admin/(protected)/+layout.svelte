@@ -91,7 +91,8 @@
 
 <style>
 	.admin-shell {
-		min-height: 100dvh;
+		height: 100dvh;
+		overflow: hidden;
 		display: flex;
 		background: #f4f4f6;
 		font-family:
@@ -103,6 +104,7 @@
 	.admin-sidebar {
 		width: 230px;
 		flex-shrink: 0;
+		overflow-y: auto;
 		background: #17171c;
 		color: #fff;
 		display: flex;
@@ -215,6 +217,8 @@
 		flex: 1;
 		padding: 2rem 2.5rem;
 		min-width: 0;
+		height: 100%;
+		overflow-y: auto;
 	}
 
 	/* --- mobile: sidebar becomes a slide-in panel behind a topbar --- */
@@ -233,6 +237,13 @@
 	@media (max-width: 860px) {
 		.admin-shell {
 			flex-direction: column;
+			height: auto;
+			overflow: visible;
+		}
+
+		.admin-content {
+			height: auto;
+			overflow-y: visible;
 		}
 
 		.admin-topbar {
