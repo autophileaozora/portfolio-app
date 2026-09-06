@@ -178,7 +178,10 @@
 
 		<div class="hero-content">
 			<div class="hero-left">
-				<h1>{project.title}</h1>
+				<div class="title-row">
+					<h1>{project.title}</h1>
+					<a href="/projects/{data.project.slug}/request-edit" class="request-edit-link">Request Edit</a>
+				</div>
 				<p>{project.description}</p>
 			</div>
 			<div class="hero-right">
@@ -195,7 +198,6 @@
 		{#if project.liveUrl}
 			<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">SEE LIVE PROJECT &rarr;</a>
 		{/if}
-		<a href="/projects/{data.project.slug}/request-edit" class="request-edit-link">Request Edit</a>
 	</div>
 
 	<section class="cards-grid">
@@ -312,6 +314,18 @@
 		align-items: center;
 		gap: 1rem;
 		flex-wrap: wrap;
+	}
+
+	.title-row {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+		margin-bottom: 24px;
+	}
+
+	.title-row h1 {
+		margin-bottom: 0;
 	}
 
 	.request-edit-link {
