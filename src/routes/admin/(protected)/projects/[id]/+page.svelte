@@ -2,25 +2,25 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { fly, fade, scale } from 'svelte/transition';
 	import { uploadViaSignedUrl } from '$lib/admin/uploadViaSignedUrl.js';
-	import { CATEGORY_OPTIONS, PROJECT_ROLE_OPTIONS, SECTION_TYPES } from '$lib/validation/schemas';
-	import { SECTION_TYPE_LABELS } from '$lib/admin/projectFields.js';
+	import { CATEGORY_OPTIONS, PROJECT_ROLE_OPTIONS } from '$lib/validation/schemas';
 	import '$lib/styles/admin-wizard.css';
 
 	let { data, form } = $props();
 
 	/**
-	 * Same 5-step wizard as admin/projects/new, seeded from the existing
-	 * project instead of blank — including its sections, so "Kelola
-	 * Sections" as a separate page is no longer needed for the common
-	 * case. See that file for the full rationale on the FormData-by-hand
-	 * submission approach (lets each step use a real transition instead
-	 * of the `hidden`-attribute trick a native form would need).
+	 * Same 6-step wizard as admin/projects/new, seeded from the existing
+	 * project instead of blank — including its sections, bucketed by type
+	 * into their own steps (Problem/Solution/Result, then Dokumentasi) the
+	 * same way. See that file for the full rationale on the FormData-by-hand
+	 * submission approach (lets each step use a real transition instead of
+	 * the `hidden`-attribute trick a native form would need).
 	 */
 	const STEPS = [
 		{ label: 'Info Dasar', icon: 'fa-circle-info' },
 		{ label: 'Kontributor', icon: 'fa-users' },
 		{ label: 'Media & SEO', icon: 'fa-image' },
-		{ label: 'Sections', icon: 'fa-layer-group' },
+		{ label: 'Problem, Solution & Result', icon: 'fa-list-check' },
+		{ label: 'Dokumentasi', icon: 'fa-images' },
 		{ label: 'Publikasi', icon: 'fa-rocket' }
 	];
 	const TOTAL_STEPS = STEPS.length;
@@ -86,10 +86,10 @@
 		}))
 	);
 	function addContributor() {
-		contributors = [...contributors, { __id: crypto.randomUUID(), name: '', url: '' }];
+		contributors.push({ __id: crypto.randomUUID(), name: '', url: '' });
 	}
 	function removeContributor(i) {
-		contributors = contributors.filter((_, idx) => idx !== i);
+		contributors.splice(i, 1);
 	}
 	let contributorsJson = $derived(JSON.stringify(contributors.map(({ __id, ...rest }) => rest)));
 
@@ -142,24 +142,28 @@
 	}
 	let tagsText = $derived(tags.join(', '));
 
-	// ---- Step 4: Sections ----
-	let sections = $state(
-		(data.sections ?? []).map((s) => ({
-			__id: crypto.randomUUID(),
-			type: s.type,
-			title: s.title ?? '',
-			content: s.content ?? '',
-			image_url: s.image_url ?? ''
-		}))
-	);
-	function addSection() {
-		sections = [
-			...sections,
-			{ __id: crypto.randomUUID(), type: SECTION_TYPES[0], title: '', content: '', image_url: '' }
-		];
+	// ---- Step 4: Problem / Solution / Result ----
+	// ---- Step 5: Dokumentasi ----
+	function bucketSections(type) {
+		return (data.sections ?? [])
+			.filter((s) => s.type === type)
+			.map((s) => ({
+				__id: crypto.randomUUID(),
+				title: s.title ?? '',
+				content: s.content ?? '',
+				image_url: s.image_url ?? ''
+			}));
 	}
-	function removeSection(i) {
-		sections = sections.filter((_, idx) => idx !== i);
+	let problemSections = $state(bucketSections('problem'));
+	let solutionSections = $state(bucketSections('solution'));
+	let resultSections = $state(bucketSections('result'));
+	let documentationSections = $state(bucketSections('documentation'));
+
+	function addSectionRow(list) {
+		list.push({ __id: crypto.randomUUID(), title: '', content: '', image_url: '' });
+	}
+	function removeSectionRow(list, i) {
+		list.splice(i, 1);
 	}
 	async function onSectionFileChange(row, e) {
 		const file = e.currentTarget.files?.[0];
@@ -175,15 +179,30 @@
 			row.__uploading = false;
 		}
 	}
+
+	function toSectionRows(list, type) {
+		return list.map(({ __id, __uploading, __uploadError, __preview, ...rest }) => ({ type, ...rest }));
+	}
 	let sectionsJson = $derived(
-		JSON.stringify(sections.map(({ __id, __uploading, __uploadError, __preview, ...rest }) => rest))
+		JSON.stringify([
+			...toSectionRows(problemSections, 'problem'),
+			...toSectionRows(solutionSections, 'solution'),
+			...toSectionRows(resultSections, 'result'),
+			...toSectionRows(documentationSections, 'documentation')
+		])
 	);
 
-	// ---- Step 5: Publikasi ----
+	// ---- Step 6: Publikasi ----
 	let is_published = $state(!!data.project.is_published);
 	let is_featured = $state(!!data.project.is_featured);
 
-	let anyUploading = $derived(thumbnailState.uploading || sections.some((s) => s.__uploading));
+	let anyUploading = $derived(
+		thumbnailState.uploading ||
+			problemSections.some((s) => s.__uploading) ||
+			solutionSections.some((s) => s.__uploading) ||
+			resultSections.some((s) => s.__uploading) ||
+			documentationSections.some((s) => s.__uploading)
+	);
 	let submitting = $state(false);
 	let networkError = $state('');
 
@@ -247,6 +266,46 @@
 
 	const transitionParams = { duration: 260, easing: (t) => 1 - Math.pow(1 - t, 3) };
 </script>
+
+{#snippet sectionGroup(list, label)}
+	<div class="wizard-section-group">
+		<h3 class="wizard-section-group-title">{label}</h3>
+		<div class="wizard-cards">
+			{#each list as s, i (s.__id)}
+				<div
+					class="wizard-card"
+					in:scale={{ start: 0.94, duration: 200, easing: transitionParams.easing }}
+					out:fade={{ duration: 150 }}
+				>
+					<button
+						type="button"
+						class="wizard-card-remove"
+						aria-label="Hapus"
+						onclick={() => removeSectionRow(list, i)}
+					>
+						&times;
+					</button>
+					<input type="text" placeholder="Judul (opsional)" bind:value={s.title} />
+					<textarea placeholder="Konten" bind:value={s.content}></textarea>
+					<div class="wizard-file-row">
+						<input type="file" accept="image/*" onchange={(e) => onSectionFileChange(s, e)} />
+						{#if s.__uploading}
+							<span class="upload-status">Mengunggah...</span>
+						{:else if s.__uploadError}
+							<span class="field-error">{s.__uploadError}</span>
+						{/if}
+					</div>
+					{#if s.__preview || s.image_url}
+						<img src={s.__preview || s.image_url} alt="Preview {label}" class="wizard-image-preview" />
+					{/if}
+				</div>
+			{/each}
+		</div>
+		<button type="button" class="wizard-add-tile" onclick={() => addSectionRow(list)}>
+			<i class="fa-solid fa-plus"></i> Tambah {label}
+		</button>
+	</div>
+{/snippet}
 
 <svelte:head>
 	<title>Admin · Edit Project</title>
@@ -432,46 +491,22 @@
 			{:else if step === 4}
 				<div class="wizard-step-header">
 					<span class="wizard-step-icon"><i class="fa-solid {STEPS[3].icon}"></i></span>
-					<h2 class="wizard-step-title">Sections</h2>
+					<h2 class="wizard-step-title">Problem, Solution & Result</h2>
 				</div>
-				<p class="wizard-step-sub">Problem / Solution / Result / Dokumentasi — opsional.</p>
-				<div class="wizard-cards">
-					{#each sections as s, i (s.__id)}
-						<div
-							class="wizard-card"
-							in:scale={{ start: 0.94, duration: 200, easing: transitionParams.easing }}
-							out:fade={{ duration: 150 }}
-						>
-							<button type="button" class="wizard-card-remove" aria-label="Hapus" onclick={() => removeSection(i)}>
-								&times;
-							</button>
-							<div class="wizard-card-row">
-								<select bind:value={s.type}>
-									{#each SECTION_TYPES as t (t)}<option value={t}>{SECTION_TYPE_LABELS[t]}</option>{/each}
-								</select>
-								<input type="text" placeholder="Judul" bind:value={s.title} />
-							</div>
-							<textarea placeholder="Konten" bind:value={s.content}></textarea>
-							<div class="wizard-file-row">
-								<input type="file" accept="image/*" onchange={(e) => onSectionFileChange(s, e)} />
-								{#if s.__uploading}
-									<span class="upload-status">Mengunggah...</span>
-								{:else if s.__uploadError}
-									<span class="field-error">{s.__uploadError}</span>
-								{/if}
-							</div>
-							{#if s.__preview || s.image_url}
-								<img src={s.__preview || s.image_url} alt="Preview section" class="wizard-image-preview" />
-							{/if}
-						</div>
-					{/each}
-				</div>
-				<button type="button" class="wizard-add-tile" onclick={addSection}>
-					<i class="fa-solid fa-plus"></i> Tambah Section
-				</button>
+				<p class="wizard-step-sub">Opsional — masing-masing biasanya satu, tapi boleh lebih dari satu.</p>
+				{@render sectionGroup(problemSections, 'Problem')}
+				{@render sectionGroup(solutionSections, 'Solution')}
+				{@render sectionGroup(resultSections, 'Result')}
 			{:else if step === 5}
 				<div class="wizard-step-header">
 					<span class="wizard-step-icon"><i class="fa-solid {STEPS[4].icon}"></i></span>
+					<h2 class="wizard-step-title">Dokumentasi</h2>
+				</div>
+				<p class="wizard-step-sub">Opsional — bisa lebih dari satu slide, ditampilkan sebagai carousel.</p>
+				{@render sectionGroup(documentationSections, 'Slide Dokumentasi')}
+			{:else if step === 6}
+				<div class="wizard-step-header">
+					<span class="wizard-step-icon"><i class="fa-solid {STEPS[5].icon}"></i></span>
 					<h2 class="wizard-step-title">Publikasi</h2>
 				</div>
 				<label class="checkbox-label">

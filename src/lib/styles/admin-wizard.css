@@ -238,6 +238,27 @@
 	gap: 0.75rem;
 }
 
+/* --- one Problem/Solution/Result/Dokumentasi group within a step --- */
+.wizard-section-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid #eeeef2;
+}
+
+.wizard-section-group:first-of-type {
+	padding-top: 0;
+	border-top: none;
+}
+
+.wizard-section-group-title {
+	margin: 0;
+	font-size: 0.88rem;
+	font-weight: 700;
+	color: #4c3fd6;
+}
+
 /* --- "add" tile: a dashed, clickable placeholder instead of a plain
    button + separate empty-state line --- */
 .wizard-add-tile {
