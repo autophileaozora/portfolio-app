@@ -18,7 +18,10 @@
 		tags: (data.project.project_tags ?? []).map((pt) => pt.tags?.label).filter(Boolean)
 	});
 
-	let seoTitle = $derived(data.project.meta_title || `${data.project.title} — Andrian Imanuel Sinaga`);
+	let seoTitle = $derived(
+		data.project.meta_title ||
+			(data.profile?.full_name ? `${data.project.title} — ${data.profile.full_name}` : data.project.title)
+	);
 	let seoDescription = $derived(
 		data.project.meta_description || data.project.short_description || `Project: ${data.project.title}`
 	);
@@ -131,7 +134,7 @@
 		description: seoDescription,
 		image: data.ogImage,
 		url: data.canonicalUrl,
-		author: { '@type': 'Person', name: 'Andrian Imanuel Sinaga' },
+		author: data.profile?.full_name ? { '@type': 'Person', name: data.profile.full_name } : undefined,
 		datePublished: data.project.date_start ?? undefined,
 		keywords: project.tags.join(', ') || undefined
 	})}

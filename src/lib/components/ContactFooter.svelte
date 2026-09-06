@@ -12,11 +12,7 @@
 	 */
 	let { profile = null, testimonials = [], answeredMessages = [] } = $props();
 
-	const FALLBACK_TESTIMONIALS = [
-		{ quote: 'KEMARIN NGERJAIN PROYEK BARENG, SERU SIH, EL NYA BAIK RESPONNYA', author_name: 'Abraham', author_role: 'Public User' }
-	];
-
-	let visibleTestimonials = $derived(testimonials.length ? testimonials : FALLBACK_TESTIMONIALS);
+	let visibleTestimonials = $derived(testimonials);
 	const VISIBLE_DOTS = 3;
 
 	let currentIndex = $state(0);
@@ -36,6 +32,7 @@
 	let sliderInterval;
 	onMount(() => {
 		sliderInterval = setInterval(() => {
+			if (!visibleTestimonials.length) return;
 			goToSlide((currentIndex + 1) % visibleTestimonials.length);
 		}, 4000);
 	});
@@ -53,7 +50,7 @@
 		toastTimer = setTimeout(() => (toastVisible = false), 3200);
 	}
 
-	let email = $derived(profile?.email || 'helloimanuel@yahoo.com');
+	let email = $derived(profile?.email ?? '');
 	let adminFirstName = $derived(profile?.full_name?.split(' ')[0] || 'Admin');
 	let availabilityText = $derived(profile?.availability_text || 'Available for work & Discussions');
 	let connectText = $derived(profile?.connect_text || "Let's Connected");
@@ -118,25 +115,31 @@
 		<div class="testimonial-card">
 			<div class="testimonial-header">
 				<span class="section-label testimonial-label">TESTIMONIAL</span>
-				<span class="testimonial-counter">{currentIndex + 1}/{visibleTestimonials.length}</span>
+				{#if visibleTestimonials.length}
+					<span class="testimonial-counter">{currentIndex + 1}/{visibleTestimonials.length}</span>
+				{/if}
 			</div>
-			<blockquote class="quote-text" class:is-fading={isFading}>
-				{quote}
-			</blockquote>
-			<div class="author-info">
-				<div class="author-avatar"><i class="fa-solid fa-user-check"></i></div>
-				<div>
-					<h4 class="author-name" class:is-fading={isFading}>{author}</h4>
-					<span class="author-role">{role}</span>
+			{#if visibleTestimonials.length}
+				<blockquote class="quote-text" class:is-fading={isFading}>
+					{quote}
+				</blockquote>
+				<div class="author-info">
+					<div class="author-avatar"><i class="fa-solid fa-user-check"></i></div>
+					<div>
+						<h4 class="author-name" class:is-fading={isFading}>{author}</h4>
+						<span class="author-role">{role}</span>
+					</div>
 				</div>
-			</div>
-			<div class="slider-controls">
-				<div class="slider-dots">
-					{#each visibleTestimonials.slice(0, VISIBLE_DOTS) as _, idx}
-						<div class="dot" class:active={idx === currentIndex} onclick={() => goToSlide(idx)}></div>
-					{/each}
+				<div class="slider-controls">
+					<div class="slider-dots">
+						{#each visibleTestimonials.slice(0, VISIBLE_DOTS) as _, idx}
+							<div class="dot" class:active={idx === currentIndex} onclick={() => goToSlide(idx)}></div>
+						{/each}
+					</div>
 				</div>
-			</div>
+			{:else}
+				<p class="no-answered">Belum ada testimonial.</p>
+			{/if}
 		</div>
 		<div class="messages-card flat-card">
 			<h2 class="card-title">LEAVE A MESSAGES</h2>
@@ -157,10 +160,12 @@
 	<div class="footer-top">
 		<div class="footer-col">
 			<span class="footer-label">{availabilityText}</span>
-			<div class="email-copy-wrapper">
-				<a href={`mailto:${email}`} class="email-link">{email}</a>
-				<button class="copy-btn" onclick={copyEmail}>COPY</button>
-			</div>
+			{#if email}
+				<div class="email-copy-wrapper">
+					<a href={`mailto:${email}`} class="email-link">{email}</a>
+					<button class="copy-btn" onclick={copyEmail}>COPY</button>
+				</div>
+			{/if}
 		</div>
 		<div class="footer-col align-right">
 			<span class="footer-label">{connectText}</span>

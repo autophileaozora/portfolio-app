@@ -4,6 +4,11 @@
 
 	let { data } = $props();
 
+	let seoTitle = $derived(
+		[data.profile?.full_name, data.profile?.title].filter(Boolean).join(' | ') || 'Portfolio'
+	);
+	let seoDescription = $derived(data.profile?.summary_paragraph || data.profile?.title || '');
+
 	// Purely decorative CSS variants for the hero carousel — cycled by index
 	// since they're a visual treatment, not real project data.
 	const HERO_STYLES = [
@@ -134,8 +139,8 @@
 
 			const secondCard = track.children[1];
 			if (secondCard) {
-				const newRole = secondCard.getAttribute('data-role') || 'as An IT Support';
-				const newDate = secondCard.getAttribute('data-date') || 'Jan 2020 - Mar 2020';
+				const newRole = secondCard.getAttribute('data-role') || '';
+				const newDate = secondCard.getAttribute('data-date') || '';
 				scrambleText((v) => (summaryActiveRole = v), newRole, 600);
 				scrambleText((v) => (summaryActiveDate = v), newDate, 450);
 			}
@@ -312,8 +317,8 @@
 </script>
 
 <svelte:head>
-	<title>Andrian Imanuel Sinaga | Tech Enthusiast & IT Support</title>
-	<meta name="description" content="Portofolio Andrian Imanuel Sinaga - Tech Enthusiast & Profesional IT Support" />
+	<title>{seoTitle}</title>
+	{#if seoDescription}<meta name="description" content={seoDescription} />{/if}
 	<link
 		href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
 		rel="stylesheet"
@@ -330,11 +335,11 @@
 						<img src={data.profile?.avatar_url || '/assets/avatar.jpg'} alt={data.profile?.full_name ?? ''} class="avatar-img" />
 					</div>
 					<div class="profile-text-details">
-						<h1 class="profile-name">{(data.profile?.full_name ?? 'Andrian Imanuel Sinaga').toUpperCase()}</h1>
-						<p class="profile-title">{data.profile?.title ?? 'Tech Enthusiast'}</p>
-						<p class="profile-location">
-							<i class="fa-solid fa-location-dot"></i> {data.profile?.location ?? 'Tangerang, Indonesia'}
-						</p>
+						<h1 class="profile-name">{(data.profile?.full_name ?? '').toUpperCase()}</h1>
+						<p class="profile-title">{data.profile?.title ?? ''}</p>
+						{#if data.profile?.location}
+							<p class="profile-location"><i class="fa-solid fa-location-dot"></i> {data.profile.location}</p>
+						{/if}
 					</div>
 				</div>
 
@@ -343,9 +348,11 @@
 						<a href={data.profile?.social_linkedin || 'https://linkedin.com'} target="_blank" rel="noreferrer" aria-label="LinkedIn" class="github-circle-btn"
 							><i class="fa-brands fa-linkedin-in"></i></a
 						>
-						<a href={`mailto:${data.profile?.email || 'helloimanuel@yahoo.com'}`} aria-label="Email" class="github-circle-btn"
-							><i class="fa-solid fa-envelope"></i></a
-						>
+						{#if data.profile?.email}
+							<a href={`mailto:${data.profile.email}`} aria-label="Email" class="github-circle-btn"
+								><i class="fa-solid fa-envelope"></i></a
+							>
+						{/if}
 						<a href={data.profile?.social_github || 'https://github.com'} target="_blank" rel="noreferrer" aria-label="GitHub" class="github-circle-btn"
 							><i class="fa-brands fa-github"></i></a
 						>
@@ -388,12 +395,9 @@
 			<div class="summary-50-grid">
 				<div class="summary-left-col">
 					<h2 class="summary-title">SUMMMARY</h2>
-					<p class="summary-paragraph">
-						Profesional IT Support yang berpengalaman dalam administrasi sistem, troubleshooting perangkat
-						keras/lunak, dan instalasi jaringan. Berpengalaman mengelola lab komputer besar, konfigurasi MikroTik,
-						dan menangani perangkat AV untuk live streaming. Memiliki kemampuan komunikasi yang baik untuk
-						memimpin tim teknis dan memecahkan masalah.
-					</p>
+					{#if data.profile?.summary_paragraph}
+						<p class="summary-paragraph">{data.profile.summary_paragraph}</p>
+					{/if}
 				</div>
 
 				<div class="summary-right-col">

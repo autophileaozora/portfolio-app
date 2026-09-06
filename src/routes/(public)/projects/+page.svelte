@@ -5,19 +5,6 @@
 	import { formatDuration } from '$lib/utils/formatDuration.js';
 
 	let { data } = $props();
-	let cards = $derived(
-		data.projects.map((p) => ({
-			slug: p.slug,
-			title: p.title,
-			role: p.role,
-			duration: formatDuration(p.date_start, p.date_end),
-			category: p.category,
-			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
-		}))
-	);
-
-	const pages = [1, 2, 3];
-	let activePage = $state(1);
 
 	// --- Floating filter bar (ported from projects/main.js initFloatFilterBar) ---
 	let floatBarEl;
@@ -36,22 +23,50 @@
 	const CATEGORY_LABELS = { all: 'All', web: 'Web', app: 'App', design: 'Design' };
 	let activeCategory = $state('all');
 
-	const TECH_OPTIONS = ['all', 'react', 'laravel', 'vue', 'nodejs', 'figma', 'mongodb', 'mysql', 'tailwind'];
-	const TECH_LABELS = {
-		all: 'All',
-		react: 'React',
-		laravel: 'Laravel',
-		vue: 'Vue',
-		nodejs: 'Node.js',
-		figma: 'Figma',
-		mongodb: 'MongoDB',
-		mysql: 'MySQL',
-		tailwind: 'Tailwind'
-	};
-	let activeTech = $state(new Set(['all']));
+	// Sort/Category/Search actually filter+sort the real project list below —
+	// Company/Client, Time Period and Tech Stack were removed entirely (they
+	// were hardcoded example values with no real filtering behind them at
+	// all — clicking any of them never changed the results).
+	let filteredProjects = $derived(
+		data.projects
+			.filter((p) => activeCategory === 'all' || p.category === activeCategory)
+			.filter((p) => {
+				const q = searchValue.trim().toLowerCase();
+				if (!q) return true;
+				return (p.title ?? '').toLowerCase().includes(q) || (p.role ?? '').toLowerCase().includes(q);
+			})
+			.slice()
+			.sort((a, b) => {
+				if (activeSort === 'asc') return (a.title ?? '').localeCompare(b.title ?? '');
+				if (activeSort === 'desc') return (b.title ?? '').localeCompare(a.title ?? '');
+				const aDate = a.date_start ?? '';
+				const bDate = b.date_start ?? '';
+				return activeSort === 'oldest' ? aDate.localeCompare(bDate) : bDate.localeCompare(aDate);
+			})
+	);
 
-	let companySelect = $state('');
-	let timeSelect = $state('');
+	const PAGE_SIZE = 9;
+	let activePage = $state(1);
+	let totalPages = $derived(Math.max(1, Math.ceil(filteredProjects.length / PAGE_SIZE)));
+	let pages = $derived(Array.from({ length: totalPages }, (_, i) => i + 1));
+
+	// Snap back to page 1 whenever the filtered set changes shape, so the
+	// admin never lands on an out-of-range page showing nothing.
+	$effect(() => {
+		const _track = [activeCategory, searchValue, activeSort];
+		activePage = 1;
+	});
+
+	let cards = $derived(
+		filteredProjects.slice((activePage - 1) * PAGE_SIZE, activePage * PAGE_SIZE).map((p) => ({
+			slug: p.slug,
+			title: p.title,
+			role: p.role,
+			duration: formatDuration(p.date_start, p.date_end),
+			category: p.category,
+			thumbnail: p.thumbnail_url || '/assets/card_header_bg.png'
+		}))
+	);
 
 	function toggleSearch() {
 		searchOpen = !searchOpen;
@@ -65,25 +80,9 @@
 		if (filterOpen) searchOpen = false;
 	}
 
-	function pickTech(value) {
-		if (value === 'all') {
-			activeTech = new Set(['all']);
-			return;
-		}
-		const next = new Set(activeTech);
-		next.delete('all');
-		if (next.has(value)) next.delete(value);
-		else next.add(value);
-		if (next.size === 0) next.add('all');
-		activeTech = next;
-	}
-
 	function resetAll() {
 		activeSort = 'newest';
 		activeCategory = 'all';
-		activeTech = new Set(['all']);
-		companySelect = '';
-		timeSelect = '';
 		searchValue = '';
 	}
 
@@ -160,16 +159,46 @@
 					<div class="card-slashes"></div>
 				</div>
 			</div>
+		{:else}
+			<p class="no-projects-found">Tidak ada project yang cocok dengan pencarian/filter ini.</p>
 		{/each}
 	</section>
 
-	<div class="pagination-container">
-		<a href="#" class="page-link page-prev" aria-label="Previous page"><span class="page-link-text">Prev</span></a>
-		{#each pages as p}
-			<a href="#" class="page-link" class:active={p === activePage} onclick={(e) => { e.preventDefault(); activePage = p; }}>{p}</a>
-		{/each}
-		<a href="#" class="page-link page-next" aria-label="Next page"><span class="page-link-text">Next</span></a>
-	</div>
+	{#if pages.length > 1}
+		<div class="pagination-container">
+			<a
+				href="#"
+				class="page-link page-prev"
+				aria-label="Previous page"
+				aria-disabled={activePage === 1}
+				onclick={(e) => {
+					e.preventDefault();
+					if (activePage > 1) activePage -= 1;
+				}}><span class="page-link-text">Prev</span></a
+			>
+			{#each pages as p}
+				<a
+					href="#"
+					class="page-link"
+					class:active={p === activePage}
+					onclick={(e) => {
+						e.preventDefault();
+						activePage = p;
+					}}>{p}</a
+				>
+			{/each}
+			<a
+				href="#"
+				class="page-link page-next"
+				aria-label="Next page"
+				aria-disabled={activePage === totalPages}
+				onclick={(e) => {
+					e.preventDefault();
+					if (activePage < totalPages) activePage += 1;
+				}}><span class="page-link-text">Next</span></a
+			>
+		</div>
+	{/if}
 </section>
 
 <!-- Floating Filter Bar -->
@@ -221,32 +250,4 @@
 		</div>
 	</div>
 
-	<div class="ffp-group">
-		<label class="ffp-label" for="ffpCompanySelect">Company / Client</label>
-		<select class="ffp-select" id="ffpCompanySelect" bind:value={companySelect}>
-			<option value="">All Companies</option>
-			<option value="uksw">Universitas Kristen Satya Wacana</option>
-			<option value="smk">SMK Kristen 5 Klaten</option>
-			<option value="personal">Personal Project</option>
-		</select>
-	</div>
-
-	<div class="ffp-group">
-		<label class="ffp-label" for="ffpTimeSelect">Time Period</label>
-		<select class="ffp-select" id="ffpTimeSelect" bind:value={timeSelect}>
-			<option value="">All Time</option>
-			<option value="2024">2024</option>
-			<option value="2023">2023</option>
-			<option value="2022">2022</option>
-		</select>
-	</div>
-
-	<div class="ffp-group">
-		<label class="ffp-label" for="tech-chips">Tech Stack</label>
-		<div class="ffp-chips ffp-chips-multi" id="tech-chips">
-			{#each TECH_OPTIONS as opt}
-				<button class="ffp-chip" class:active={activeTech.has(opt)} onclick={() => pickTech(opt)}>{TECH_LABELS[opt]}</button>
-			{/each}
-		</div>
-	</div>
 </div>

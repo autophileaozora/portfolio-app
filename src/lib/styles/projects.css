@@ -446,6 +446,13 @@ p, .skill {
     padding: 0 100px;
 }
 
+.no-projects-found {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-secondary, #6b7280);
+    padding: 60px 20px;
+}
+
 /* Container Pembungkus Kartu Utuh */
 .card-wrapper {
     position: relative;
