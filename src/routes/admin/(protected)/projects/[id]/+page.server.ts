@@ -116,6 +116,6 @@ export const actions: Actions = {
 			}
 		}
 
-		redirect(303, `/admin/projects/${params.id}`);
+		redirect(303, '/admin/projects?updated=1');
 	}
 };

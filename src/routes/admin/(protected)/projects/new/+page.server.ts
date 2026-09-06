@@ -76,6 +76,6 @@ export const actions: Actions = {
 			}
 		}
 
-		redirect(303, `/admin/projects/${inserted.id}`);
+		redirect(303, '/admin/projects?created=1');
 	}
 };
