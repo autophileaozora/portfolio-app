@@ -7,7 +7,7 @@
 		{ name: 'site_name', label: 'Nama Website', type: 'text' },
 		{
 			name: 'favicon_url',
-			label: 'Favicon (ikon tab browser)',
+			label: 'Favicon (ikon tab browser & cuplikan Google)',
 			type: 'file',
 			accept: 'image/png,image/svg+xml,image/x-icon',
 			isImage: true,
@@ -21,13 +21,42 @@
 			isImage: true,
 			folder: 'branding'
 		},
+		{
+			name: 'meta_title',
+			label: 'Judul Cuplikan Google (kosongkan untuk otomatis)',
+			type: 'text'
+		},
+		{
+			name: 'meta_description',
+			label: 'Deskripsi Cuplikan Google (kosongkan untuk otomatis)',
+			type: 'textarea'
+		},
 		{ name: 'google_site_verification', label: 'Kode Verifikasi Google Search Console', type: 'text' }
 	];
 
-	let values = $derived(form?.values ?? data.seoSettings);
+	let values = $derived(form?.values ?? data.seoSettings ?? {});
 	let errors = $derived(
 		Object.fromEntries(Object.entries(form?.fieldErrors ?? {}).map(([k, v]) => [k, v?.[0]]))
 	);
+
+	// A best-effort mirror of the same fallback logic Home's +page.svelte
+	// uses, so the preview reflects reality even before a meta_title/
+	// meta_description override is ever set.
+	let brandHandle = $derived(data.profile?.email ? data.profile.email.split('@')[0] : '');
+	let previewTitle = $derived(
+		values.meta_title ||
+			(data.profile?.full_name
+				? `${data.profile.full_name}${brandHandle ? ` (${brandHandle})` : ''} — Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ''}`
+				: 'Portfolio')
+	);
+	let previewDescription = $derived(
+		values.meta_description ||
+			data.profile?.summary_paragraph ||
+			(data.profile?.full_name
+				? `Portfolio ${data.profile.full_name} — Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ' di Indonesia'}.`
+				: '')
+	);
+	let previewUrl = $derived(data.canonicalUrl ?? 'https://helloimanuel.vercel.app');
 
 	function formatDuration(seconds) {
 		if (!seconds) return '0d';
@@ -82,11 +111,40 @@
 	Nama Website dipakai untuk tag <code>og:site_name</code>. Favicon menggantikan ikon tab browser
 	bawaan (saat ini masih logo default SvelteKit kalau belum diisi). Thumbnail di sini dipakai
 	sebagai gambar bagikan (Open Graph/Twitter Card) di semua halaman kalau diisi — kalau kosong,
-	otomatis pakai foto profil sebagai gantinya. Kode Verifikasi Google Search Console mengisi tag
+	otomatis pakai foto profil sebagai gantinya. Judul & Deskripsi Cuplikan Google menimpa teks yang
+	otomatis dibuat dari data Profile — isi kalau mau kata-kata yang persis, kosongkan untuk biarkan
+	otomatis. Kode Verifikasi Google Search Console mengisi tag
 	<code>&lt;meta name="google-site-verification"&gt;</code> di setiap halaman, jadi verifikasi
 	ulang di masa depan tidak perlu upload file HTML lagi — cukup isi kode dari Search Console
 	(Settings → Ownership verification → HTML tag, ambil bagian <code>content="..."</code> saja).
 </p>
+
+<div class="google-preview-wrap">
+	<div class="google-preview-label">Pratinjau Cuplikan Google (berdasarkan data yang sudah tersimpan)</div>
+	<div class="google-preview-card">
+		<div class="google-preview-top">
+			{#if data.seoSettings?.favicon_url}
+				<img src={data.seoSettings.favicon_url} alt="" class="google-preview-favicon" />
+			{:else}
+				<div class="google-preview-favicon google-preview-favicon-empty">?</div>
+			{/if}
+			<div>
+				<div class="google-preview-sitename">{data.seoSettings?.site_name || data.profile?.full_name || 'Website'}</div>
+				<div class="google-preview-url">{previewUrl}</div>
+			</div>
+		</div>
+		<div class="google-preview-title">{previewTitle}</div>
+		<div class="google-preview-desc">{previewDescription}</div>
+	</div>
+	{#if !data.seoSettings?.favicon_url}
+		<p class="doc-import-sub" style="margin-top: 0.5rem;">
+			⚠️ Favicon belum diisi, jadi Google kemungkinan masih menampilkan ikon default Vercel (bulat
+			putih) di hasil pencarian, seperti di screenshot. Upload favicon di bawah, lalu tunggu —
+			Google butuh waktu (bisa beberapa hari–minggu) untuk crawl ulang dan mengganti ikon yang
+			sudah di-cache-nya, meskipun sudah diganti di sini.
+		</p>
+	{/if}
+</div>
 
 <AdminForm
 	{fields}
@@ -280,7 +338,7 @@
 									{:else if ev.event_type === 'click' && ev.goal}
 										🎯 {GOAL_LABELS[ev.goal] ?? ev.goal} — {ev.label ?? '—'}
 									{:else if ev.event_type === 'click'}
-										[{CLICK_TYPE_LABELS[ev.elementType] ?? ev.elementType ?? '—'}] {ev.label ?? '—'}
+										[{CLICK_TYPE_LABELS[ev.elementType ?? ''] ?? ev.elementType ?? '—'}] {ev.label ?? '—'}
 									{:else if ev.event_type === 'error' || ev.event_type === 'not_found'}
 										{ev.label ?? '—'}
 									{:else if ev.event_type === 'web_vital'}
@@ -299,6 +357,84 @@
 </div>
 
 <style>
+	.google-preview-wrap {
+		margin-bottom: 1.5rem;
+	}
+
+	.google-preview-label {
+		font-size: 0.78rem;
+		color: #77777f;
+		margin-bottom: 0.4rem;
+	}
+
+	.google-preview-card {
+		background: #fff;
+		border: 1px solid rgba(20, 20, 30, 0.06);
+		border-radius: 14px;
+		padding: 1rem 1.1rem;
+		max-width: 560px;
+		box-shadow:
+			0 1px 2px rgba(20, 20, 30, 0.03),
+			0 8px 24px rgba(20, 20, 30, 0.05);
+		font-family: arial, sans-serif;
+	}
+
+	.google-preview-top {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.google-preview-favicon {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		object-fit: cover;
+		flex-shrink: 0;
+		border: 1px solid #e4e4ea;
+	}
+
+	.google-preview-favicon-empty {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f2f2f5;
+		color: #9a9aa2;
+		font-size: 0.85rem;
+		font-weight: 700;
+	}
+
+	.google-preview-sitename {
+		font-size: 0.82rem;
+		color: #202124;
+	}
+
+	.google-preview-url {
+		font-size: 0.78rem;
+		color: #5f6368;
+	}
+
+	.google-preview-title {
+		color: #1a0dab;
+		font-size: 1.15rem;
+		margin-top: 0.4rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.google-preview-desc {
+		color: #4d5156;
+		font-size: 0.85rem;
+		margin-top: 0.2rem;
+		line-height: 1.4;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
 	.analytics-summary-grid {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

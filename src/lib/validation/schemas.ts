@@ -254,5 +254,7 @@ export const seoSettingsSchema = z.object({
 	site_name: z.string().trim().max(160).optional().default(''),
 	favicon_url: nullableText(500),
 	og_image_url: nullableText(500),
-	google_site_verification: nullableText(200)
+	google_site_verification: nullableText(200),
+	meta_title: nullableText(70),
+	meta_description: nullableText(200)
 });

@@ -16,13 +16,17 @@
 	// written bio (summary_paragraph) as the description whenever it's
 	// set, since unique real content is better for search than a
 	// templated sentence.
+	// A manual override set in /admin/seo (the exact wording for the
+	// Google search snippet) always wins over the auto-derived text below.
 	let seoTitle = $derived(
-		data.profile?.full_name
-			? `${data.profile.full_name}${brandHandle ? ` (${brandHandle})` : ''} — Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ''}`
-			: 'Portfolio'
+		data.seoSettings?.meta_title ||
+			(data.profile?.full_name
+				? `${data.profile.full_name}${brandHandle ? ` (${brandHandle})` : ''} — Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ''}`
+				: 'Portfolio')
 	);
 	let seoDescription = $derived(
-		data.profile?.summary_paragraph ||
+		data.seoSettings?.meta_description ||
+			data.profile?.summary_paragraph ||
 			(data.profile?.full_name
 				? `Portfolio ${data.profile.full_name} — Web Developer & IT Support${data.profile.location ? ` di ${data.profile.location}` : ' di Indonesia'}.`
 				: '')

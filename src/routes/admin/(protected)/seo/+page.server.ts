@@ -31,14 +31,20 @@ function metaValue(metadata: unknown, key: string): unknown {
 	return (metadata as Record<string, unknown>)[key];
 }
 
-export const load: PageServerLoad = async ({ locals: { supabase } }) => {
-	const { data: seoSettings, error: seoError } = await supabase
-		.from('seo_settings')
-		.select('*')
-		.eq('id', 1)
-		.single();
+export const load: PageServerLoad = async ({ locals: { supabase }, url }) => {
+	// Not re-queried here — the ROOT layout (src/routes/+layout.server.ts)
+	// already fetches seo_settings (it needs it for the favicon everywhere,
+	// admin included) and that flows down into `data.seoSettings` on this
+	// page for free. Querying it again here as well, with a different
+	// null-fallback shape, previously fought with that inherited type at
+	// the TypeScript level for no real benefit — same table, same row.
 
-	if (seoError) console.error('[admin/seo] seo_settings load failed:', seoError.message);
+	// The (public) route group's own layout is what normally supplies
+	// `profile` — this admin page sits outside that group, so it needs its
+	// own small query. Only used here to mirror Home's title/description
+	// fallback logic in the on-page Google-snippet preview.
+	const { data: profile, error: profileError } = await supabase.from('profile').select('*').eq('id', 1).single();
+	if (profileError) console.error('[admin/seo] profile load failed:', profileError.message);
 
 	// Aggregated in JS from a bounded window of raw events rather than a
 	// SQL GROUP BY / RPC — simplest option that doesn't need its own
@@ -153,7 +159,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 		}))
 	};
 
-	return { seoSettings: seoSettings ?? {}, analytics };
+	return { analytics, canonicalUrl: `${url.origin}/`, profile: profile ?? null };
 };
 
 export const actions: Actions = {
@@ -169,7 +175,9 @@ export const actions: Actions = {
 			site_name: formData.get('site_name'),
 			favicon_url: formData.get('favicon_url'),
 			og_image_url: formData.get('og_image_url'),
-			google_site_verification: formData.get('google_site_verification')
+			google_site_verification: formData.get('google_site_verification'),
+			meta_title: formData.get('meta_title'),
+			meta_description: formData.get('meta_description')
 		};
 
 		const parsed = seoSettingsSchema.safeParse(raw);

@@ -456,6 +456,8 @@ export type Database = {
           favicon_url: string | null
           google_site_verification: string | null
           id: number
+          meta_description: string | null
+          meta_title: string | null
           og_image_url: string | null
           site_name: string
           updated_at: string
@@ -464,6 +466,8 @@ export type Database = {
           favicon_url?: string | null
           google_site_verification?: string | null
           id?: number
+          meta_description?: string | null
+          meta_title?: string | null
           og_image_url?: string | null
           site_name?: string
           updated_at?: string
@@ -472,6 +476,8 @@ export type Database = {
           favicon_url?: string | null
           google_site_verification?: string | null
           id?: number
+          meta_description?: string | null
+          meta_title?: string | null
           og_image_url?: string | null
           site_name?: string
           updated_at?: string
