@@ -36,6 +36,13 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     line-height: 1.6;
+    /* Page still scrolls normally (wheel/touch/keyboard) — just without
+       the visible scrollbar track/thumb. */
+    scrollbar-width: none;
+}
+
+body::-webkit-scrollbar {
+    display: none;
 }
 
 /* App Container Layout */

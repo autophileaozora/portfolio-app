@@ -233,20 +233,40 @@
     gap: 0;
     z-index: 999;
 }
-.navbar-links.open a { color: #1f2937; }
+/* #navbar-prefixed on purpose — the theme-variant rules above
+   (.navbar--on-dark/.navbar--on-light, each combined with :not(.scrolled))
+   stack up to 4 classes, which beats plain .navbar-links.open (2 classes)
+   on specificity alone regardless of source order. That let e.g.
+   .navbar--on-dark:not(.scrolled) .navbar-links a's white text leak
+   through onto this panel's WHITE background — invisible link text on a
+   real device, reported directly by the user. An ID always outranks any
+   number of stacked classes, so prefixing with the nav's own #navbar
+   settles it for good against every current and future theme variant,
+   not just the one that happened to break this time. */
+#navbar .navbar-links.open a {
+    display: block;
+    padding: 12px 0;
+    font-size: 13px;
+    color: #1f2937;
+}
 
-.navbar-links.open a:hover { color: #ffffff; }
+#navbar .navbar-links.open a:hover,
+#navbar .navbar-links.open a.active {
+    color: var(--accent-gold, #e2d175);
+}
+
+/* Same white-on-white risk applies to the LANGUAGE row's text, which
+   lives inside this same white panel on mobile — same fix. */
+#navbar .navbar-links.open .lang-text {
+    color: #555e6d;
+}
+
 .navbar-links.open li {
     opacity: 1;
     animation: none;
     border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .navbar-links.open li:last-child { border-bottom: none; }
-.navbar-links.open a {
-    display: block;
-    padding: 12px 0;
-    font-size: 13px;
-}
 
 @media (max-width: 768px) {
     .navbar { padding: 0 20px; }

@@ -450,6 +450,14 @@ select.form-input option {
     border: 1px solid var(--border-gold);
     border-radius: 24px;
     color: var(--text-primary);
+    /* Still scrollable (wheel/touch/keyboard), just without the visible
+       track/thumb — a plain browser scrollbar clashed with the rounded
+       dark card look. */
+    scrollbar-width: none;
+}
+
+.modal-content::-webkit-scrollbar {
+    display: none;
 }
 
 .modal-close {

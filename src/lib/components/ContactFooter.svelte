@@ -245,15 +245,34 @@
 			{/if}
 			{#if !isAnonymous}
 				<div class="form-group">
-					<label class="form-label" for="sender-avatar">Your Photo (optional)</label>
-					<input type="file" id="sender-avatar" accept="image/*" onchange={onAvatarChange} />
-					{#if avatarState.uploading}
-						<span class="upload-status">Uploading...</span>
-					{:else if avatarState.error}
-						<span class="field-error">{avatarState.error}</span>
-					{:else if avatarState.url}
-						<img src={avatarState.url} alt="Preview" class="avatar-preview" />
-					{/if}
+					<span class="form-label">Photo <span class="optional-badge">optional</span></span>
+					<label for="sender-avatar" class="avatar-picker">
+						<span class="avatar-picker-circle">
+							{#if avatarState.url}
+								<img src={avatarState.url} alt="" />
+							{:else}
+								<i class="fa-solid fa-user"></i>
+							{/if}
+						</span>
+						<span class="avatar-picker-text">
+							{#if avatarState.uploading}
+								Uploading...
+							{:else if avatarState.error}
+								{avatarState.error}
+							{:else if avatarState.url}
+								Change photo
+							{:else}
+								Click to upload photo
+							{/if}
+						</span>
+					</label>
+					<input
+						type="file"
+						id="sender-avatar"
+						accept="image/*"
+						onchange={onAvatarChange}
+						class="avatar-picker-input"
+					/>
 					<input type="hidden" name="sender_avatar_url" value={avatarState.url} />
 				</div>
 			{/if}
@@ -375,23 +394,65 @@
 		font-size: 0.9rem;
 	}
 
-	.upload-status {
-		font-size: 0.8rem;
-		color: var(--text-muted, #9a9aa2);
+	.optional-badge {
+		font-size: 0.7em;
+		font-weight: 400;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		opacity: 0.5;
+		margin-left: 4px;
 	}
 
-	.field-error {
-		font-size: 0.8rem;
-		color: #f87171;
+	.avatar-picker {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		cursor: pointer;
 	}
 
-	.avatar-preview {
+	.avatar-picker-circle {
 		width: 56px;
 		height: 56px;
 		border-radius: 50%;
+		border: 1.5px dashed rgba(255, 255, 255, 0.3);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: rgba(255, 255, 255, 0.5);
+		font-size: 1.3rem;
+		flex-shrink: 0;
+		overflow: hidden;
+		transition: border-color 0.2s ease;
+	}
+
+	.avatar-picker:hover .avatar-picker-circle {
+		border-color: var(--accent-gold, #e2d175);
+	}
+
+	.avatar-picker-circle img {
+		width: 100%;
+		height: 100%;
 		object-fit: cover;
-		border: 1px solid rgba(255, 255, 255, 0.15);
-		display: block;
+	}
+
+	.avatar-picker-text {
+		font-size: 0.85rem;
+		color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+	}
+
+	/* Visually hidden (not display:none, which would drop it from the
+	   accessibility tree and break keyboard/label activation) — the
+	   .avatar-picker label above is the actual clickable control. */
+	.avatar-picker-input {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 
 	.project-new-hint {
