@@ -261,6 +261,22 @@
             background-repeat: no-repeat;
         }
 
+        /* A light/white documentation screenshot (a common case — app UI
+           mockups, mostly-white pages) left the white glass card's text
+           nearly unreadable against it. A thin dark overlay on the image
+           itself keeps the card legible regardless of how bright the
+           uploaded image is, without needing per-image adjustment. Sits
+           behind .glass-card-wrapper/.dokumentasi-slashes by plain DOM
+           order (it's inserted as the slide's first "child"), no z-index
+           juggling needed. */
+        .carousel-slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            pointer-events: none;
+        }
+
         .carousel-slide.active {
             opacity: 1;
             visibility: visible;
@@ -294,7 +310,7 @@
         .glass-card {
             position: absolute;
             inset: 0;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(10, 14, 20, 0.45);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 6px;
