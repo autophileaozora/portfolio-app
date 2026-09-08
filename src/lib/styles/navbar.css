@@ -250,7 +250,14 @@
 
 @media (max-width: 768px) {
     .navbar { padding: 0 20px; }
-    .navbar-links { display: none; }
+    /* :not(.open), not a blanket `.navbar-links { display: none }` — the
+       open mobile dropdown's OWN display:flex rule further up is
+       unconditional (not inside this media query), so a plain
+       display:none here would only be reliably beaten by it through
+       specificity math (2 classes vs. 1) rather than an unambiguous
+       selector, and on a real device the links came out invisible
+       instead of showing the white dropdown panel. */
+    .navbar-links:not(.open) { display: none; }
     .navbar-hamburger { display: flex; }
 
     /* Floating pill was too narrow/cramped on small screens */
