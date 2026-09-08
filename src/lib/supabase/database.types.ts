@@ -169,7 +169,11 @@ export type Database = {
           created_at: string
           id: string
           is_anonymous: boolean
+          project_id: string | null
+          proposed_project_name: string | null
           replied_at: string | null
+          sender_avatar_url: string | null
+          sender_instagram: string | null
           sender_name: string | null
           status: string
         }
@@ -179,7 +183,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_anonymous?: boolean
+          project_id?: string | null
+          proposed_project_name?: string | null
           replied_at?: string | null
+          sender_avatar_url?: string | null
+          sender_instagram?: string | null
           sender_name?: string | null
           status?: string
         }
@@ -189,11 +197,23 @@ export type Database = {
           created_at?: string
           id?: string
           is_anonymous?: boolean
+          project_id?: string | null
+          proposed_project_name?: string | null
           replied_at?: string | null
+          sender_avatar_url?: string | null
+          sender_instagram?: string | null
           sender_name?: string | null
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile: {
         Row: {

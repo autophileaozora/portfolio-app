@@ -1,6 +1,6 @@
 <script>
 	import { enhance } from '$app/forms';
-	import { uploadViaSignedUrl } from '$lib/admin/uploadViaSignedUrl.js';
+	import { uploadViaSignedUrl } from '$lib/utils/uploadViaSignedUrl.js';
 
 	/**
 	 * fields: [{

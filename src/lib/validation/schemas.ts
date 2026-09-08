@@ -224,13 +224,28 @@ export const newProjectSectionsSchema = z.preprocess((v) => {
 	}
 }, z.array(sectionSchema).max(60));
 
-export const messageSchema = z.object({
-	// formData.get() returns null (not undefined) for a field that isn't
-	// present at all, which z.optional() doesn't accept — normalize first.
-	sender_name: z.preprocess((v) => v ?? '', z.string().trim().max(120)),
-	is_anonymous: z.boolean(),
-	content: z.string().trim().min(1, 'Pesan tidak boleh kosong.').max(2000)
-});
+export const messageSchema = z
+	.object({
+		// formData.get() returns null (not undefined) for a field that isn't
+		// present at all, which z.optional() doesn't accept — normalize first.
+		sender_name: z.preprocess((v) => v ?? '', z.string().trim().max(120)),
+		is_anonymous: z.boolean(),
+		content: z.string().trim().min(1, 'Pesan tidak boleh kosong.').max(2000),
+		sender_avatar_url: nullableText(500),
+		sender_instagram: nullableText(60),
+		// An existing project's id, picked from a <select> — not validated
+		// as a UUID shape here on purpose; a bogus value just fails the
+		// database's own foreign-key constraint on insert, which already
+		// produces a clear enough error.
+		project_id: nullableText(100),
+		proposed_project_name: nullableText(200)
+	})
+	// Proposing a NEW project (one not in the existing list) requires real
+	// accountability — the visitor can't do that anonymously.
+	.refine((data) => !data.proposed_project_name || (!data.is_anonymous && data.sender_name.trim().length > 0), {
+		message: 'Menambahkan project baru tidak boleh anonim — isi nama kamu dulu.',
+		path: ['proposed_project_name']
+	});
 
 export const profileSchema = z.object({
 	full_name: z.string().trim().min(1, 'Nama wajib diisi.').max(120),

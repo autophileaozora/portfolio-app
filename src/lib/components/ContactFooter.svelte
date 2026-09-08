@@ -1,16 +1,17 @@
 <script>
 	import { onMount, onDestroy } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { uploadViaSignedUrl } from '$lib/utils/uploadViaSignedUrl.js';
 
 	/**
-	 * profile/testimonials/answeredMessages all come from Supabase (loaded
-	 * once in the (public) layout, since this component renders on every
-	 * public page). The message form posts to /messages regardless of which
-	 * page it's opened from — an absolute action path works the same as a
-	 * same-route one for use:enhance, so no need to duplicate this action
-	 * across every public route's own +page.server.ts.
+	 * profile/testimonials/answeredMessages/projects all come from Supabase
+	 * (loaded once in the (public) layout, since this component renders on
+	 * every public page). The message form posts to /messages regardless of
+	 * which page it's opened from — an absolute action path works the same
+	 * as a same-route one for use:enhance, so no need to duplicate this
+	 * action across every public route's own +page.server.ts.
 	 */
-	let { profile = null, testimonials = [], answeredMessages = [] } = $props();
+	let { profile = null, testimonials = [], answeredMessages = [], projects = [] } = $props();
 
 	let visibleTestimonials = $derived(testimonials);
 	const VISIBLE_DOTS = 3;
@@ -76,6 +77,40 @@
 	// --- Message form (real /messages form action) ---
 	let sending = $state(false);
 	let sendError = $state('');
+	let isAnonymous = $state(false);
+	let avatarState = $state({ uploading: false, error: '', url: '' });
+	let selectedProjectOption = $state('');
+	let newProjectName = $state('');
+	// "+ Project lain (belum ada di daftar)" is a magic option value, not a
+	// real project id — everything below keys off whether that's selected.
+	let isNewProjectMode = $derived(selectedProjectOption === '__new__');
+	let submitProjectId = $derived(!isNewProjectMode && selectedProjectOption ? selectedProjectOption : '');
+
+	$effect(() => {
+		// Proposing a project that isn't in the list yet needs real
+		// accountability — force anonymous off the moment that mode is
+		// picked (mirrors the server-side rule in messageSchema's .refine()).
+		if (isNewProjectMode) isAnonymous = false;
+	});
+
+	async function onAvatarChange(e) {
+		const file = e.currentTarget.files?.[0];
+		if (!file) return;
+		avatarState = { uploading: true, error: '', url: '' };
+		try {
+			const url = await uploadViaSignedUrl(file, 'message-avatars', '/api/upload-message-avatar');
+			avatarState = { uploading: false, error: '', url };
+		} catch (err) {
+			avatarState = { uploading: false, error: err instanceof Error ? err.message : 'Upload gagal.', url: '' };
+		}
+	}
+
+	function resetMessageForm() {
+		isAnonymous = false;
+		avatarState = { uploading: false, error: '', url: '' };
+		selectedProjectOption = '';
+		newProjectName = '';
+	}
 
 	let visibleAnsweredMessages = $derived(
 		answeredMessages.map((m) => ({
@@ -98,6 +133,7 @@
 			sending = false;
 			if (result.type === 'success') {
 				formElement.reset();
+				resetMessageForm();
 				msgModalOpen = false;
 				showToast('Message sent successfully! Thank you.');
 				// A goal worth counting distinctly from a generic click — the
@@ -207,13 +243,68 @@
 			{#if sendError}
 				<p class="send-error">{sendError}</p>
 			{/if}
+			{#if !isAnonymous}
+				<div class="form-group">
+					<label class="form-label" for="sender-avatar">Your Photo (optional)</label>
+					<input type="file" id="sender-avatar" accept="image/*" onchange={onAvatarChange} />
+					{#if avatarState.uploading}
+						<span class="upload-status">Uploading...</span>
+					{:else if avatarState.error}
+						<span class="field-error">{avatarState.error}</span>
+					{:else if avatarState.url}
+						<img src={avatarState.url} alt="Preview" class="avatar-preview" />
+					{/if}
+					<input type="hidden" name="sender_avatar_url" value={avatarState.url} />
+				</div>
+			{/if}
 			<div class="form-group">
 				<label class="form-label" for="sender-name">Your Name</label>
 				<input type="text" id="sender-name" name="sender_name" class="form-input" placeholder="e.g. Abraham" />
 			</div>
+			{#if !isAnonymous}
+				<div class="form-group">
+					<label class="form-label" for="sender-instagram">Instagram (optional)</label>
+					<input
+						type="text"
+						id="sender-instagram"
+						name="sender_instagram"
+						class="form-input"
+						placeholder="@username"
+					/>
+				</div>
+			{/if}
 			<div class="form-group checkbox-group">
-				<input type="checkbox" id="anonymous-check" name="is_anonymous" />
+				<input
+					type="checkbox"
+					id="anonymous-check"
+					name="is_anonymous"
+					bind:checked={isAnonymous}
+					disabled={isNewProjectMode}
+				/>
 				<label class="form-label" for="anonymous-check">Send as Anonymous Element</label>
+			</div>
+			<div class="form-group">
+				<label class="form-label" for="project-select">Project we worked on together (optional)</label>
+				<select id="project-select" class="form-input" bind:value={selectedProjectOption}>
+					<option value="">— None / skip —</option>
+					{#each projects as p (p.id)}
+						<option value={p.id}>{p.title}</option>
+					{/each}
+					<option value="__new__">+ A project not listed here</option>
+				</select>
+				<input type="hidden" name="project_id" value={submitProjectId} />
+				{#if isNewProjectMode}
+					<input
+						type="text"
+						name="proposed_project_name"
+						class="form-input"
+						style="margin-top: 0.5rem;"
+						placeholder="Project name"
+						bind:value={newProjectName}
+						required
+					/>
+					<span class="project-new-hint">Adding a new project can't be anonymous — your name is required.</span>
+				{/if}
 			</div>
 			<div class="form-group">
 				<label class="form-label" for="message-content">Your Message / Feedback</label>
@@ -226,7 +317,7 @@
 					required
 				></textarea>
 			</div>
-			<button type="submit" class="btn-pill-accent btn-full" disabled={sending}>
+			<button type="submit" class="btn-pill-accent btn-full" disabled={sending || avatarState.uploading}>
 				{sending ? 'Sending...' : 'Submit Message'} &rarr;
 			</button>
 		</form>
@@ -282,5 +373,29 @@
 		color: inherit;
 		opacity: 0.7;
 		font-size: 0.9rem;
+	}
+
+	.upload-status {
+		font-size: 0.8rem;
+		color: var(--text-muted, #9a9aa2);
+	}
+
+	.field-error {
+		font-size: 0.8rem;
+		color: #f87171;
+	}
+
+	.avatar-preview {
+		width: 56px;
+		height: 56px;
+		border-radius: 50%;
+		object-fit: cover;
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		display: block;
+	}
+
+	.project-new-hint {
+		font-size: 0.78rem;
+		color: var(--text-muted, #9a9aa2);
 	}
 </style>

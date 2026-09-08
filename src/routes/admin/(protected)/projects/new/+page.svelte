@@ -1,7 +1,7 @@
 <script>
 	import { applyAction, deserialize } from '$app/forms';
 	import { fly, fade, scale } from 'svelte/transition';
-	import { uploadViaSignedUrl } from '$lib/admin/uploadViaSignedUrl.js';
+	import { uploadViaSignedUrl } from '$lib/utils/uploadViaSignedUrl.js';
 	import { CATEGORY_OPTIONS, PROJECT_ROLE_OPTIONS } from '$lib/validation/schemas';
 	import '$lib/styles/admin-wizard.css';
 

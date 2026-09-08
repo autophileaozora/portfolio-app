@@ -8,6 +8,13 @@
 	function senderLabel() {
 		return data.message.is_anonymous ? 'Anonim' : data.message.sender_name || '—';
 	}
+
+	// Either an existing project (joined via project_id) or a proposed new
+	// one the sender typed in — never both, per messageSchema's own rule.
+	let projectLabel = $derived(
+		data.message.projects?.title ??
+			(data.message.proposed_project_name ? `${data.message.proposed_project_name} (belum ada di daftar)` : null)
+	);
 </script>
 
 <svelte:head>
@@ -19,7 +26,28 @@
 </div>
 
 <div class="admin-form" style="margin-bottom:1.5rem;">
-	<p><strong>{senderLabel()}</strong></p>
+	<div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+		{#if data.message.sender_avatar_url}
+			<img
+				src={data.message.sender_avatar_url}
+				alt=""
+				style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:1px solid #e4e4ea;"
+			/>
+		{/if}
+		<div>
+			<p style="margin:0;"><strong>{senderLabel()}</strong></p>
+			{#if data.message.sender_instagram}
+				<p style="margin:0; font-size:0.82rem; color:#77777f;">
+					<i class="fa-brands fa-instagram"></i> {data.message.sender_instagram}
+				</p>
+			{/if}
+		</div>
+	</div>
+	{#if projectLabel}
+		<p style="font-size:0.82rem; color:#4c3fd6; margin:0 0 0.5rem;">
+			<i class="fa-solid fa-diagram-project"></i> Project: {projectLabel}
+		</p>
+	{/if}
 	<p>{data.message.content}</p>
 </div>
 

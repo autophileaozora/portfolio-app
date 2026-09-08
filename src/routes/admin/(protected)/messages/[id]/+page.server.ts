@@ -9,7 +9,7 @@ const replySchema = z.object({
 export const load: PageServerLoad = async ({ params, locals: { supabase } }) => {
 	const { data: message, error: messageError } = await supabase
 		.from('messages')
-		.select('*')
+		.select('*, projects(title, slug)')
 		.eq('id', params.id)
 		.single();
 

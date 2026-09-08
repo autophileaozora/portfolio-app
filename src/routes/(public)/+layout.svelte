@@ -15,5 +15,10 @@
 {@render children()}
 
 <div id="contact-footer-root">
-	<ContactFooter profile={data.profile} testimonials={data.testimonials} answeredMessages={data.answeredMessages} />
+	<ContactFooter
+		profile={data.profile}
+		testimonials={data.testimonials}
+		answeredMessages={data.answeredMessages}
+		projects={data.projects}
+	/>
 </div>

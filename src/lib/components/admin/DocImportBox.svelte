@@ -1,5 +1,5 @@
 <script>
-	import { uploadViaSignedUrl } from '$lib/admin/uploadViaSignedUrl.js';
+	import { uploadViaSignedUrl } from '$lib/utils/uploadViaSignedUrl.js';
 
 	/**
 	 * Generic "Isi Otomatis dari Dokumen" upload box for every admin

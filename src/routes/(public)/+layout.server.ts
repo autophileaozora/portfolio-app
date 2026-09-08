@@ -10,7 +10,8 @@ export const load: LayoutServerLoad = async ({ locals: { supabase } }) => {
 	const [
 		{ data: profile, error: profileError },
 		{ data: testimonials, error: testimonialsError },
-		{ data: answeredMessages, error: messagesError }
+		{ data: answeredMessages, error: messagesError },
+		{ data: projects, error: projectsError }
 	] = await Promise.all([
 		supabase.from('profile').select('*').eq('id', 1).single(),
 		supabase.from('testimonials').select('*').eq('is_published', true).order('display_order'),
@@ -18,16 +19,22 @@ export const load: LayoutServerLoad = async ({ locals: { supabase } }) => {
 			.from('messages')
 			.select('sender_name, is_anonymous, content, admin_reply, replied_at')
 			.eq('status', 'answered')
-			.order('replied_at', { ascending: false })
+			.order('replied_at', { ascending: false }),
+		// Powers the "which project did we work on together" picker on the
+		// Leave a Message form (ContactFooter.svelte) — same list on every
+		// public page, so it's fetched once here rather than per-page.
+		supabase.from('projects').select('id, title').eq('is_published', true).order('display_order')
 	]);
 
 	if (profileError) console.error('[+layout.server.ts] profile query failed:', profileError.message);
 	if (testimonialsError) console.error('[+layout.server.ts] testimonials query failed:', testimonialsError.message);
 	if (messagesError) console.error('[+layout.server.ts] messages query failed:', messagesError.message);
+	if (projectsError) console.error('[+layout.server.ts] projects query failed:', projectsError.message);
 
 	return {
 		profile,
 		testimonials: testimonials ?? [],
-		answeredMessages: answeredMessages ?? []
+		answeredMessages: answeredMessages ?? [],
+		projects: projects ?? []
 	};
 };
