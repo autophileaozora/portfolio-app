@@ -81,15 +81,15 @@
 	}
 
 	// "Most viewed" projects (data.heroProjects, ranked server-side via the
-	// get_top_viewed_projects RPC, falling back to newest when there's no
-	// view data yet) — capped at 6 here too, defensively, since the
-	// server-side fallback path can exceed 6 if more than 6 projects are
-	// marked "Unggulan".
+	// get_top_viewed_projects RPC — already capped to 6 PROJECTS there, so
+	// not re-sliced here). Tags are capped at 6 per card instead — a
+	// project with more than that pushed the 3-line-clamped title past
+	// the card's own bottom edge (it grew a 3rd tag row), clipping it.
 	let heroCards = $derived(
-		data.heroProjects.slice(0, 6).map((p, i) => ({
+		data.heroProjects.map((p, i) => ({
 			...HERO_STYLES[i % HERO_STYLES.length],
 			thumbnail: p.thumbnail_url || null,
-			tags: projectTags(p),
+			tags: projectTags(p).slice(0, 6),
 			headline: p.title,
 			slug: p.slug
 		}))
@@ -124,15 +124,20 @@
 			img: p.thumbnail_url || null,
 			hue: HUE_STYLES[i % HUE_STYLES.length],
 			alt: p.title,
-			tags: projectTags(p),
+			tags: projectTags(p).slice(0, 6),
 			title: p.title
 		}))
 	);
+	// Keeps the marquee's perceived speed roughly constant regardless of
+	// how many projects there are — a fixed duration would make the
+	// track visibly race by once there are a lot of cards, since
+	// translateX(-50%) always covers "one full copy" of a wider track in
+	// the same amount of time otherwise.
+	let marqueeDurationSeconds = $derived(Math.max(15, projects.length * 6));
 
 	// --- element refs ---
 	let heroTrackEl;
 	let summaryTrackEl;
-	let projectsTrackEl;
 	let statsGridEl;
 	let expScrollInnerEl;
 	let expHLineEl;
@@ -217,47 +222,12 @@
 		return () => clearInterval(interval);
 	}
 
-	// 4. Projects infinite auto carousel (paused on mobile — stacked list there)
-	function initProjectsCarousel() {
-		const track = projectsTrackEl;
-		if (!track) return () => {};
-
-		let isTransitioning = false;
-		const stepWidth = 300 + 24;
-		const slideDuration = 520;
-
-		function nextSlide() {
-			if (isTransitioning) return;
-			if (window.innerWidth <= 768) return;
-			isTransitioning = true;
-
-			const firstCard = track.firstElementChild;
-			if (!firstCard) {
-				isTransitioning = false;
-				return;
-			}
-
-			track.appendChild(firstCard);
-			track.style.transition = 'none';
-			track.style.transform = 'translateX(0)';
-
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					track.style.transition = `transform ${slideDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`;
-					track.style.transform = `translateX(-${stepWidth}px)`;
-				});
-			});
-
-			setTimeout(() => {
-				track.style.transition = 'none';
-				track.style.transform = 'translateX(0)';
-				isTransitioning = false;
-			}, slideDuration + 30);
-		}
-
-		const interval = setInterval(nextSlide, 3200);
-		return () => clearInterval(interval);
-	}
+	// 4. Projects carousel — a continuous, non-stop CSS marquee (see
+	// .projects-carousel-track's animation in home.css) rather than the
+	// step-pause-jump JS interval this replaced; no JS driver needed at
+	// all. The track below renders `projects` TWICE back to back so the
+	// animation can slide by exactly one copy's width (translateX(-50%))
+	// and loop with no visible seam.
 
 	// 5. Animated counter statistics on scroll into view
 	function initCounterAnimations() {
@@ -374,7 +344,6 @@
 		const cleanups = [
 			initHeroCarouselScroll(),
 			initSummaryAutoCarousel(),
-			initProjectsCarousel(),
 			initCounterAnimations(),
 			initExperienceTimelineMobile()
 		];
@@ -564,6 +533,22 @@
 			</div>
 		</section>
 
+		{#snippet projCard(project, isDuplicate)}
+			<div class="proj-card" class:proj-card--duplicate={isDuplicate} aria-hidden={isDuplicate ? 'true' : undefined}>
+				<div class="proj-img-wrapper">
+					{#if project.img}<img src={project.img} alt={project.alt} class="proj-img {project.hue}" />{/if}
+				</div>
+				<div class="proj-info">
+					<div class="proj-tags">
+						{#each project.tags as tag}
+							<span class="proj-tag">{tag}</span>
+						{/each}
+					</div>
+					<h3 class="proj-title">{project.title}</h3>
+				</div>
+			</div>
+		{/snippet}
+
 		<!-- Projects Carousel Section -->
 		<section id="projects" class="projects-carousel-section">
 			<div class="projects-carousel-header">
@@ -571,22 +556,19 @@
 			</div>
 
 			<div class="projects-carousel-viewport">
-				<div class="projects-carousel-track" bind:this={projectsTrackEl}>
-					{#each projects as project}
-						<div class="proj-card">
-							<div class="proj-img-wrapper">
-								{#if project.img}<img src={project.img} alt={project.alt} class="proj-img {project.hue}" />{/if}
-							</div>
-							<div class="proj-info">
-								<div class="proj-tags">
-									{#each project.tags as tag}
-										<span class="proj-tag">{tag}</span>
-									{/each}
-								</div>
-								<h3 class="proj-title">{project.title}</h3>
-							</div>
-						</div>
+				<div
+					class="projects-carousel-track"
+					class:projects-carousel-track--static={projects.length <= 1}
+					style="--marquee-duration: {marqueeDurationSeconds}s"
+				>
+					{#each projects as project, i (project.title + '-a' + i)}
+						{@render projCard(project, false)}
 					{/each}
+					{#if projects.length > 1}
+						{#each projects as project, i (project.title + '-b' + i)}
+							{@render projCard(project, true)}
+						{/each}
+					{/if}
 				</div>
 			</div>
 

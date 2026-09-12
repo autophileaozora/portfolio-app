@@ -299,27 +299,28 @@ body::-webkit-scrollbar {
     100% { background-position: 100% 50%; }
 }
 
-/* Always-visible scrim + tags/title — this used to only reveal on
-   hover, which meant a project's title was never actually shown unless
-   someone happened to mouse over its card. Now these cards represent
-   real content (the most-viewed projects), so the info needs to be
-   visible by default; :hover still nudges it slightly for a bit of
-   interactive feedback rather than being what reveals it at all. */
+/* Hover Overlay — back to reveal-on-hover per the user's explicit ask
+   (a brief always-visible experiment didn't stick). */
 .card-hover-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(15, 21, 28, 0.95) 0%, rgba(15, 21, 28, 0.55) 55%, rgba(15, 21, 28, 0.15) 100%);
+    background: linear-gradient(to top, rgba(15, 21, 28, 0.95) 0%, rgba(15, 21, 28, 0.45) 60%, transparent 100%);
     padding: 24px 28px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     gap: 12px;
-    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px);
+    transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
     border-radius: 28px;
 }
 
 .hero-card:hover .card-hover-overlay {
-    transform: translateY(-4px);
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
 }
 
 .project-tags {
@@ -697,12 +698,35 @@ body::-webkit-scrollbar {
     padding: 0 100px;
 }
 
-/* Track: flex row of cards, no-wrap */
+/* Track: flex row of cards, no-wrap. Rendered TWICE in the markup (the
+   second copy marked .proj-card--duplicate) so this animation can slide
+   by exactly one copy's width (-50%) and loop with no visible seam —
+   continuous, non-stop, never the old pause-then-jump-one-card version.
+   --marquee-duration is set inline per-render (scales with project
+   count) so the perceived speed stays roughly constant either way. */
 .projects-carousel-track {
     display: flex;
     flex-direction: row;
-    gap: 24px;
+    /* Spacing comes from .proj-card's own margin-right below, NOT a flex
+       gap here — a flex gap only sits BETWEEN items (N-1 gaps for N
+       items), so translateX(-50%) would land half a gap short of a
+       perfect loop point (the doubled track has one asymmetric "seam"
+       gap where copy A meets copy B). Giving every card, including the
+       last one of each copy, the SAME trailing margin makes each copy's
+       rendered width exactly half of the whole doubled track, so -50%
+       is exact with zero visible hitch. */
+    width: max-content;
     will-change: transform;
+    animation: projMarquee var(--marquee-duration, 25s) linear infinite;
+}
+
+.projects-carousel-track--static {
+    animation: none;
+}
+
+@keyframes projMarquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
 }
 
 /* Individual project card */
@@ -711,6 +735,7 @@ body::-webkit-scrollbar {
     display: flex;
     flex-direction: column;
     gap: 14px;
+    margin-right: 24px;
     cursor: pointer;
 }
 
@@ -901,10 +926,17 @@ body::-webkit-scrollbar {
     .projects-carousel-track {
         flex-direction: column;
         gap: 28px;
-        transform: none !important; /* auto-scroll is disabled on mobile, see main.js */
+        animation: none;
+        transform: none !important; /* stacked static list on mobile, no marquee */
     }
 
-    .proj-card { flex: 1 1 auto; width: 100%; cursor: default; }
+    /* margin-right: 0 — the desktop marquee's trailing spacing (now on
+       each card instead of a flex gap, so the CSS loop math above is
+       exact) would otherwise push a 100%-wide stacked card 24px past
+       its container on mobile; vertical spacing here already comes from
+       the track's own gap in column mode. */
+    .proj-card { flex: 1 1 auto; width: 100%; margin-right: 0; cursor: default; }
+    .proj-card--duplicate { display: none; }
     .proj-img-wrapper { width: 100%; height: 200px; }
 
     .proj-card:nth-child(n+5) { display: none; }
