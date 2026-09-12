@@ -117,12 +117,17 @@
             text-transform: uppercase;
             text-decoration: none;
             border-radius: 100px;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, border-color 0.25s ease, color 0.25s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .cta-button:hover {
             border-color: #b3b0b0;
             color: #b3b0b0;
+            transform: translateY(-2px);
+        }
+
+        .cta-button:active {
+            transform: translateY(-2px) scale(0.99);
         }
 
         /* ===== CARDS SECTION ===== */
@@ -559,7 +564,9 @@
         }
 
         .op-see-more {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             background-color: #000;
             color: #fff;
             padding: 16px 32px;
@@ -567,10 +574,14 @@
             font-size: 14px;
             font-weight: 600;
             text-decoration: none;
-            transition: background 0.3s;
+            transition: background 0.3s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .op-see-more:hover {
             background-color: #333;
+            transform: translateY(-2px);
+        }
+        .op-see-more:active {
+            transform: translateY(-2px) scale(0.98);
         }
 
     

@@ -475,14 +475,26 @@ body::-webkit-scrollbar {
     justify-content: space-between;
 }
 
-.stat-card { 
-    padding: 20px 24px; 
-    text-align: center; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: center; 
+.stat-card {
+    padding: 20px 24px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 12px;
+    /* Reveal is toggled by the SAME IntersectionObserver already driving
+       the counter animation (see initCounterAnimations) — not a
+       separate observer per card. transition-delay is set inline per
+       card (a small stagger) via style="transition-delay: ...". */
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stat-card.revealed {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .stat-number { 
@@ -737,6 +749,11 @@ body::-webkit-scrollbar {
     gap: 14px;
     margin-right: 24px;
     cursor: pointer;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.proj-card:hover {
+    transform: translateY(-6px);
 }
 
 .proj-card:hover .proj-img {
@@ -811,6 +828,20 @@ body::-webkit-scrollbar {
     text-decoration: none;
     font-family: var(--font-heading);
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-pill-accent:hover {
+    background: #202c3a;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.btn-pill-accent:active {
+    transform: translateY(-2px) scale(0.98);
 }
 
 @media (max-width: 1024px) {
@@ -942,4 +973,20 @@ body::-webkit-scrollbar {
     .proj-card:nth-child(n+5) { display: none; }
 
     .projects-carousel-footer { padding: 0 20px; margin-top: 24px; justify-content: flex-start; }
+}
+
+/* Respect prefers-reduced-motion: kill every purely-decorative infinite
+   keyframe animation on this page (mesh-card gradient cycling, the
+   non-stop projects marquee). These are pure CSS `animation` properties
+   with no JS toggle behind them, so a media query is the only lever —
+   nothing here needs a JS-side reduced-motion check to match. */
+@media (prefers-reduced-motion: reduce) {
+    .card-mesh-1, .card-mesh-2, .card-mesh-3 {
+        animation: none;
+    }
+
+    .projects-carousel-track {
+        animation: none;
+        transform: none;
+    }
 }

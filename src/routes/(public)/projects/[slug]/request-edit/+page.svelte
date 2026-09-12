@@ -90,7 +90,7 @@
 				<input type="text" bind:value={requesterWhatsapp} />
 			</label>
 			<div class="form-actions">
-				<button type="submit" class="btn-primary">Lanjut ke Edit &rarr;</button>
+				<button type="submit" class="btn-primary">Lanjut ke Edit <span class="btn-arrow">&rarr;</span></button>
 				<a class="btn-secondary" href="/projects/{data.project.slug}">Batal</a>
 			</div>
 		</form>

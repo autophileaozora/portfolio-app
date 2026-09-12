@@ -234,12 +234,37 @@
 .btn-pill-dark:hover {
     background: #18222E;
     border-color: var(--accent-cyan);
+    transform: translateY(-2px);
+}
+
+.btn-pill-dark:active,
+.btn-pill-outline:active {
+    transform: translateY(-2px) scale(0.98);
 }
 
 .btn-pill-outline {
     background: transparent;
     color: var(--text-primary);
     border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-pill-outline:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Shared arrow micro-interaction — every button/link ending in "→"
+   across the public site wraps it in this span so only the arrow
+   nudges on hover, not the whole label. One rule here (contact-footer.css
+   loads on every public page) instead of repeating it per button class. */
+.btn-arrow {
+    display: inline-block;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+a:hover .btn-arrow,
+button:hover .btn-arrow {
+    transform: translateX(4px);
 }
 
 .form-group {
@@ -454,6 +479,14 @@ select.form-input option {
        track/thumb — a plain browser scrollbar clashed with the rounded
        dark card look. */
     scrollbar-width: none;
+    /* Matches the "unavailable feature" modal's own entrance polish
+       (.navbar-info-modal-card) instead of just a flat opacity fade. */
+    transform: translateY(12px) scale(0.97);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-backdrop.active .modal-content {
+    transform: translateY(0) scale(1);
 }
 
 .modal-content::-webkit-scrollbar {

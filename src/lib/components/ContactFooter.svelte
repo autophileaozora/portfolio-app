@@ -195,8 +195,8 @@
 				possible by checking anonymous element.
 			</p>
 			<div class="messages-actions">
-				<button class="btn-pill-dark" onclick={() => (msgModalOpen = true)}>Send Messages &rarr;</button>
-				<button class="btn-pill-outline" onclick={() => (readModalOpen = true)}>Read Messages &rarr;</button>
+				<button class="btn-pill-dark" onclick={() => (msgModalOpen = true)}>Send Messages <span class="btn-arrow">&rarr;</span></button>
+				<button class="btn-pill-outline" onclick={() => (readModalOpen = true)}>Read Messages <span class="btn-arrow">&rarr;</span></button>
 			</div>
 		</div>
 	</div>
@@ -337,7 +337,7 @@
 				></textarea>
 			</div>
 			<button type="submit" class="btn-pill-accent btn-full" disabled={sending || avatarState.uploading}>
-				{sending ? 'Sending...' : 'Submit Message'} &rarr;
+				{sending ? 'Sending...' : 'Submit Message'} <span class="btn-arrow">&rarr;</span>
 			</button>
 		</form>
 	</div>

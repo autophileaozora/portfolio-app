@@ -188,7 +188,7 @@
 
 	<div class="hero-actions">
 		{#if project.liveUrl}
-			<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">SEE LIVE PROJECT &rarr;</a>
+			<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">SEE LIVE PROJECT <span class="btn-arrow">&rarr;</span></a>
 		{/if}
 	</div>
 
@@ -296,7 +296,7 @@
 		</div>
 
 		<div class="op-footer">
-			<a href="/projects" class="op-see-more" data-sveltekit-reload>See More Project &rarr;</a>
+			<a href="/projects" class="op-see-more" data-sveltekit-reload>See More Project <span class="btn-arrow">&rarr;</span></a>
 		</div>
 	</div>
 </section>

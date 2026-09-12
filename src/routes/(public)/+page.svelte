@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import '$lib/styles/home.css';
 	import { jsonLdScriptTag } from '$lib/utils/jsonLd.js';
+	import { reveal } from '$lib/actions/reveal.js';
 
 	let { data } = $props();
 
@@ -147,9 +148,18 @@
 	let summaryActiveRole = $state(summaryCards[0]?.role ?? '');
 	let summaryActiveDate = $state(summaryCards[0]?.date ?? '');
 	let statValues = $state(stats.map(() => 0));
+	// Reveal state for the stat cards themselves — piggybacks on the SAME
+	// IntersectionObserver below that already watches statsGridEl for the
+	// counter animation, rather than giving each card its own observer.
+	let statsRevealed = $state(false);
 
-	// 1. Hero carousel: scroll-driven horizontal parallax
+	// 1. Hero carousel: scroll-driven horizontal parallax — decorative-only
+	// movement, so it's skipped entirely under prefers-reduced-motion
+	// rather than just toned down.
 	function initHeroCarouselScroll() {
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduceMotion) return () => {};
+
 		function handleScroll() {
 			const moveX = window.scrollY * 0.75;
 			if (heroTrackEl) heroTrackEl.style.transform = `translateX(-${moveX}px)`;
@@ -240,6 +250,7 @@
 				entries.forEach((entry) => {
 					if (entry.isIntersecting && !animated) {
 						animated = true;
+						statsRevealed = true;
 						stats.forEach((stat, i) => {
 							// Fixed step count rather than "+1 per tick" — a
 							// decimal target (e.g. 2.8 years) needs fractional
@@ -384,7 +395,7 @@
 		<!-- Hero / Profile Section -->
 		<section id="home" class="section hero-section">
 			<div class="profile-row">
-				<div class="profile-left">
+				<div class="profile-left" use:reveal={{ immediate: true, delay: 80 }}>
 					<div class="avatar-container">
 						{#if data.profile?.avatar_url}
 							<img src={data.profile.avatar_url} alt={data.profile?.full_name ?? ''} class="avatar-img" />
@@ -399,7 +410,7 @@
 					</div>
 				</div>
 
-				<div class="profile-right">
+				<div class="profile-right" use:reveal={{ immediate: true, delay: 240 }}>
 					<div class="social-icons-row">
 						{#if data.profile?.social_linkedin}
 							<a href={data.profile.social_linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" class="github-circle-btn"
@@ -433,7 +444,7 @@
 				</div>
 			</div>
 
-			<div class="hero-carousel-wrapper">
+			<div class="hero-carousel-wrapper" use:reveal={{ immediate: true, delay: 320, y: 16 }}>
 				<div class="hero-carousel-track" bind:this={heroTrackEl}>
 					{#each heroCards as card}
 						<div class="hero-card {card.thumbnail ? '' : card.class}">
@@ -461,14 +472,14 @@
 		<!-- Summary Section -->
 		<section id="summary" class="section summary-section">
 			<div class="summary-50-grid">
-				<div class="summary-left-col">
+				<div class="summary-left-col" use:reveal>
 					<h2 class="summary-title">SUMMMARY</h2>
 					{#if data.profile?.summary_paragraph}
 						<p class="summary-paragraph">{data.profile.summary_paragraph}</p>
 					{/if}
 				</div>
 
-				<div class="summary-right-col">
+				<div class="summary-right-col" use:reveal={{ delay: 100 }}>
 					<div class="summary-header-info">
 						<span class="summary-role-text">{summaryActiveRole}</span>
 						<span class="summary-date-text">{summaryActiveDate}</span>
@@ -488,7 +499,7 @@
 
 			<div class="stats-grid" bind:this={statsGridEl}>
 				{#each stats as stat, i}
-					<div class="stat-card">
+					<div class="stat-card" class:revealed={statsRevealed} style="transition-delay: {i * 70}ms">
 						<div class="stat-number">{statValues[i]}</div>
 						<div class="stat-label">{stat.label}</div>
 					</div>
@@ -498,7 +509,7 @@
 
 		<!-- Work Experience Section -->
 		<section id="experience" class="experience-section-wrap">
-			<div class="exp-inner-content">
+			<div class="exp-inner-content" use:reveal>
 				<h2 class="section-hashtag">#WORK EXPERIENCE</h2>
 			</div>
 
@@ -523,7 +534,7 @@
 				</div>
 			</div>
 
-			<div class="exp-inner-content">
+			<div class="exp-inner-content" use:reveal>
 				<h2 class="section-title" style="margin-bottom: 20px;">RELATED SKILLS</h2>
 				<div class="skills-cloud">
 					{#each skills as skill}
@@ -551,11 +562,11 @@
 
 		<!-- Projects Carousel Section -->
 		<section id="projects" class="projects-carousel-section">
-			<div class="projects-carousel-header">
+			<div class="projects-carousel-header" use:reveal>
 				<h2 class="section-title">PROJECTS</h2>
 			</div>
 
-			<div class="projects-carousel-viewport">
+			<div class="projects-carousel-viewport" use:reveal={{ delay: 100 }}>
 				<div
 					class="projects-carousel-track"
 					class:projects-carousel-track--static={projects.length <= 1}
@@ -573,7 +584,7 @@
 			</div>
 
 			<div class="projects-carousel-footer">
-				<a href="/projects" class="btn btn-pill-accent" data-sveltekit-reload>See More Project &rarr;</a>
+				<a href="/projects" class="btn btn-pill-accent" data-sveltekit-reload>See More Project <span class="btn-arrow">&rarr;</span></a>
 			</div>
 		</section>
 	</main>
