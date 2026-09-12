@@ -57,8 +57,9 @@
 		sameAs: socialLinks.length ? socialLinks : undefined
 	});
 
-	// Purely decorative CSS variants for the hero carousel — cycled by index
-	// since they're a visual treatment, not real project data.
+	// Decorative fallback for a project with no thumbnail_url yet —
+	// cycled by index, never shown ON TOP of a real image, only in place
+	// of one that doesn't exist.
 	const HERO_STYLES = [
 		{ class: 'card-marble', inner: 'marble' },
 		{ class: 'card-mesh-1', inner: 'mesh' },
@@ -79,11 +80,18 @@
 		return end ? `${fmt(start)} - ${fmt(end)}` : `${fmt(start)} - Present`;
 	}
 
+	// "Most viewed" projects (data.heroProjects, ranked server-side via the
+	// get_top_viewed_projects RPC, falling back to newest when there's no
+	// view data yet) — capped at 6 here too, defensively, since the
+	// server-side fallback path can exceed 6 if more than 6 projects are
+	// marked "Unggulan".
 	let heroCards = $derived(
-		data.featuredProjects.map((p, i) => ({
+		data.heroProjects.slice(0, 6).map((p, i) => ({
 			...HERO_STYLES[i % HERO_STYLES.length],
+			thumbnail: p.thumbnail_url || null,
 			tags: projectTags(p),
-			headline: p.title
+			headline: p.title,
+			slug: p.slug
 		}))
 	);
 
@@ -459,8 +467,10 @@
 			<div class="hero-carousel-wrapper">
 				<div class="hero-carousel-track" bind:this={heroTrackEl}>
 					{#each heroCards as card}
-						<div class="hero-card {card.class}">
-							{#if card.inner === 'marble'}
+						<div class="hero-card {card.thumbnail ? '' : card.class}">
+							{#if card.thumbnail}
+								<img src={card.thumbnail} alt={card.headline} class="hero-card-img" />
+							{:else if card.inner === 'marble'}
 								<div class="marble-canvas-sim"></div>
 							{:else if card.inner === 'mesh'}
 								<div class="mesh-inner"></div>

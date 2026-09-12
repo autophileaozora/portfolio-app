@@ -614,6 +614,10 @@ export type Database = {
         Args: { deleted_order: number; target_table: string }
         Returns: undefined
       }
+      get_top_viewed_projects: {
+        Args: { result_limit?: number }
+        Returns: { project_id: string; view_count: number }[]
+      }
       reorder_project_section: {
         Args: { new_order: number; section_id: string }
         Returns: undefined

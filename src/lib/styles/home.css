@@ -236,10 +236,19 @@ body::-webkit-scrollbar {
     flex-shrink: 0;
     overflow: hidden;
     position: relative;
+    background-color: #12181f;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
     border: 1.5px solid rgba(255, 255, 255, 0.08);
     transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
+}
+
+.hero-card-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .hero-card:hover {
@@ -290,27 +299,27 @@ body::-webkit-scrollbar {
     100% { background-position: 100% 50%; }
 }
 
-/* Hover Overlay */
+/* Always-visible scrim + tags/title — this used to only reveal on
+   hover, which meant a project's title was never actually shown unless
+   someone happened to mouse over its card. Now these cards represent
+   real content (the most-viewed projects), so the info needs to be
+   visible by default; :hover still nudges it slightly for a bit of
+   interactive feedback rather than being what reveals it at all. */
 .card-hover-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(15, 21, 28, 0.95) 0%, rgba(15, 21, 28, 0.45) 60%, transparent 100%);
+    background: linear-gradient(to top, rgba(15, 21, 28, 0.95) 0%, rgba(15, 21, 28, 0.55) 55%, rgba(15, 21, 28, 0.15) 100%);
     padding: 24px 28px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
     gap: 12px;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(12px);
-    transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1), transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
     border-radius: 28px;
 }
 
 .hero-card:hover .card-hover-overlay {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
+    transform: translateY(-4px);
 }
 
 .project-tags {
@@ -337,11 +346,12 @@ body::-webkit-scrollbar {
     line-height: 1.35;
     text-transform: uppercase;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-height: 2.7em;
+    max-height: 4.05em;
 }
 
 /* ==========================================================================
