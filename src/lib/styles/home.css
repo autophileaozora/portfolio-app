@@ -453,11 +453,15 @@ body::-webkit-scrollbar {
 }
 
 /* Stats Counter Row */
-.stats-grid { 
-    display: grid; 
-    grid-template-columns: repeat(4, 1fr); 
-    gap: 24px; 
-    padding-right: 100px;
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    /* Was padding-right: 100px, which squeezed the 4 equal-width columns
+       into a narrower strip than the section itself — leaving a big gap
+       on the right instead of spreading the 4 numbers edge to edge like
+       the user wants ("space between"). */
+    justify-content: space-between;
 }
 
 .stat-card { 

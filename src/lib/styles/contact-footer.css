@@ -561,7 +561,17 @@ select.form-input option {
         padding: 0 20px;
     }
 
-    .messages-card {
+    /* .messages-card.flat-card (not just .messages-card) — the desktop
+       rule this is meant to override is the compound selector further up
+       (.messages-card.flat-card, 2 classes), added later to fix a
+       DIFFERENT cross-page theme bug. A plain single-class
+       .messages-card here has lower specificity than that, so its
+       justify-self:end/max-width:90% silently won even inside this
+       mobile breakpoint — the card sat shifted right instead of
+       centered/full-width, reported directly by the user. Matching the
+       same compound selector keeps specificity equal, so source order
+       (this comes later) decides, as intended. */
+    .messages-card.flat-card {
         max-width: 100%;
         justify-self: stretch;
         align-self: auto;
