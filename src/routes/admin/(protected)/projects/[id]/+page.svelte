@@ -25,7 +25,6 @@
 	];
 	const TOTAL_STEPS = STEPS.length;
 	let step = $state(1);
-	let maxStepReached = $state(TOTAL_STEPS); // editing an existing project — every step already has data, so every dot is clickable from the start
 	let direction = $state(1);
 
 	const FIELD_STEP = {

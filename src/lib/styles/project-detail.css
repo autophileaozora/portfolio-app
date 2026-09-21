@@ -593,54 +593,6 @@
         }
 
     
-        /* ===== FOOTER & MODAL CSS (COPIED) ===== */
-        :root {
-            --bg-dark: #192128;
-            --bg-card: #202A34;
-            --border-card: rgba(255, 255, 255, 0.08);
-            --border-gold: rgba(212, 175, 55, 0.4);
-            --accent-gold: #d4e94e;
-            --accent-gold-text: #d4e94e;
-            --accent-cyan: #06B6D4;
-            --text-primary: #FFFFFF;
-            --text-secondary: #CBD5E1;
-            --text-muted: #94A3B8;
-            --font-heading: 'Inter', sans-serif;
-            --radius-sm: 8px;
-            --radius-md: 16px;
-            --radius-lg: 24px;
-            --radius-full: 9999px;
-        }
-
-        .flat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-card);
-            border-radius: var(--radius-lg);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-            transition: transform 0.25s ease, border-color 0.25s ease;
-        }
-
-        .flat-card:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-3px);
-        }
-
-        .btn-pill-accent {
-            background: #18222E;
-            color: var(--text-primary);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 10px 22px;
-            border-radius: var(--radius-full);
-            cursor: pointer;
-            text-decoration: none;
-            font-family: var(--font-heading);
-            font-weight: 300;
-        }
-
-        .btn-pill-accent:hover {
-            background: #2a3b50;
-        }
-
         /* ===== CONSOLIDATED RESPONSIVE MEDIA QUERIES ===== */
 
         /* Layout & Engagement adjustments for Tablets and Mobile (900px and under) */
@@ -667,25 +619,6 @@
             /* Other Projects Section */
             .op-grid { grid-template-columns: 1fr; }
             .other-projects-section { padding: 60px 20px; }
-
-            /* Engagement & Testimonial Section */
-            .engagement-grid {
-                grid-template-columns: 1fr;
-                padding: 0 20px;
-            }
-
-            /* Footer Section */
-            .footer-top {
-                flex-direction: column;
-                padding: 32px 20px;
-            }
-            .footer-col.align-right {
-                align-items: flex-start;
-            }
-            .footer-top::before {
-                left: 20px;
-                right: 20px;
-            }
         }
 
         @media (max-width: 768px) {
