@@ -12,7 +12,16 @@
 	 * for what each variant changes.
 	 */
 	let { locale = 'id' } = $props();
-	let t = $derived(getDictionary(locale));
+	// Set the instant a flag is clicked, before the page navigation that
+	// actually applies it even starts — makes the switch feel immediate
+	// (the whole navbar flips to the target language right away) instead of
+	// a silent redirect the user has to squint at to confirm happened.
+	// `locale` itself doesn't change until the real reload lands with a
+	// fresh `data.locale` from the server, which is what actually matters
+	// for the rest of the page (and is unaffected by this).
+	let switchingTo = $state(null);
+	let effectiveLocale = $derived(switchingTo ?? locale);
+	let t = $derived(getDictionary(effectiveLocale));
 
 	let NAV_LINKS = $derived([
 		{ label: t.nav.home, anchor: null, unavailable: false },
@@ -28,6 +37,25 @@
 	}
 	function setLocaleHref(code) {
 		return `/api/set-locale?locale=${code}&redirect=${encodeURIComponent(currentPath())}`;
+	}
+
+	/**
+	 * The <a href> alone (data-sveltekit-reload) already works and stays as
+	 * the real fallback — a plain link, so it degrades correctly with JS
+	 * off, and a modifier-click (ctrl/cmd/middle-click) still opens it in a
+	 * new tab like any normal link, untouched by this. On an ordinary left
+	 * click, drive the navigation explicitly via location.href instead of
+	 * leaving it to the browser's default click-through — a plain
+	 * assignment is as close to unblockable as navigation gets, so this
+	 * reload can't silently get lost to any click-handling quirk between
+	 * here and the browser actually following the link.
+	 */
+	function switchLocale(e, code) {
+		if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+		e.preventDefault();
+		switchingTo = code;
+		langMenuOpen = false;
+		window.location.href = setLocaleHref(code);
 	}
 
 	let onHomePage = $derived($page.url.pathname === '/');
@@ -159,7 +187,7 @@
 			aria-expanded={langMenuOpen}
 			onclick={toggleLangMenu}
 		>
-			{@render flagSvg(locale)}
+			{@render flagSvg(effectiveLocale)}
 			<span class="lang-text">{t.nav.language}</span>
 		</button>
 		{#if langMenuOpen}
@@ -169,8 +197,9 @@
 						<a
 							href={setLocaleHref(loc.code)}
 							class="navbar-language-option"
-							class:active={loc.code === locale}
+							class:active={loc.code === effectiveLocale}
 							data-sveltekit-reload
+							onclick={(e) => switchLocale(e, loc.code)}
 						>
 							{@render flagSvg(loc.code)}
 							<span>{loc.label}</span>

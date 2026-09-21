@@ -9,10 +9,10 @@ export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders, u
 
 	if (projectsError) console.error('[+page.server.ts /projects] query failed:', projectsError.message);
 
-	// private, not public — see the identical comment in the Home page's
-	// +page.server.ts (this page is locale-dependent too, and a shared/CDN
-	// cache doesn't vary by the `locale` cookie).
-	setHeaders({ 'cache-control': 'private, max-age=60' });
+	// no-store — see the identical comment in the Home page's +page.server.ts
+	// (this page is locale-dependent too, and even a private/browser-only
+	// cache can serve a pre-language-switch response back on the same URL).
+	setHeaders({ 'cache-control': 'private, no-store' });
 
 	return {
 		projects: projects ?? [],

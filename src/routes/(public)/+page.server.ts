@@ -65,13 +65,16 @@ export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders, u
 	// third query, so the hero isn't empty in the meantime either.
 	if (heroProjects.length === 0) heroProjects = homeProjects;
 
-	// `public` (shared/CDN cache) would serve ONE visitor's cached response —
-	// in whatever language THEY had selected — to every other visitor for up
-	// to 60s, since Vercel's edge cache key doesn't vary by the `locale`
-	// cookie the language switcher reads. `private` keeps each visitor's own
-	// browser cache (still cheap on repeat views) without ever sharing a
-	// response across visitors.
-	setHeaders({ 'cache-control': 'private, max-age=60' });
+	// no-store, not just private — a plain `private, max-age=60` still lets
+	// the VISITOR'S OWN browser reuse its previous response for up to 60s,
+	// and that previous response could be from right before they switched
+	// languages (the browser's HTTP cache is keyed on URL, not on whether a
+	// Set-Cookie happened via a different request in between) — confirmed
+	// live: switching language then landing back on this same URL served the
+	// old-language response straight from the browser's own cache. `no-store`
+	// removes that ambiguity entirely; real traffic here is small enough that
+	// losing this cache layer costs nothing worth trading correctness for.
+	setHeaders({ 'cache-control': 'private, no-store' });
 
 	return {
 		featuredProjects: homeProjects,
