@@ -6,7 +6,7 @@ import type { LayoutServerLoad } from './$types';
  * leaf +page.server.ts sets its own Cache-Control, and SvelteKit errors if
  * two loads in the same chain both set the same header.
  */
-export const load: LayoutServerLoad = async ({ locals: { supabase } }) => {
+export const load: LayoutServerLoad = async ({ locals: { supabase, locale } }) => {
 	const [
 		{ data: profile, error: profileError },
 		{ data: testimonials, error: testimonialsError },
@@ -35,6 +35,7 @@ export const load: LayoutServerLoad = async ({ locals: { supabase } }) => {
 		profile,
 		testimonials: testimonials ?? [],
 		answeredMessages: answeredMessages ?? [],
-		projects: projects ?? []
+		projects: projects ?? [],
+		locale
 	};
 };

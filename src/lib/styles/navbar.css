@@ -190,6 +190,16 @@
     display: none;
 }
 
+/* Positioning context for the dropdown panel below — the trigger button
+   and its popover both live inside this. */
+.navbar-language-wrap {
+    position: relative;
+}
+
+/* A real <button> now (was a div[role=button]) for native keyboard/Enter-
+   Space handling, so the browser's default button chrome needs resetting
+   on top of the styling below — same reasoning as .page-link elsewhere in
+   this codebase. */
 .navbar-language {
     display: flex;
     align-items: center;
@@ -197,6 +207,12 @@
     cursor: pointer;
     user-select: none;
     transition: opacity 0.2s ease;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    appearance: none;
+    -webkit-appearance: none;
 }
 .navbar-language:hover { opacity: 0.8; }
 
@@ -215,6 +231,56 @@
     letter-spacing: 1px;
     text-transform: uppercase;
     color: #555e6d;
+}
+
+/* Dropdown panel — same floating-card language as the navbar-info-modal
+   card (dark bg, gold accent border) rather than a plain white popover, so
+   it reads as part of this site's system instead of a generic browser-y
+   dropdown. */
+.navbar-language-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 150px;
+    background: #1c242c;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 12px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    padding: 6px;
+    list-style: none;
+    margin: 0;
+    z-index: 10000;
+}
+
+.navbar-language-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    transition: background 0.15s ease;
+}
+
+.navbar-language-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-language-option.active {
+    background: rgba(226, 209, 117, 0.15);
+    color: #e2d175;
+    font-weight: 600;
+}
+
+/* Inside the mobile dropdown, the panel opens upward-friendly (below the
+   trigger, same as desktop) but needs to stay within the white mobile
+   menu's own stacking context — z-index above .navbar-links.open (999) is
+   already covered by the 10000 above. */
+.navbar-language-item .navbar-language-menu {
+    right: auto;
+    left: 0;
 }
 
 /* Hamburger (mobile only) */

@@ -3,8 +3,10 @@
 	import '$lib/styles/projects.css';
 	import VantaRingsBackground from '$lib/components/VantaRingsBackground.svelte';
 	import { formatDuration } from '$lib/utils/formatDuration.js';
+	import { getDictionary } from '$lib/i18n';
 
 	let { data } = $props();
+	let t = $derived(getDictionary(data.locale));
 
 	let brandHandle = $derived(data.profile?.email ? data.profile.email.split('@')[0] : '');
 	let seoTitle = $derived(
@@ -30,11 +32,11 @@
 	let searchValue = $state('');
 
 	const SORT_OPTIONS = ['newest', 'oldest', 'asc', 'desc'];
-	const SORT_LABELS = { newest: 'Newest', oldest: 'Oldest', asc: 'A → Z', desc: 'Z → A' };
+	let SORT_LABELS = $derived(t.projectsListing.sortLabels);
 	let activeSort = $state('newest');
 
 	const CATEGORY_OPTIONS = ['all', 'web', 'app', 'design'];
-	const CATEGORY_LABELS = { all: 'All', web: 'Web', app: 'App', design: 'Design' };
+	let CATEGORY_LABELS = $derived(t.projectsListing.categoryLabels);
 	let activeCategory = $state('all');
 
 	// Sort/Category/Search actually filter+sort the real project list below —
@@ -159,13 +161,13 @@
 		{#each cards as card}
 			<div class="card-wrapper">
 				<div class="card-header">
-					<a href="/projects/{card.slug}" class="card-arrow-btn" aria-label="Lihat Project" data-sveltekit-reload>
+					<a href="/projects/{card.slug}" class="card-arrow-btn" aria-label={t.common.viewProjectAria} data-sveltekit-reload>
 						<img src="/assets/arrow_button.png" alt="Arrow" class="arrow-icon" />
 					</a>
 					<a
 						href="/projects/{card.slug}"
 						class="thumbnail-wrapper"
-						aria-label="Lihat project: {card.title}"
+						aria-label={t.common.viewProjectWithTitleAria(card.title)}
 						data-sveltekit-reload
 					>
 						{#if card.thumbnail}
@@ -180,17 +182,17 @@
 					</h3>
 					<div class="card-meta">
 						<div class="meta-row">
-							<span class="meta-label">Role :</span>
+							<span class="meta-label">{t.common.role}</span>
 							<span class="meta-value">{card.role}</span>
 						</div>
 						<div class="divider"></div>
 						<div class="meta-row">
-							<span class="meta-label">Duration :</span>
+							<span class="meta-label">{t.common.duration}</span>
 							<span class="meta-value">{card.duration}</span>
 						</div>
 						<div class="divider"></div>
 						<div class="meta-row">
-							<span class="meta-label">Categories :</span>
+							<span class="meta-label">{t.common.categories}</span>
 							<span class="meta-value">{card.category}</span>
 						</div>
 					</div>
@@ -203,7 +205,7 @@
 				</div>
 			</div>
 		{:else}
-			<p class="no-projects-found">Tidak ada project yang cocok dengan pencarian/filter ini.</p>
+			<p class="no-projects-found">{t.projectsListing.noProjectsFound}</p>
 		{/each}
 	</section>
 
@@ -212,11 +214,11 @@
 			<button
 				type="button"
 				class="page-link page-prev"
-				aria-label="Previous page"
+				aria-label={t.projectsListing.prevAria}
 				disabled={activePage === 1}
 				onclick={() => {
 					if (activePage > 1) activePage -= 1;
-				}}><span class="page-link-text">Prev</span></button
+				}}><span class="page-link-text">{t.projectsListing.prev}</span></button
 			>
 			{#each pages as p}
 				<button type="button" class="page-link" class:active={p === activePage} onclick={() => (activePage = p)}
@@ -226,11 +228,11 @@
 			<button
 				type="button"
 				class="page-link page-next"
-				aria-label="Next page"
+				aria-label={t.projectsListing.nextAria}
 				disabled={activePage === totalPages}
 				onclick={() => {
 					if (activePage < totalPages) activePage += 1;
-				}}><span class="page-link-text">Next</span></button
+				}}><span class="page-link-text">{t.projectsListing.next}</span></button
 			>
 		</div>
 	{/if}
@@ -239,16 +241,16 @@
 
 <!-- Floating Filter Bar -->
 <div class="float-filter-bar" class:show={barVisible} bind:this={floatBarEl}>
-	<button class="ffb-btn ffb-search" class:active={searchOpen} title="Search projects" onclick={toggleSearch}>
+	<button class="ffb-btn ffb-search" class:active={searchOpen} title={t.projectsListing.searchLabel} onclick={toggleSearch}>
 		<i class="fa-solid fa-magnifying-glass"></i>
-		<span class="ffb-label">Search</span>
+		<span class="ffb-label">{t.projectsListing.searchLabel}</span>
 	</button>
 
 	<div class="ffb-divider"></div>
 
-	<button class="ffb-btn ffb-filter" class:active={filterOpen} title="Filter projects" onclick={toggleFilter}>
+	<button class="ffb-btn ffb-filter" class:active={filterOpen} title={t.projectsListing.filterLabel} onclick={toggleFilter}>
 		<i class="fa-solid fa-sliders"></i>
-		<span class="ffb-label">Filter</span>
+		<span class="ffb-label">{t.projectsListing.filterLabel}</span>
 	</button>
 </div>
 
@@ -256,7 +258,7 @@
 	<input
 		type="text"
 		class="ffb-search-input"
-		placeholder="Search projects..."
+		placeholder={t.projectsListing.searchPlaceholder}
 		bind:this={searchInputEl}
 		bind:value={searchValue}
 	/>
@@ -264,12 +266,12 @@
 
 <div class="ffb-filter-panel" class:open={filterOpen}>
 	<div class="ffp-header">
-		<span class="ffp-title"><i class="fa-solid fa-sliders"></i> Filter Projects</span>
-		<button class="ffp-reset" onclick={resetAll}>Reset All</button>
+		<span class="ffp-title"><i class="fa-solid fa-sliders"></i> {t.projectsListing.filterProjectsTitle}</span>
+		<button class="ffp-reset" onclick={resetAll}>{t.projectsListing.resetAll}</button>
 	</div>
 
 	<div class="ffp-group">
-		<label class="ffp-label" for="sort-chips">Sort By</label>
+		<label class="ffp-label" for="sort-chips">{t.projectsListing.sortBy}</label>
 		<div class="ffp-chips" id="sort-chips">
 			{#each SORT_OPTIONS as opt}
 				<button class="ffp-chip" class:active={activeSort === opt} onclick={() => (activeSort = opt)}>{SORT_LABELS[opt]}</button>
@@ -278,7 +280,7 @@
 	</div>
 
 	<div class="ffp-group">
-		<label class="ffp-label" for="cat-chips">Category</label>
+		<label class="ffp-label" for="cat-chips">{t.projectsListing.category}</label>
 		<div class="ffp-chips" id="cat-chips">
 			{#each CATEGORY_OPTIONS as opt}
 				<button class="ffp-chip" class:active={activeCategory === opt} onclick={() => (activeCategory = opt)}>{CATEGORY_LABELS[opt]}</button>

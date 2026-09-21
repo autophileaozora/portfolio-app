@@ -10,7 +10,7 @@
 
 <AnalyticsTracker />
 
-<div id="navbar-root"><Navbar /></div>
+<div id="navbar-root"><Navbar locale={data.locale} /></div>
 
 {@render children()}
 
@@ -20,5 +20,6 @@
 		testimonials={data.testimonials}
 		answeredMessages={data.answeredMessages}
 		projects={data.projects}
+		locale={data.locale}
 	/>
 </div>

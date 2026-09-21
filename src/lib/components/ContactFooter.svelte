@@ -2,6 +2,7 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { uploadViaSignedUrl } from '$lib/utils/uploadViaSignedUrl.js';
+	import { getDictionary } from '$lib/i18n';
 
 	/**
 	 * profile/testimonials/answeredMessages/projects all come from Supabase
@@ -11,7 +12,8 @@
 	 * as a same-route one for use:enhance, so no need to duplicate this
 	 * action across every public route's own +page.server.ts.
 	 */
-	let { profile = null, testimonials = [], answeredMessages = [], projects = [] } = $props();
+	let { profile = null, testimonials = [], answeredMessages = [], projects = [], locale = 'id' } = $props();
+	let t = $derived(getDictionary(locale));
 
 	let visibleTestimonials = $derived(testimonials);
 	const VISIBLE_DOTS = 3;
@@ -60,9 +62,9 @@
 	async function copyEmail() {
 		try {
 			await navigator.clipboard.writeText(email);
-			showToast('Email copied to clipboard: ' + email);
+			showToast(t.footer.emailCopiedToast(email));
 		} catch {
-			showToast('Email: ' + email);
+			showToast(t.footer.emailFallbackToast(email));
 		}
 	}
 
@@ -101,7 +103,7 @@
 			const url = await uploadViaSignedUrl(file, 'message-avatars', '/api/upload-message-avatar');
 			avatarState = { uploading: false, error: '', url };
 		} catch (err) {
-			avatarState = { uploading: false, error: err instanceof Error ? err.message : 'Upload gagal.', url: '' };
+			avatarState = { uploading: false, error: err instanceof Error ? err.message : t.messageModal.uploadFailed, url: '' };
 		}
 	}
 
@@ -114,7 +116,7 @@
 
 	let visibleAnsweredMessages = $derived(
 		answeredMessages.map((m) => ({
-			senderLabel: m.is_anonymous ? 'Anonymous Element' : m.sender_name || 'Anonymous Element',
+			senderLabel: m.is_anonymous ? t.readModal.anonymousLabel : m.sender_name || t.readModal.anonymousLabel,
 			date: formatDate(m.replied_at),
 			content: m.content,
 			reply: m.admin_reply
@@ -135,7 +137,7 @@
 				formElement.reset();
 				resetMessageForm();
 				msgModalOpen = false;
-				showToast('Message sent successfully! Thank you.');
+				showToast(t.messageModal.sentToast);
 				// A goal worth counting distinctly from a generic click — the
 				// submit button being pressed doesn't confirm it actually
 				// went through, this branch does. AnalyticsTracker.svelte
@@ -148,9 +150,9 @@
 					// Analytics must never break the actual feature.
 				}
 			} else if (result.type === 'failure') {
-				sendError = result.data?.error ?? 'Gagal mengirim pesan.';
+				sendError = result.data?.error ?? t.messageModal.failedGeneric;
 			} else {
-				sendError = 'Terjadi kesalahan. Coba lagi.';
+				sendError = t.messageModal.errorGeneric;
 			}
 		};
 	}
@@ -161,7 +163,7 @@
 	<div class="engagement-grid">
 		<div class="testimonial-card">
 			<div class="testimonial-header">
-				<span class="section-label testimonial-label">TESTIMONIAL</span>
+				<span class="section-label testimonial-label">{t.footer.testimonialLabel}</span>
 				{#if visibleTestimonials.length}
 					<span class="testimonial-counter">{currentIndex + 1}/{visibleTestimonials.length}</span>
 				{/if}
@@ -185,18 +187,17 @@
 					</div>
 				</div>
 			{:else}
-				<p class="no-answered">Belum ada testimonial.</p>
+				<p class="no-answered">{t.footer.noTestimonial}</p>
 			{/if}
 		</div>
 		<div class="messages-card flat-card">
-			<h2 class="card-title">LEAVE A MESSAGES</h2>
+			<h2 class="card-title">{t.footer.leaveMessageTitle}</h2>
 			<p class="messages-desc">
-				Hi, I really appreciate if you would give me a review, or any messages. Don't worry, anonymous messages is
-				possible by checking anonymous element.
+				{t.footer.leaveMessageDesc}
 			</p>
 			<div class="messages-actions">
-				<button class="btn-pill-dark" onclick={() => (msgModalOpen = true)}>Send Messages <span class="btn-arrow">&rarr;</span></button>
-				<button class="btn-pill-outline" onclick={() => (readModalOpen = true)}>Read Messages <span class="btn-arrow">&rarr;</span></button>
+				<button class="btn-pill-dark" onclick={() => (msgModalOpen = true)}>{t.footer.sendMessages} <span class="btn-arrow">&rarr;</span></button>
+				<button class="btn-pill-outline" onclick={() => (readModalOpen = true)}>{t.footer.readMessages} <span class="btn-arrow">&rarr;</span></button>
 			</div>
 		</div>
 	</div>
@@ -210,7 +211,7 @@
 			{#if email}
 				<div class="email-copy-wrapper">
 					<a href={`mailto:${email}`} class="email-link">{email}</a>
-					<button class="copy-btn" onclick={copyEmail}>COPY</button>
+					<button class="copy-btn" onclick={copyEmail}>{t.footer.copyBtn}</button>
 				</div>
 			{/if}
 		</div>
@@ -238,14 +239,14 @@
 >
 	<div class="modal-content">
 		<button class="modal-close" onclick={() => (msgModalOpen = false)}>&times;</button>
-		<h3 class="modal-title">Leave a Review or Message</h3>
+		<h3 class="modal-title">{t.messageModal.title}</h3>
 		<form method="POST" action="/messages" use:enhance={handleMessageSubmit}>
 			{#if sendError}
 				<p class="send-error">{sendError}</p>
 			{/if}
 			{#if !isAnonymous}
 				<div class="form-group">
-					<span class="form-label">Photo <span class="optional-badge">optional</span></span>
+					<span class="form-label">{t.messageModal.photoLabel} <span class="optional-badge">{t.messageModal.optionalBadge}</span></span>
 					<label for="sender-avatar" class="avatar-picker">
 						<span class="avatar-picker-circle">
 							{#if avatarState.url}
@@ -256,13 +257,13 @@
 						</span>
 						<span class="avatar-picker-text">
 							{#if avatarState.uploading}
-								Uploading...
+								{t.messageModal.uploading}
 							{:else if avatarState.error}
 								{avatarState.error}
 							{:else if avatarState.url}
-								Change photo
+								{t.messageModal.changePhoto}
 							{:else}
-								Click to upload photo
+								{t.messageModal.clickToUploadPhoto}
 							{/if}
 						</span>
 					</label>
@@ -277,18 +278,18 @@
 				</div>
 			{/if}
 			<div class="form-group">
-				<label class="form-label" for="sender-name">Your Name</label>
-				<input type="text" id="sender-name" name="sender_name" class="form-input" placeholder="e.g. Abraham" />
+				<label class="form-label" for="sender-name">{t.messageModal.yourName}</label>
+				<input type="text" id="sender-name" name="sender_name" class="form-input" placeholder={t.messageModal.namePlaceholder} />
 			</div>
 			{#if !isAnonymous}
 				<div class="form-group">
-					<label class="form-label" for="sender-instagram">Instagram (optional)</label>
+					<label class="form-label" for="sender-instagram">{t.messageModal.instagramOptional}</label>
 					<input
 						type="text"
 						id="sender-instagram"
 						name="sender_instagram"
 						class="form-input"
-						placeholder="@username"
+						placeholder={t.messageModal.instagramPlaceholder}
 					/>
 				</div>
 			{/if}
@@ -300,16 +301,16 @@
 					bind:checked={isAnonymous}
 					disabled={isNewProjectMode}
 				/>
-				<label class="form-label" for="anonymous-check">Send as Anonymous Element</label>
+				<label class="form-label" for="anonymous-check">{t.messageModal.sendAsAnonymous}</label>
 			</div>
 			<div class="form-group">
-				<label class="form-label" for="project-select">Project we worked on together (optional)</label>
+				<label class="form-label" for="project-select">{t.messageModal.projectTogether}</label>
 				<select id="project-select" class="form-input" bind:value={selectedProjectOption}>
-					<option value="">— None / skip —</option>
+					<option value="">{t.messageModal.noneSkipOption}</option>
 					{#each projects as p (p.id)}
 						<option value={p.id}>{p.title}</option>
 					{/each}
-					<option value="__new__">+ A project not listed here</option>
+					<option value="__new__">{t.messageModal.newProjectOption}</option>
 				</select>
 				<input type="hidden" name="project_id" value={submitProjectId} />
 				{#if isNewProjectMode}
@@ -318,26 +319,26 @@
 						name="proposed_project_name"
 						class="form-input"
 						style="margin-top: 0.5rem;"
-						placeholder="Project name"
+						placeholder={t.messageModal.projectNamePlaceholder}
 						bind:value={newProjectName}
 						required
 					/>
-					<span class="project-new-hint">Adding a new project can't be anonymous — your name is required.</span>
+					<span class="project-new-hint">{t.messageModal.newProjectHint}</span>
 				{/if}
 			</div>
 			<div class="form-group">
-				<label class="form-label" for="message-content">Your Message / Feedback</label>
+				<label class="form-label" for="message-content">{t.messageModal.yourMessage}</label>
 				<textarea
 					id="message-content"
 					name="content"
 					class="form-input"
 					rows="4"
-					placeholder="Write your message here..."
+					placeholder={t.messageModal.messagePlaceholder}
 					required
 				></textarea>
 			</div>
 			<button type="submit" class="btn-pill-accent btn-full" disabled={sending || avatarState.uploading}>
-				{sending ? 'Sending...' : 'Submit Message'} <span class="btn-arrow">&rarr;</span>
+				{sending ? t.messageModal.sending : t.messageModal.submit} <span class="btn-arrow">&rarr;</span>
 			</button>
 		</form>
 	</div>
@@ -352,7 +353,7 @@
 >
 	<div class="modal-content">
 		<button class="modal-close" onclick={() => (readModalOpen = false)}>&times;</button>
-		<h3 class="modal-title">Answered Messages &amp; Feedback</h3>
+		<h3 class="modal-title">{t.readModal.title}</h3>
 		<div class="answered-messages-list">
 			{#each visibleAnsweredMessages as item}
 				<div class="answered-item">
@@ -366,7 +367,7 @@
 					</div>
 				</div>
 			{:else}
-				<p class="no-answered">Belum ada pesan yang dibalas.</p>
+				<p class="no-answered">{t.readModal.noAnswered}</p>
 			{/each}
 		</div>
 	</div>

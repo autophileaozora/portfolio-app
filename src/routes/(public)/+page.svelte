@@ -3,8 +3,10 @@
 	import '$lib/styles/home.css';
 	import { jsonLdScriptTag } from '$lib/utils/jsonLd.js';
 	import { reveal } from '$lib/actions/reveal.js';
+	import { getDictionary } from '$lib/i18n';
 
 	let { data } = $props();
+	let t = $derived(getDictionary(data.locale));
 
 	// The personal-brand handle the user goes by (e.g. "helloimanuel") —
 	// derived from the email's local part rather than hardcoded, so it
@@ -436,10 +438,10 @@
 					</div>
 					<div class="document-links-row">
 						{#if data.profile?.cv_url}
-							<a href="{data.profile.cv_url}?download=CV.pdf" download="CV.pdf" class="doc-link">Curriculum Vitae</a>
+							<a href="{data.profile.cv_url}?download=CV.pdf" download="CV.pdf" class="doc-link">{t.home.curriculumVitae}</a>
 						{/if}
 						{#if data.profile?.resume_url}
-							<a href="{data.profile.resume_url}?download=Resume.pdf" download="Resume.pdf" class="doc-link">Resume</a>
+							<a href="{data.profile.resume_url}?download=Resume.pdf" download="Resume.pdf" class="doc-link">{t.home.resume}</a>
 						{/if}
 					</div>
 				</div>
@@ -478,7 +480,7 @@
 		<section id="summary" class="section summary-section">
 			<div class="summary-50-grid">
 				<div class="summary-left-col" use:reveal>
-					<h2 class="summary-title">SUMMMARY</h2>
+					<h2 class="summary-title">{t.home.summaryTitle}</h2>
 					{#if data.profile?.summary_paragraph}
 						<p class="summary-paragraph">{data.profile.summary_paragraph}</p>
 					{/if}
@@ -515,7 +517,7 @@
 		<!-- Work Experience Section -->
 		<section id="experience" class="experience-section-wrap">
 			<div class="exp-inner-content" use:reveal>
-				<h2 class="section-hashtag">#WORK EXPERIENCE</h2>
+				<h2 class="section-hashtag">{t.home.workExperienceHashtag}</h2>
 			</div>
 
 			<div class="exp-scroll-outer">
@@ -540,7 +542,7 @@
 			</div>
 
 			<div class="exp-inner-content" use:reveal>
-				<h2 class="section-title" style="margin-bottom: 20px;">RELATED SKILLS</h2>
+				<h2 class="section-title" style="margin-bottom: 20px;">{t.home.relatedSkillsTitle}</h2>
 				<div class="skills-cloud">
 					{#each skills as skill}
 						<span class="skill-chip">{skill}</span>
@@ -575,7 +577,7 @@
 		<!-- Projects Carousel Section -->
 		<section id="projects" class="projects-carousel-section">
 			<div class="projects-carousel-header" use:reveal>
-				<h2 class="section-title">PROJECTS</h2>
+				<h2 class="section-title">{t.home.projectsTitle}</h2>
 			</div>
 
 			<div class="projects-carousel-viewport" use:reveal={{ delay: 100 }}>
@@ -596,7 +598,7 @@
 			</div>
 
 			<div class="projects-carousel-footer">
-				<a href="/projects" class="btn btn-pill-accent" data-sveltekit-reload>See More Project <span class="btn-arrow">&rarr;</span></a>
+				<a href="/projects" class="btn btn-pill-accent" data-sveltekit-reload>{t.common.seeMoreProject} <span class="btn-arrow">&rarr;</span></a>
 			</div>
 		</section>
 	</main>

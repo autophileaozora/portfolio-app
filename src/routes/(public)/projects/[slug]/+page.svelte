@@ -3,8 +3,10 @@
 	import '$lib/styles/project-detail.css';
 	import { formatDuration } from '$lib/utils/formatDuration.js';
 	import { jsonLdScriptTag } from '$lib/utils/jsonLd.js';
+	import { getDictionary } from '$lib/i18n';
 
 	let { data } = $props();
+	let t = $derived(getDictionary(data.locale));
 
 	let project = $derived({
 		title: data.project.title,
@@ -136,7 +138,7 @@
 	<header class="hero" id="home">
 		<div class="meta-row">
 			<div class="meta-item">
-				<div class="label">Contributor :</div>
+				<div class="label">{t.projectDetail.contributor}</div>
 				<div class="value">
 					{#each project.contributors as c, i (i)}
 						{#if c.url}<a href={c.url} target="_blank" rel="noreferrer" class="contributor-link">{c.name}</a
@@ -147,23 +149,23 @@
 				</div>
 			</div>
 			<div class="meta-item">
-				<div class="label">Associated with :</div>
+				<div class="label">{t.projectDetail.associatedWith}</div>
 				<div class="value">{project.associatedWith}</div>
 			</div>
 			<div class="meta-item">
-				<div class="label">Categories :</div>
+				<div class="label">{t.projectDetail.categories}</div>
 				<div class="value">{project.category}</div>
 			</div>
 			<div class="meta-item">
-				<div class="label">Dates :</div>
+				<div class="label">{t.projectDetail.dates}</div>
 				<div class="value">{project.dates}</div>
 			</div>
 			<div class="meta-item">
-				<div class="label">Duration :</div>
+				<div class="label">{t.projectDetail.duration}</div>
 				<div class="value">{project.duration}</div>
 			</div>
 			<div class="meta-item">
-				<div class="label">Roles :</div>
+				<div class="label">{t.projectDetail.roles}</div>
 				<div class="value">{project.role}</div>
 			</div>
 		</div>
@@ -172,7 +174,7 @@
 			<div class="hero-left">
 				<div class="title-row">
 					<h1>{project.title}</h1>
-					<a href="/projects/{data.project.slug}/request-edit" class="request-edit-link">Request Edit</a>
+					<a href="/projects/{data.project.slug}/request-edit" class="request-edit-link">{t.projectDetail.requestEditLink}</a>
 				</div>
 				<p>{project.description}</p>
 			</div>
@@ -188,7 +190,7 @@
 
 	<div class="hero-actions">
 		{#if project.liveUrl}
-			<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">SEE LIVE PROJECT <span class="btn-arrow">&rarr;</span></a>
+			<a href={project.liveUrl} target="_blank" rel="noreferrer" class="cta-button">{t.projectDetail.seeLiveProject} <span class="btn-arrow">&rarr;</span></a>
 		{/if}
 	</div>
 
@@ -218,7 +220,7 @@
 				type="button"
 				class="dot"
 				class:active={idx === activeDotIndex()}
-				aria-label="Lihat slide dokumentasi {idx + 1}"
+				aria-label={t.projectDetail.slideAria(idx + 1)}
 				aria-current={idx === activeDotIndex()}
 				onclick={() => onDotClick(idx)}
 			></button>
@@ -252,19 +254,19 @@
 <!-- Other Projects -->
 <section class="other-projects-section" id="others">
 	<div class="other-projects-container">
-		<h2 class="op-title">OTHER PROJECTS</h2>
+		<h2 class="op-title">{t.projectDetail.otherProjectsTitle}</h2>
 
 		<div class="op-grid">
 			{#each otherProjects as card}
 				<div class="card-wrapper">
 					<div class="card-header">
-						<a href="/projects/{card.slug}" class="card-arrow-btn" aria-label="Lihat Project" data-sveltekit-reload>
+						<a href="/projects/{card.slug}" class="card-arrow-btn" aria-label={t.common.viewProjectAria} data-sveltekit-reload>
 							<img src="/assets/arrow_button.png" alt="Arrow" class="arrow-icon" />
 						</a>
 						<a
 							href="/projects/{card.slug}"
 							class="thumbnail-wrapper"
-							aria-label="Lihat project: {card.title}"
+							aria-label={t.common.viewProjectWithTitleAria(card.title)}
 							data-sveltekit-reload
 						>
 							{#if card.thumbnail}
@@ -278,17 +280,17 @@
 						</h3>
 						<div class="card-meta">
 							<div class="meta-row">
-								<span class="meta-label">Role :</span>
+								<span class="meta-label">{t.common.role}</span>
 								<span class="meta-value">{card.role}</span>
 							</div>
 							<div class="divider"></div>
 							<div class="meta-row">
-								<span class="meta-label">Duration :</span>
+								<span class="meta-label">{t.common.duration}</span>
 								<span class="meta-value">{card.duration}</span>
 							</div>
 							<div class="divider"></div>
 							<div class="meta-row">
-								<span class="meta-label">Categories :</span>
+								<span class="meta-label">{t.common.categories}</span>
 								<span class="meta-value">{card.category}</span>
 							</div>
 						</div>
@@ -303,7 +305,7 @@
 		</div>
 
 		<div class="op-footer">
-			<a href="/projects" class="op-see-more" data-sveltekit-reload>See More Project <span class="btn-arrow">&rarr;</span></a>
+			<a href="/projects" class="op-see-more" data-sveltekit-reload>{t.common.seeMoreProject} <span class="btn-arrow">&rarr;</span></a>
 		</div>
 	</div>
 </section>

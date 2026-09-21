@@ -2,8 +2,14 @@
 	import AdminForm from '$lib/components/admin/AdminForm.svelte';
 	import '$lib/styles/admin.css';
 	import { projectFields } from '$lib/admin/projectFields.js';
+	import { getDictionary } from '$lib/i18n';
 
 	let { data, form } = $props();
+	// Only this page's own chrome (headings, step-1 fields, buttons) is
+	// translated — the step-2 form fields come from projectFields.js, shared
+	// with the admin panel (which stays Indonesian-only by design), so they
+	// stay Indonesian here too regardless of the visitor's chosen language.
+	let t = $derived(getDictionary(data.locale).requestEdit);
 
 	// Stay on step 2 if a submission just failed validation, so errors are visible.
 	let step = $state(form && !form.success ? 2 : 1);
@@ -57,51 +63,48 @@
 </script>
 
 <svelte:head>
-	<title>Request Edit — {data.project.title}</title>
+	<title>{t.pageTitle(data.project.title)}</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <div class="request-edit-page">
 	{#if form?.success}
 		<div class="admin-page-header">
-			<h1>Terima kasih!</h1>
+			<h1>{t.thankYouTitle}</h1>
 		</div>
 		<p>
-			Permintaan edit kamu untuk <strong>{data.project.title}</strong> sudah terkirim dan menunggu review admin.
-			Perubahan baru akan tayang setelah disetujui.
+			{t.thankYouBefore} <strong>{data.project.title}</strong> {t.thankYouAfter}
 		</p>
-		<a class="btn-secondary" href="/projects/{data.project.slug}">&larr; Kembali ke project</a>
+		<a class="btn-secondary" href="/projects/{data.project.slug}">{t.backToProject}</a>
 	{:else if step === 1}
 		<div class="admin-page-header">
-			<h1>Request Edit: {data.project.title}</h1>
+			<h1>{t.requestEditTitle(data.project.title)}</h1>
 		</div>
-		<p class="dashboard-sub">Sebelum lanjut, kami perlu tahu siapa yang mengusulkan perubahan ini.</p>
+		<p class="dashboard-sub">{t.step1Intro}</p>
 		<form class="admin-form" onsubmit={goToStep2}>
 			<label>
-				Nama
+				{t.nameLabel}
 				<input type="text" bind:value={requesterName} required />
 			</label>
 			<label>
-				Username Instagram
-				<input type="text" bind:value={requesterInstagram} required placeholder="tanpa @" />
+				{t.instagramLabel}
+				<input type="text" bind:value={requesterInstagram} required placeholder={t.instagramPlaceholder} />
 			</label>
 			<label>
-				Nomor WhatsApp (opsional)
+				{t.whatsappLabel}
 				<input type="text" bind:value={requesterWhatsapp} />
 			</label>
 			<div class="form-actions">
-				<button type="submit" class="btn-primary">Lanjut ke Edit <span class="btn-arrow">&rarr;</span></button>
-				<a class="btn-secondary" href="/projects/{data.project.slug}">Batal</a>
+				<button type="submit" class="btn-primary">{t.continueToEdit} <span class="btn-arrow">&rarr;</span></button>
+				<a class="btn-secondary" href="/projects/{data.project.slug}">{t.cancel}</a>
 			</div>
 		</form>
 	{:else}
 		<div class="admin-page-header">
-			<h1>Edit: {data.project.title}</h1>
+			<h1>{t.editTitle(data.project.title)}</h1>
 		</div>
 		<p class="dashboard-sub">
-			Perubahan kamu akan direview dulu oleh admin sebelum tayang di halaman publik. Daftar "Slide Dokumentasi" di
-			bawah sudah diisi slide yang ada sekarang — edit, hapus, atau tambah baris sesuai kebutuhan; daftar akhir yang
-			kamu kirim akan menggantikan slide yang ada.
+			{t.step2Intro}
 		</p>
 		<AdminForm
 			fields={editFields}
@@ -109,7 +112,7 @@
 			{errors}
 			formError={form?.error}
 			cancelHref="/projects/{data.project.slug}"
-			submitLabel="Kirim Permintaan Edit"
+			submitLabel={t.submitLabel}
 		/>
 	{/if}
 </div>
