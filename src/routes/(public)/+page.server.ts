@@ -65,7 +65,13 @@ export const load: PageServerLoad = async ({ locals: { supabase }, setHeaders, u
 	// third query, so the hero isn't empty in the meantime either.
 	if (heroProjects.length === 0) heroProjects = homeProjects;
 
-	setHeaders({ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' });
+	// `public` (shared/CDN cache) would serve ONE visitor's cached response —
+	// in whatever language THEY had selected — to every other visitor for up
+	// to 60s, since Vercel's edge cache key doesn't vary by the `locale`
+	// cookie the language switcher reads. `private` keeps each visitor's own
+	// browser cache (still cheap on repeat views) without ever sharing a
+	// response across visitors.
+	setHeaders({ 'cache-control': 'private, max-age=60' });
 
 	return {
 		featuredProjects: homeProjects,

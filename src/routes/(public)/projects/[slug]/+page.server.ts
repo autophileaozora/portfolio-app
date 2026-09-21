@@ -22,7 +22,10 @@ export const load: PageServerLoad = async ({ params, url, locals: { supabase }, 
 		.order('display_order')
 		.limit(3);
 
-	setHeaders({ 'cache-control': 'public, s-maxage=60, stale-while-revalidate=300' });
+	// private, not public — see the identical comment in the Home page's
+	// +page.server.ts (this page is locale-dependent too, and a shared/CDN
+	// cache doesn't vary by the `locale` cookie).
+	setHeaders({ 'cache-control': 'private, max-age=60' });
 
 	// No static fallback image — if the project has no thumbnail, the
 	// og:image/twitter:image meta tags are just omitted (see +page.svelte)
