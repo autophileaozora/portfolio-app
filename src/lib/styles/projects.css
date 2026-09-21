@@ -504,6 +504,7 @@ p, .skill {
 }
 
 .thumbnail-wrapper {
+    display: block; /* now an <a> — the thumbnail itself is clickable */
     width: 100%;
     height: 120%;
     border-radius: 12px;

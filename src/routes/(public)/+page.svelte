@@ -126,7 +126,8 @@
 			hue: HUE_STYLES[i % HUE_STYLES.length],
 			alt: p.title,
 			tags: projectTags(p).slice(0, 6),
-			title: p.title
+			title: p.title,
+			slug: p.slug
 		}))
 	);
 	// Keeps the marquee's perceived speed roughly constant regardless of
@@ -447,7 +448,11 @@
 			<div class="hero-carousel-wrapper" use:reveal={{ immediate: true, delay: 320, y: 16 }}>
 				<div class="hero-carousel-track" bind:this={heroTrackEl}>
 					{#each heroCards as card}
-						<div class="hero-card {card.thumbnail ? '' : card.class}">
+						<a
+							href="/projects/{card.slug}"
+							class="hero-card {card.thumbnail ? '' : card.class}"
+							data-sveltekit-reload
+						>
 							{#if card.thumbnail}
 								<img src={card.thumbnail} alt={card.headline} class="hero-card-img" />
 							{:else if card.inner === 'marble'}
@@ -463,7 +468,7 @@
 								</div>
 								<h3 class="project-headline">{card.headline}</h3>
 							</div>
-						</div>
+						</a>
 					{/each}
 				</div>
 			</div>
@@ -545,7 +550,14 @@
 		</section>
 
 		{#snippet projCard(project, isDuplicate)}
-			<div class="proj-card" class:proj-card--duplicate={isDuplicate} aria-hidden={isDuplicate ? 'true' : undefined}>
+			<a
+				href="/projects/{project.slug}"
+				class="proj-card"
+				class:proj-card--duplicate={isDuplicate}
+				aria-hidden={isDuplicate ? 'true' : undefined}
+				tabindex={isDuplicate ? -1 : undefined}
+				data-sveltekit-reload
+			>
 				<div class="proj-img-wrapper">
 					{#if project.img}<img src={project.img} alt={project.alt} class="proj-img {project.hue}" />{/if}
 				</div>
@@ -557,7 +569,7 @@
 					</div>
 					<h3 class="proj-title">{project.title}</h3>
 				</div>
-			</div>
+			</a>
 		{/snippet}
 
 		<!-- Projects Carousel Section -->

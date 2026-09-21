@@ -261,14 +261,21 @@
 						<a href="/projects/{card.slug}" class="card-arrow-btn" aria-label="Lihat Project" data-sveltekit-reload>
 							<img src="/assets/arrow_button.png" alt="Arrow" class="arrow-icon" />
 						</a>
-						<div class="thumbnail-wrapper">
+						<a
+							href="/projects/{card.slug}"
+							class="thumbnail-wrapper"
+							aria-label="Lihat project: {card.title}"
+							data-sveltekit-reload
+						>
 							{#if card.thumbnail}
 								<img src={card.thumbnail} alt="{card.title} Preview" class="card-thumbnail" />
 							{/if}
-						</div>
+						</a>
 					</div>
 					<article class="project-card">
-						<h3 class="card-title">{card.title}</h3>
+						<h3 class="card-title">
+							<a href="/projects/{card.slug}" data-sveltekit-reload>{card.title}</a>
+						</h3>
 						<div class="card-meta">
 							<div class="meta-row">
 								<span class="meta-label">Role :</span>

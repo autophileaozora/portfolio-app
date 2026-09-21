@@ -435,10 +435,13 @@
         }
 
         .thumbnail-wrapper {
+            display: block; /* now an <a> — the thumbnail itself is clickable */
             width: 100%;
             height: 120%;
             border-radius: 12px;
             overflow: hidden;
+            color: inherit;
+            text-decoration: none;
         }
 
         .card-thumbnail {
@@ -501,6 +504,11 @@
             color: #0F205F;
             text-transform: uppercase;
             margin-bottom: 8px;
+        }
+
+        .project-card .card-title a {
+            color: inherit;
+            text-decoration: none;
         }
 
         .card-meta {

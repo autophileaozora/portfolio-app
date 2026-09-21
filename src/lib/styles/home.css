@@ -227,8 +227,12 @@ body::-webkit-scrollbar {
     }
 }
 
-/* Hero Card Base */
+/* Hero Card Base — an <a> (whole card links to the project, not just its
+   title/image) rather than a <div>, so the block layout + default link
+   styling need to be set explicitly instead of relying on a <div>'s
+   defaults. */
 .hero-card {
+    display: block;
     min-width: 380px;
     width: 380px;
     height: 230px;
@@ -241,6 +245,8 @@ body::-webkit-scrollbar {
     border: 1.5px solid rgba(255, 255, 255, 0.08);
     transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
+    color: inherit;
+    text-decoration: none;
 }
 
 .hero-card-img {
@@ -741,7 +747,8 @@ body::-webkit-scrollbar {
     to { transform: translateX(-50%); }
 }
 
-/* Individual project card */
+/* Individual project card — an <a> (whole card links to the project) so
+   default link styling needs resetting explicitly. */
 .proj-card {
     flex: 0 0 300px;
     display: flex;
@@ -750,6 +757,8 @@ body::-webkit-scrollbar {
     margin-right: 24px;
     cursor: pointer;
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    color: inherit;
+    text-decoration: none;
 }
 
 .proj-card:hover {
@@ -966,7 +975,7 @@ body::-webkit-scrollbar {
        exact) would otherwise push a 100%-wide stacked card 24px past
        its container on mobile; vertical spacing here already comes from
        the track's own gap in column mode. */
-    .proj-card { flex: 1 1 auto; width: 100%; margin-right: 0; cursor: default; }
+    .proj-card { flex: 1 1 auto; width: 100%; margin-right: 0; }
     .proj-card--duplicate { display: none; }
     .proj-img-wrapper { width: 100%; height: 200px; }
 
