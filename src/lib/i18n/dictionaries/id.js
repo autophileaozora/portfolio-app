@@ -62,7 +62,8 @@ export default {
 		requestEditLink: 'Ajukan Edit',
 		seeLiveProject: 'LIHAT PROJECT LIVE',
 		otherProjectsTitle: 'PROJECT LAINNYA',
-		slideAria: (n) => `Lihat slide dokumentasi ${n}`
+		slideAria: (n) => `Lihat slide dokumentasi ${n}`,
+		readMore: 'Baca selengkapnya'
 	},
 
 	requestEdit: {

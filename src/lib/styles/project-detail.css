@@ -158,6 +158,38 @@
             min-height: 360px;
         }
 
+        /* Only applied once detectClamp (see +page.svelte) confirms this
+           specific card's text actually got cut off — a card short enough
+           to fully fit isn't clickable at all, nothing to "read more" of. */
+        .card--clampable {
+            cursor: pointer;
+            transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .card--clampable:hover {
+            transform: translateY(-4px);
+        }
+
+        .card-read-more {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1C242C;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        /* Full, untruncated text inside the read-more modal — the modal
+           chrome itself (.modal-backdrop/.modal-content/.modal-title) comes
+           from contact-footer.css (loads globally); just the body text
+           styling is this page's own. */
+        .card-modal-body {
+            font-size: 15px;
+            line-height: 1.7;
+            color: inherit;
+        }
+
         .card-bg {
             position: absolute;
             inset: 0;

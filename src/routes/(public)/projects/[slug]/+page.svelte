@@ -4,6 +4,7 @@
 	import { formatDuration } from '$lib/utils/formatDuration.js';
 	import { jsonLdScriptTag } from '$lib/utils/jsonLd.js';
 	import { getDictionary } from '$lib/i18n';
+	import { detectClamp } from '$lib/actions/detectClamp.js';
 
 	let { data } = $props();
 	let t = $derived(getDictionary(data.locale));
@@ -52,6 +53,32 @@
 			body: s.content
 		}))
 	);
+
+	// --- Problem/Solution/Result cards: "read more" modal for whichever
+	// ones are actually clamped (see .card p's -webkit-line-clamp) ---
+	// Keyed by index rather than a single flag per card, since whether a
+	// given card's text clips depends on its own length/the viewport width,
+	// not something known ahead of render.
+	/** @type {Record<number, boolean>} */
+	let clampedCards = $state({});
+	/** @type {{ heading: string; body: string } | null} */
+	let cardModalSection = $state(null);
+
+	function openCardModal(section) {
+		cardModalSection = section;
+	}
+	function closeCardModal() {
+		cardModalSection = null;
+	}
+	function closeOnBackdrop(e, close) {
+		if (e.target === e.currentTarget) close();
+	}
+	function onCardKeydown(e, section) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			openCardModal(section);
+		}
+	}
 
 	let docSlides = $derived(
 		sectionsByType('documentation').map((s) => ({ title: s.title, body: s.content, image: s.image_url }))
@@ -133,6 +160,8 @@
 	})}
 </svelte:head>
 
+<svelte:window onkeydown={(e) => e.key === 'Escape' && closeCardModal()} />
+
 <main>
 <div class="container">
 	<header class="hero" id="home">
@@ -195,12 +224,24 @@
 	</div>
 
 	<section class="cards-grid">
-		{#each sections as section}
-			<div class="card">
+		{#each sections as section, i}
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -- role and
+			     tabindex are bound together off the same clampedCards[i]
+			     flag (never one without the other at runtime); the linter
+			     just can't see that since role is a dynamic attribute. -->
+			<div
+				class="card"
+				class:card--clampable={clampedCards[i]}
+				role={clampedCards[i] ? 'button' : undefined}
+				tabindex={clampedCards[i] ? 0 : undefined}
+				onclick={() => clampedCards[i] && openCardModal(section)}
+				onkeydown={(e) => clampedCards[i] && onCardKeydown(e, section)}
+			>
 				<div class="card-bg"></div>
 				<div class="card-content">
 					<h2>{section.heading}</h2>
-					<p>{section.body}</p>
+					<p use:detectClamp={(isClamped) => (clampedCards[i] = isClamped)}>{section.body}</p>
+					{#if clampedCards[i]}<span class="card-read-more">{t.projectDetail.readMore}</span>{/if}
 				</div>
 				<div class="cards-slashes">
 					<div class="just-slashes"></div>
@@ -210,6 +251,26 @@
 			</div>
 		{/each}
 	</section>
+</div>
+
+<!-- Problem/Solution/Result "read more" modal — only ever opened for a
+     card whose text actually clamped (see .card p's -webkit-line-clamp
+     and detectClamp above); reuses the same .modal-backdrop/.modal-content
+     pattern ContactFooter.svelte's own modals use (contact-footer.css
+     loads globally, so the styling is already there). -->
+<div
+	class="modal-backdrop"
+	class:active={cardModalSection !== null}
+	role="presentation"
+	onclick={(e) => closeOnBackdrop(e, closeCardModal)}
+>
+	<div class="modal-content">
+		<button class="modal-close" onclick={closeCardModal}>&times;</button>
+		{#if cardModalSection}
+			<h3 class="modal-title">{cardModalSection.heading}</h3>
+			<p class="card-modal-body">{cardModalSection.body}</p>
+		{/if}
+	</div>
 </div>
 
 <!-- Documentation Carousel -->

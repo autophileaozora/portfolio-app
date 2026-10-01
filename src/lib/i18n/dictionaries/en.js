@@ -59,7 +59,8 @@ export default {
 		requestEditLink: 'Request Edit',
 		seeLiveProject: 'SEE LIVE PROJECT',
 		otherProjectsTitle: 'OTHER PROJECTS',
-		slideAria: (n) => `View documentation slide ${n}`
+		slideAria: (n) => `View documentation slide ${n}`,
+		readMore: 'Read more'
 	},
 
 	requestEdit: {
