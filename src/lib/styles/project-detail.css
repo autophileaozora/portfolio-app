@@ -209,6 +209,16 @@
             font-size: 14px;
             line-height: 1.7;
             color: #444;
+            /* Max 10 lines, rest truncated with an ellipsis — .card-bg
+               behind this (the notched card shape) is a fixed 350px tall,
+               so a long Problem/Solution/Result write-up would otherwise
+               overflow past its own card background. */
+            display: -webkit-box;
+            -webkit-line-clamp: 10;
+            line-clamp: 10;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* ===== FULL CAROUSEL SECTION (FADE & SMOOTH ENTER) ===== */
