@@ -9,6 +9,28 @@
  */
 :root {
 	--admin-ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+	/* Not used by anything in THIS file — admin.css styles the admin
+	   panel's own pages, which don't need these — but navbar.css and
+	   contact-footer.css are global stylesheets that render on every
+	   public page via var(), request-edit included (the one public route
+	   that loads admin.css instead of home/projects/project-detail.css).
+	   Without a copy here, those two stylesheets' buttons/text render
+	   un-themed specifically on this page — same root cause as a bug just
+	   fixed on project-detail.css, found while investigating that one. */
+	--bg-dark: #192128;
+	--bg-card: #202a34;
+	--border-gold: rgba(212, 175, 55, 0.4);
+	--accent-gold: #e2d175;
+	--accent-gold-text: #f3e5ab;
+	--accent-cyan: #06b6d4;
+	--text-primary: #ffffff;
+	--text-secondary: #cbd5e1;
+	--text-muted: #94a3b8;
+	--font-heading: 'Inter', sans-serif;
+	--radius-sm: 8px;
+	--radius-md: 16px;
+	--radius-full: 9999px;
 }
 
 .admin-page-header {

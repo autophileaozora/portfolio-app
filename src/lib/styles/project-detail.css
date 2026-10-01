@@ -592,7 +592,37 @@
             transform: translateY(-2px) scale(0.98);
         }
 
-    
+        /* Restored after a prior cleanup pass deleted this whole block for
+           looking locally unused (nothing left in THIS file's own markup
+           references it once .flat-card/.btn-pill-accent were confirmed
+           dead) — but contact-footer.css and navbar.css are GLOBAL
+           stylesheets that render on every public page via var(), this
+           page's own project-detail.css included, and several of these
+           custom properties (--text-primary etc.) have no other source on
+           this specific page. Missing them made ContactFooter's buttons
+           render with un-themed (near-invisible) text specifically on
+           project detail pages — reported directly by the user. Keeping
+           the full original block here, not just the properties known to
+           be consumed today, so a future addition to contact-footer.css/
+           navbar.css doesn't silently break the same way again. */
+        :root {
+            --bg-dark: #192128;
+            --bg-card: #202A34;
+            --border-card: rgba(255, 255, 255, 0.08);
+            --border-gold: rgba(212, 175, 55, 0.4);
+            --accent-gold: #d4e94e;
+            --accent-gold-text: #d4e94e;
+            --accent-cyan: #06B6D4;
+            --text-primary: #FFFFFF;
+            --text-secondary: #CBD5E1;
+            --text-muted: #94A3B8;
+            --font-heading: 'Inter', sans-serif;
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-full: 9999px;
+        }
+
         /* ===== CONSOLIDATED RESPONSIVE MEDIA QUERIES ===== */
 
         /* Layout & Engagement adjustments for Tablets and Mobile (900px and under) */
