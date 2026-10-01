@@ -320,8 +320,21 @@ select.form-input option {
     border: none;
     border-radius: 0;
     box-shadow: none;
-    width: 100vw;
-    margin-left: calc(-50vw + 50%);
+    /* Used to be the "full-bleed breakout" technique (100vw +
+       margin-left: calc(-50vw + 50%)) for escaping a width-constrained
+       parent — but #contact-footer-root (this element's actual parent)
+       has never been width-constrained by anything, so that was always
+       unnecessary here, and 100vw carries a real cost: vw units include
+       the scrollbar's width, so on any page whose scrollbar isn't hidden
+       via CSS, 100vw is wider than the actually-visible viewport, and
+       this centered-content footer (.footer-top below) renders visibly
+       off-center — confirmed live: project-detail.css doesn't hide the
+       scrollbar the way home.css/projects.css do, and only that page
+       showed the divider line and footer content shifted hard right,
+       reported directly by the user with screenshots. A plain 100% has
+       the identical full-width visual result without this failure mode,
+       on every page, regardless of that page's own scrollbar styling. */
+    width: 100%;
 }
 
 .footer-top {

@@ -4,12 +4,26 @@
             box-sizing: border-box;
         }
 
+        /* Hidden scrollbar track/thumb, matching home.css/projects.css —
+           this page was the one missing it (confirmed live: a visible
+           native scrollbar here, hidden everywhere else), which combined
+           with .footer's old 100vw full-bleed trick to visibly shift the
+           footer content on this page only. Page still scrolls normally
+           (wheel/touch/keyboard), just without the visible track/thumb. */
+        ::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #ffffff;
             color: #333;
             overflow-x: hidden;
             margin: 0 auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
 
         .container {
@@ -610,8 +624,14 @@
             --bg-card: #202A34;
             --border-card: rgba(255, 255, 255, 0.08);
             --border-gold: rgba(212, 175, 55, 0.4);
-            --accent-gold: #d4e94e;
-            --accent-gold-text: #d4e94e;
+            /* Was #d4e94e/#d4e94e (a lime-green, and --accent-gold-text
+               equal to --accent-gold itself, not a lighter variant like
+               everywhere else) — visibly wrong gold on contact-footer.css's
+               buttons/social links specifically on this page, confirmed
+               live via screenshot. Aligned to the same values projects.css/
+               admin.css already use consistently. */
+            --accent-gold: #E2D175;
+            --accent-gold-text: #F3E5AB;
             --accent-cyan: #06B6D4;
             --text-primary: #FFFFFF;
             --text-secondary: #CBD5E1;
