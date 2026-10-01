@@ -11,7 +11,15 @@ declare global {
 			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
 			locale: string;
 		}
-		// interface PageData {}
+		interface PageData {
+			// Only the project detail page's own +page.server.ts actually
+			// returns this (testimonials scoped to that project) — declared
+			// here so (public)/+layout.svelte, which reads it to override the
+			// general testimonials pool, type-checks; SvelteKit merges it in
+			// at runtime regardless of this declaration, same as any other
+			// route's load data, this just makes the type system aware too.
+			projectTestimonials?: Database['public']['Tables']['testimonials']['Row'][] | null;
+		}
 		// interface PageState {}
 		// interface Platform {}
 	}

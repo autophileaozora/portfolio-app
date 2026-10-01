@@ -572,6 +572,7 @@ export type Database = {
           display_order: number
           id: string
           is_published: boolean
+          project_id: string | null
           quote: string
           updated_at: string
         }
@@ -582,6 +583,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_published?: boolean
+          project_id?: string | null
           quote: string
           updated_at?: string
         }
@@ -592,10 +594,19 @@ export type Database = {
           display_order?: number
           id?: string
           is_published?: boolean
+          project_id?: string | null
           quote?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "testimonials_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

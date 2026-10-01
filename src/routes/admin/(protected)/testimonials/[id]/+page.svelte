@@ -8,6 +8,12 @@
 		{ name: 'author_name', label: 'Nama', type: 'text', required: true },
 		{ name: 'author_role', label: 'Peran (mis. Rekan Kerja)', type: 'text' },
 		{ name: 'quote', label: 'Quote', type: 'textarea', required: true },
+		{
+			name: 'project_id',
+			label: 'Project (opsional — tampil khusus di halaman detail project itu, bukan di daftar testimoni umum)',
+			type: 'select',
+			options: data.projects.map((p) => ({ value: p.id, label: p.title }))
+		},
 		{ name: 'is_published', label: 'Terbitkan di halaman publik', type: 'checkbox' }
 	];
 

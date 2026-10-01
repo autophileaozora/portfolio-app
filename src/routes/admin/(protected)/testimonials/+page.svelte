@@ -18,7 +18,8 @@
 <AdminTable
 	columns={[
 		{ key: 'author_name', label: 'Nama' },
-		{ key: 'author_role', label: 'Peran' }
+		{ key: 'author_role', label: 'Peran' },
+		{ key: 'project_title', label: 'Project' }
 	]}
 	{rows}
 	basePath="/admin/testimonials"

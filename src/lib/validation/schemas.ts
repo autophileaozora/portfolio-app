@@ -76,7 +76,10 @@ export const testimonialSchema = z.object({
 	author_name: z.string().trim().min(1, 'Nama wajib diisi.').max(120),
 	author_role: z.string().trim().max(120).optional().default(''),
 	quote: z.string().trim().min(1, 'Quote wajib diisi.').max(1000),
-	is_published: z.boolean()
+	is_published: z.boolean(),
+	// Optional — which project this testimonial is about, if any. Shown on
+	// that project's own detail page instead of the general/site-wide pool.
+	project_id: nullableText(100)
 });
 
 export const CATEGORY_OPTIONS = ['web', 'app', 'design'];

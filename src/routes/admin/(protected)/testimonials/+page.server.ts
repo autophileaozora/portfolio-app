@@ -4,14 +4,32 @@ import { reorderRow, compactAfterDelete } from '$lib/server/ranked';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals: { supabase } }) => {
-	const { data: testimonials, error: testimonialsError } = await supabase
+	const { data: withProject, error: withProjectError } = await supabase
 		.from('testimonials')
-		.select('*')
+		.select('*, project:projects(title)')
 		.order('display_order');
 
-	if (testimonialsError) console.error('[admin/testimonials] load failed:', testimonialsError.message);
+	let rows: { project_title: string; [key: string]: unknown }[];
 
-	return { testimonials: testimonials ?? [] };
+	if (withProjectError) {
+		// The embedded `project:projects(title)` requires the project_id FK
+		// to actually exist — until the migration adding it has been run,
+		// PostgREST can't resolve that relationship and this whole query
+		// errors. Falling back to a plain select keeps the existing list
+		// visible (with "—" for every project column) instead of the list
+		// silently going empty, which would otherwise look like every
+		// testimonial had vanished.
+		console.error('[admin/testimonials] load with project join failed, retrying without it:', withProjectError.message);
+		const { data: plain, error: plainError } = await supabase.from('testimonials').select('*').order('display_order');
+		if (plainError) console.error('[admin/testimonials] plain load also failed:', plainError.message);
+		rows = (plain ?? []).map((t) => ({ ...t, project_title: '—' }));
+	} else {
+		// Flattened for AdminTable, which only reads top-level row[col.key] —
+		// no nested-path support.
+		rows = (withProject ?? []).map((t) => ({ ...t, project_title: t.project?.title || '—' }));
+	}
+
+	return { testimonials: rows };
 };
 
 export const actions: Actions = {
